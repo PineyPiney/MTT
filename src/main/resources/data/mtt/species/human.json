@@ -1,0 +1,51 @@
+{
+	"id": "human",
+	"type": "humanoid",
+	"size": {
+		"options": [
+			"small",
+			"medium"
+		]
+	},
+	"movement": 30,
+	"model": {
+		"options": [
+			"short",
+			"default"
+		]
+	},
+	"language": [
+		"common",
+		{
+			"choices": 2,
+			"options": [
+				"common_sign",
+				"draconic",
+				"dwarvish",
+				"elvish",
+				"giant",
+				"gnomish",
+				"goblin",
+				"halfling",
+				"orc"
+			]
+		}
+	],
+	"proficiency": {
+		"type": "skill",
+		"proficiency": {
+			"choices": 1
+		}
+	},
+	"feat": {
+		"choices": 1,
+		"options": [
+			"alert",
+			"cleric_initiate",
+			"druid_initiate",
+			"wizard_initiate",
+			"savage_attacker",
+			"skilled"
+		]
+	}
+}

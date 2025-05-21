@@ -1,0 +1,122 @@
+{
+	"id": "elf",
+	"type": "humanoid",
+	"size": "medium",
+	"movement": 30,
+	"model": "default",
+	"language": [
+		"common",
+		{
+			"choice": 2,
+			"options": [
+				"common_sign",
+				"draconic",
+				"dwarvish",
+				"elvish",
+				"giant",
+				"gnomish",
+				"goblin",
+				"halfling",
+				"orc"
+			]
+		}
+	],
+	"dark_vision": 60,
+
+	"trait": [
+		{
+			"id": "fey_ancestry",
+			"effect": {
+				"advantage": {
+					"type": "spell",
+					"advantage": "charmed"
+				}
+			}
+		},
+		{
+			"id": "keen_senses",
+			"effect": {
+				"proficiency": {
+					"type": "skill",
+					"proficiency": {
+						"options": [
+							"insight",
+							"perception",
+							"survival"
+						]
+					}
+				}
+			}
+		},
+		{
+			"id": "trance",
+			"description": "You don’t need to sleep, and magic can’t put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness."
+		}
+	],
+	"spell_ability": {
+		"options": [
+			"intelligence",
+			"wisdom",
+			"charisma"
+		]
+	},
+	"sub_species_id": "elven_lineage",
+	"sub_species": [
+		{
+			"id": "drow",
+			"description": "",
+			"dark_vision": 120,
+			"spell": [
+				{
+					"level": 1,
+					"spell": "dancing_lights"
+				},
+				{
+					"level": 3,
+					"spell": "faerie_fire"
+				},
+				{
+					"level": 5,
+					"spell": "darkness"
+				}
+			]
+		},
+		{
+			"id": "high_elf",
+			"description": "",
+			"spell": [
+				{
+					"level": 1,
+					"spell": "prestidigitation"
+				},
+				{
+					"level": 3,
+					"spell": "detect_magic"
+				},
+				{
+					"level": 5,
+					"spell": "misty_step"
+				}
+			]
+		},
+		{
+			"id": "wood_elf",
+			"description": "",
+			"movement": 35,
+			"spell": [
+				{
+					"level": 1,
+					"spell": "druidcraft"
+				},
+				{
+					"level": 3,
+					"spell": "longstrider"
+				},
+				{
+					"level": 5,
+					"spell": "pass_without_trace"
+				}
+			]
+		}
+	]
+}

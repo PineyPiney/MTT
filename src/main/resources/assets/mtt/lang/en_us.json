@@ -1,0 +1,81 @@
+{
+  "mtt.screen.dnd_inventory": "Inventory",
+  "mtt.screen.character_maker": "Character Maker",
+
+  "mtt.character_maker_screen.species": "Species",
+  "mtt.character_maker_screen.class": "Class",
+  "mtt.character_maker_screen.abilities": "Abilities",
+  "mtt.character_maker_screen.background": "Background",
+
+  "mtt.species.human": "Human",
+  "mtt.species.dwarf": "Dwarf",
+  "mtt.species.elf": "Elf",
+  "mtt.species.drow": "Drow",
+  "mtt.species.high_elf": "High Elf",
+  "mtt.species.wood_elf": "Wood Elf",
+  "mtt.species.tiefling": "Tiefling",
+  "mtt.species.abyssal_tiefling": "Abyssal Tiefling",
+  "mtt.species.chthonic_tiefling": "Chthonic Tiefling",
+  "mtt.species.infernal_tiefling": "Infernal Tiefling",
+
+  "mtt.sub_species.elven_lineage": "Elven Lineage",
+  "mtt.sub_species.fiendish_legacy": "Fiendish Legacy",
+
+  "mtt.creature_type.humanoid": "Humanoid",
+
+  "mtt.size.small": "Small",
+  "mtt.size.medium": "Medium",
+
+  "mtt.trait.creature_type": "Creature Type",
+  "mtt.trait.speed": "Speed",
+  "mtt.trait.size": "Size",
+  "mtt.trait.dark_vision": "Dark Vision",
+
+  "mtt.trait.dwarven_resilience": "Dwarven Resilience",
+  "mtt.trait.dwarven_toughness": "Dwarven Toughness",
+  "mtt.trait.stone_cunning": "Stone Cunning",
+  "mtt.trait.fey_ancestry": "Fey Ancestry",
+  "mtt.trait.keen_senses": "Keen Senses",
+  "mtt.trait.trance": "Trance",
+  "mtt.trait.otherworldly_presence": "Otherworldly Presence",
+
+  "itemGroup.mtt.melee_weapons": "Melee Weapons",
+  "itemGroup.mtt.ranged_weapons": "Ranged Weapons",
+  "itemGroup.mtt.armour": "Armour",
+
+  "item.mtt.dagger": "Dagger",
+  "item.mtt.short_sword": "Short Sword",
+  "item.mtt.long_sword": "Long Sword",
+  "item.mtt.great_sword": "Great Sword",
+  "item.mtt.great_club": "Great Club",
+
+  "item.mtt.shortbow": "Shortbow",
+  "item.mtt.longbow": "Longbow",
+  "item.mtt.light_crossbow": "Light Crossbow",
+  "item.mtt.heavy_crossbow": "Heavy Crossbow",
+
+  "item.mtt.leather_armour": "Leather Armour",
+  "item.mtt.scale_mail": "Scale Mail",
+  "item.mtt.splint": "Splint",
+
+  "item.mtt.iron_helmet": "Iron Helmet",
+  "item.mtt.shield": "Shield",
+
+  "item.mtt.property.thrown": "Thrown",
+
+  "item.mtt.tooltip.rarity": "Rarity",
+  "item.mtt.tooltip.common": "Common",
+  "item.mtt.tooltip.uncommon": "Uncommon",
+  "item.mtt.tooltip.rare": "Rare",
+  "item.mtt.tooltip.very_rare": "Very rare",
+  "item.mtt.tooltip.legendary": "Legendary",
+  "item.mtt.tooltip.artifact": "Artifact",
+
+  "item.mtt.tooltip.hit_bonus": "Hit Bonus",
+  "item.mtt.tooltip.damage": "Damage",
+
+  "mtt.damage_type.slashing": "Slashing",
+  "mtt.damage_type.bludgeoning": "Bludgeoning",
+  "mtt.damage_type.piercing": "Piercing",
+  "mtt.damage_type.fire": "Fire"
+}
