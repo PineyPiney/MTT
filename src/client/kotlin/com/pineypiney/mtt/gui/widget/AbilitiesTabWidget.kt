@@ -1,18 +1,25 @@
 package com.pineypiney.mtt.gui.widget
 
+import com.pineypiney.mtt.CharacterSheet
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.species.Species
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
-import net.minecraft.client.gui.widget.ContainerWidget
 import net.minecraft.client.gui.widget.TextWidget
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 
-class AbilitiesTabWidget(val client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, private val species: List<Species>) : ContainerWidget(x, y, width, height, message) {
+class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, private val species: List<Species>) : CharacterCreatorTabWidget(
+	sheet, client,
+	x,
+	y,
+	width,
+	height,
+	message
+) {
 
 	val speciesSelectChildren = species.map { TextWidget(8, 32, 240, 30, Text.literal(it.id), client.textRenderer) }
 
@@ -49,6 +56,10 @@ class AbilitiesTabWidget(val client: MinecraftClient, x: Int, y: Int, width: Int
 		}
 		context.disableScissor()
 		drawScrollbar(context)
+	}
+
+	override fun reposition(start: Int) {
+
 	}
 
 	override fun appendClickableNarrations(builder: NarrationMessageBuilder?) {

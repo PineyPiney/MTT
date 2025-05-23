@@ -2,7 +2,7 @@
 	"id": "elf",
 	"type": "humanoid",
 	"size": "medium",
-	"movement": 30,
+	"speed": 30,
 	"model": "default",
 	"language": [
 		"common",
@@ -102,7 +102,7 @@
 		{
 			"id": "wood_elf",
 			"description": "",
-			"movement": 35,
+			"speed": 35,
 			"spell": [
 				{
 					"level": 1,

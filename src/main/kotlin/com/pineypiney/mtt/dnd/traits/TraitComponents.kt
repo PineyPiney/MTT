@@ -18,7 +18,7 @@ object TraitComponents {
 	init {
 		register(TraitCodec.TYPE_CODEC)
 		register(TraitCodec.SIZE_CODEC)
-		register(TraitCodec.MOVEMENT_CODEC)
+		register(TraitCodec.SPEED_CODEC)
 		register(TraitCodec.MODEL_CODEC)
 		register(TraitCodec.LANGUAGE_CODEC)
 		register(TraitCodec.DARK_VISION_CODEC)
@@ -103,8 +103,8 @@ class CreatureTypeComponent(val type: Trait<String>): TraitComponent<CreatureTyp
 class SizeComponent(val size: Trait<Size>): TraitComponent<SizeComponent>(){
 	override fun getCodec(): TraitCodec<SizeComponent> = TraitCodec.SIZE_CODEC
 }
-class MovementComponent(val movement: Trait<Int>): TraitComponent<MovementComponent>(){
-	override fun getCodec(): TraitCodec<MovementComponent> = TraitCodec.MOVEMENT_CODEC
+class SpeedComponent(val speed: Trait<Int>): TraitComponent<SpeedComponent>(){
+	override fun getCodec(): TraitCodec<SpeedComponent> = TraitCodec.SPEED_CODEC
 }
 class ModelComponent(val model: Trait<String>): TraitComponent<ModelComponent>(){
 	override fun getCodec(): TraitCodec<ModelComponent> = TraitCodec.MODEL_CODEC

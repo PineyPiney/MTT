@@ -1,15 +1,14 @@
 package com.pineypiney.mtt.gui.widget
 
+import com.pineypiney.mtt.CharacterSheet
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.DNDClientEngine
-import com.pineypiney.mtt.gui.screens.ClassTabWidget
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.client.gui.widget.ButtonWidget
-import net.minecraft.client.gui.widget.ContainerWidget
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.text.Text
@@ -18,6 +17,7 @@ import net.minecraft.util.Identifier
 class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory: PlayerInventory, title: Text) : HandledScreen<CharacterMakerScreenHandler>(handler, playerInventory, title) {
 
 	val engine = (MinecraftClient.getInstance() as DNDEngineHolder<*>).dndEngine as DNDClientEngine
+	val sheet = CharacterSheet()
 
 	var tabOpen = 0
 	val tabButtons = Array(4){ i ->
@@ -28,7 +28,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		}.position(x + i * 64, y).size(64, 28).build()
 	}
 
-	lateinit var tabWidgets: Array<ContainerWidget>
+	lateinit var tabWidgets: Array<CharacterCreatorTabWidget>
 
 	init {
 		backgroundWidth = 256
@@ -37,17 +37,44 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 
 	override fun init() {
 		super.init()
+
 		tabWidgets = arrayOf(
-			SpeciesTabWidget(client!!, x + 8, y + 32, 240, 216, Text.literal("Species Widget Text"), engine.receivedSpecies),
-			ClassTabWidget(client!!, x + 8, y + 32, 240, 216, Text.literal("Species Widget Text"), engine.receivedSpecies),
-			AbilitiesTabWidget(client!!, x + 8, y + 32, 240, 216, Text.literal("Species Widget Text"), engine.receivedSpecies),
-			BackgroundTabWidget(client!!, x + 8, y + 32, 240, 216, Text.literal("Species Widget Text"), engine.receivedSpecies)
+			SpeciesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
+			ClassTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
+			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
+			BackgroundTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies)
 		)
 		addDrawableChild(tabWidgets[0])
+
 		for((i, button) in tabButtons.withIndex()) {
 			button.setPosition(x + i * 64, y)
 			addSelectableChild(button)
 		}
+	}
+
+	override fun refreshWidgetPositions() {
+		this.x = (this.width - this.backgroundWidth) / 2
+		this.y = (this.height - this.backgroundHeight) / 2
+		tabButtons.forEachIndexed { i, button ->
+			button.setPosition(x + i * 64, y)
+		}
+		tabWidgets.forEach {
+			it.x = x + 8
+			it.y = y + 32 + it.yOffset
+			it.reposition()
+		}
+	}
+
+	override fun mouseScrolled(
+		mouseX: Double,
+		mouseY: Double,
+		horizontalAmount: Double,
+		verticalAmount: Double
+	): Boolean {
+		for (element in children()) {
+			if(element.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) return true
+		}
+		return false
 	}
 
 	override fun drawForeground(context: DrawContext, mouseX: Int, mouseY: Int) {

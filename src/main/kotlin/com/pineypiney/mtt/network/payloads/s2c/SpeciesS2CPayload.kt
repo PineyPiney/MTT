@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.network.payloads.s2c
 
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dnd.CreatureType
 import com.pineypiney.mtt.dnd.Size
 import com.pineypiney.mtt.dnd.species.NamedTrait
 import com.pineypiney.mtt.dnd.species.Species
@@ -55,7 +56,7 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 					SubSpecies(subName, subSpeciesComponents, subSpeciesNamedTraits)
 				}
 
-				return Species(name, type, movement, sizeTrait, model, components, namedTraits, subSpecies)
+				return Species(name, CreatureType.valueOf(type.uppercase()), movement, sizeTrait, model, components, namedTraits, subSpecies)
 			}
 
 			fun <T: TraitComponent<*>> encodeTrait(buf: ByteBuf, it: T){
@@ -73,8 +74,8 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 
 			override fun encode(buf: ByteBuf, value: Species) {
 				PacketCodecs.STRING.encode(buf, value.id)
-				PacketCodecs.STRING.encode(buf, value.type)
-				PacketCodecs.INTEGER.encode(buf, value.movement)
+				PacketCodecs.STRING.encode(buf, value.type.name)
+				PacketCodecs.INTEGER.encode(buf, value.speed)
 				encodeTrait(buf, value.size, PacketCodecs.STRING, Size::name)
 				encodeTrait(buf, value.model, PacketCodecs.STRING)
 

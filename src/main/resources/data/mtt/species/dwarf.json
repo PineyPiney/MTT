@@ -2,7 +2,7 @@
 	"id": "dwarf",
 	"type": "humanoid",
 	"size": "medium",
-	"movement": 30,
+	"speed": 30,
 	"model": "short",
 	"language": [
 		"common",

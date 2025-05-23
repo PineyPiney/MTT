@@ -40,18 +40,18 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 					getJsonTrait(json) { Size.fromString(it.content) }.forEach { list.add(SizeComponent(it)) }
 				}
 		}
-		val MOVEMENT_CODEC = object : TraitCodec<MovementComponent>{
-			override fun decode(buf: ByteBuf): MovementComponent {
-				return MovementComponent(decodeTrait(buf, PacketCodecs.INTEGER))
+		val SPEED_CODEC = object : TraitCodec<SpeedComponent>{
+			override fun decode(buf: ByteBuf): SpeedComponent {
+				return SpeedComponent(decodeTrait(buf, PacketCodecs.INTEGER))
 			}
 
-			override fun encode(buf: ByteBuf, value: MovementComponent) {
-				encodeTrait(buf, value.movement, PacketCodecs.INTEGER)
+			override fun encode(buf: ByteBuf, value: SpeedComponent) {
+				encodeTrait(buf, value.speed, PacketCodecs.INTEGER)
 			}
 
-			override val ID = "movement"
+			override val ID = "speed"
 			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::int).forEach { list.add(MovementComponent(it)) }
+				getJsonTrait(json, JsonPrimitive::int).forEach { list.add(SpeedComponent(it)) }
 			}
 		}
 		val MODEL_CODEC = object : TraitCodec<ModelComponent> {

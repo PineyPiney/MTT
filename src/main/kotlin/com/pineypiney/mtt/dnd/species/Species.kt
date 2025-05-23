@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.dnd.species
 
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dnd.CreatureType
 import com.pineypiney.mtt.dnd.Size
 import com.pineypiney.mtt.dnd.traits.CustomTraitComponent
 import com.pineypiney.mtt.dnd.traits.SetTraits
@@ -11,11 +12,11 @@ import com.pineypiney.mtt.dnd.traits.TraitComponents
 import com.pineypiney.mtt.dnd.traits.TraitOption
 import kotlinx.serialization.json.*
 
-open class Species(val id: String, val type: String, val movement: Int, val size: Trait<Size>, val model: Trait<String>, val components: List<TraitComponent<*>>, val namedTraits: List<NamedTrait>, val subspecies: List<SubSpecies>) {
+open class Species(val id: String, val type: CreatureType, val speed: Int, val size: Trait<Size>, val model: Trait<String>, val components: List<TraitComponent<*>>, val namedTraits: List<NamedTrait>, val subspecies: List<SubSpecies>) {
 
 	class Builder(val id: String){
-		var type = "humanoid"
-		var movement = 30
+		var type = CreatureType.HUMANOID
+		var speed = 30
 		var size: Trait<Size> = SetTraits(Size.MEDIUM)
 		var model: Trait<String> = SetTraits("default")
 
@@ -23,8 +24,8 @@ open class Species(val id: String, val type: String, val movement: Int, val size
 		val namedTraits = mutableListOf<NamedTrait>()
 		val subspecies = mutableListOf<SubSpecies>()
 
-		fun type(value: String) = this.apply { type = value }
-		fun movement(value: Int) = this.apply{ movement = value }
+		fun type(value: CreatureType) = this.apply { type = value }
+		fun speed(value: Int) = this.apply{ speed = value }
 		fun size(value: Trait<Size>) = this.apply{ size = value }
 		fun model(value: Trait<String>) = this.apply{ model = value }
 
@@ -36,7 +37,7 @@ open class Species(val id: String, val type: String, val movement: Int, val size
 			factory(json, components)
 		}
 
-		fun build() = Species(id, type, movement, size, model, components, namedTraits, subspecies)
+		fun build() = Species(id, type, speed, size, model, components, namedTraits, subspecies)
 	}
 
 	override fun toString(): String {
@@ -55,8 +56,8 @@ open class Species(val id: String, val type: String, val movement: Int, val size
 			for ((name, element) in json) {
 				when(name){
 					"id" -> continue
-					"type" -> builder.type(element.jsonPrimitive.content)
-					"movement"-> builder.movement(element.jsonPrimitive.int)
+					"type" -> builder.type(CreatureType.valueOf(element.jsonPrimitive.content.uppercase()))
+					"speed"-> builder.speed(element.jsonPrimitive.int)
 					"size" -> {
 						when(element){
 							is JsonObject -> {
@@ -93,7 +94,6 @@ open class Species(val id: String, val type: String, val movement: Int, val size
 										MTT.logger.warn("SubSpecies does not contain 'name' field")
 										continue
 									}
-									val desc = entry["description"]?.jsonPrimitive?.content ?: ""
 
 									val subComps = mutableListOf<TraitComponent<*>>()
 									val subTraits = mutableListOf<NamedTrait>()
