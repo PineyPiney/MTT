@@ -6,11 +6,7 @@ import com.pineypiney.mtt.dnd.Size
 import com.pineypiney.mtt.dnd.species.NamedTrait
 import com.pineypiney.mtt.dnd.species.Species
 import com.pineypiney.mtt.dnd.species.SubSpecies
-import com.pineypiney.mtt.dnd.traits.Trait
-import com.pineypiney.mtt.dnd.traits.TraitComponent
-import com.pineypiney.mtt.dnd.traits.TraitComponents
-import com.pineypiney.mtt.dnd.traits.decodeTrait
-import com.pineypiney.mtt.dnd.traits.encodeTrait
+import com.pineypiney.mtt.dnd.traits.*
 import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
@@ -26,7 +22,7 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 
 		val SPECIES_PACKET_CODEC = object : PacketCodec<ByteBuf, Species>{
 
-			fun decodeTraitList(buf: ByteBuf): List<TraitComponent<*>>{
+			fun decodeTraitList(buf: ByteBuf): List<TraitComponent<*, *>>{
 				val numComponents = PacketCodecs.BYTE.decode(buf).toInt()
 				return List(numComponents){
 					val componentID = PacketCodecs.STRING.decode(buf)
@@ -44,7 +40,7 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 				val components = decodeTraitList(buf)
 
 				val numNamedTraits = PacketCodecs.BYTE.decode(buf).toInt()
-				val namedTraits = List(numNamedTraits){ NamedTrait(PacketCodecs.STRING.decode(buf), PacketCodecs.STRING.decode(buf), decodeTraitList(buf)) }
+				val namedTraits = List(numNamedTraits){ NamedTrait(PacketCodecs.STRING.decode(buf), decodeTraitList(buf)) }
 
 				val numSubSpecies = PacketCodecs.BYTE.decode(buf).toInt()
 				val subSpecies = List(numSubSpecies){
@@ -52,20 +48,20 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 					val subSpeciesComponents = decodeTraitList(buf)
 
 					val numSubSpeciesNamedTraits = PacketCodecs.BYTE.decode(buf).toInt()
-					val subSpeciesNamedTraits = List(numSubSpeciesNamedTraits){ NamedTrait(PacketCodecs.STRING.decode(buf), PacketCodecs.STRING.decode(buf), decodeTraitList(buf)) }
+					val subSpeciesNamedTraits = List(numSubSpeciesNamedTraits){ NamedTrait(PacketCodecs.STRING.decode(buf), decodeTraitList(buf)) }
 					SubSpecies(subName, subSpeciesComponents, subSpeciesNamedTraits)
 				}
 
 				return Species(name, CreatureType.valueOf(type.uppercase()), movement, sizeTrait, model, components, namedTraits, subSpecies)
 			}
 
-			fun <T: TraitComponent<*>> encodeTrait(buf: ByteBuf, it: T){
+			fun <T: TraitComponent<*, *>> encodeTrait(buf: ByteBuf, it: T){
 				val codec = it.getCodec()
 				PacketCodecs.STRING.encode(buf, codec.ID)
 				it.encode(buf)
 			}
 
-			fun encodeTraitList(buf: ByteBuf, components: List<TraitComponent<*>>){
+			fun encodeTraitList(buf: ByteBuf, components: List<TraitComponent<*, *>>){
 				PacketCodecs.BYTE.encode(buf, components.size.toByte())
 				components.forEach {
 					encodeTrait(buf, it)
@@ -84,7 +80,6 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 				PacketCodecs.BYTE.encode(buf, value.namedTraits.size.toByte())
 				value.namedTraits.forEach {
 					PacketCodecs.STRING.encode(buf, it.name)
-					PacketCodecs.STRING.encode(buf, it.description)
 					encodeTraitList(buf, it.components)
 				}
 
@@ -95,7 +90,6 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 					PacketCodecs.BYTE.encode(buf, it.namedTraits.size.toByte())
 					it.namedTraits.forEach { t ->
 						PacketCodecs.STRING.encode(buf, t.name)
-						PacketCodecs.STRING.encode(buf, t.description)
 						encodeTraitList(buf, t.components)
 					}
 				}

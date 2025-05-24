@@ -4,19 +4,15 @@ import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.entity.DNDInventory
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.screen.DNDScreenHandler
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.client.gui.screen.ingame.InventoryScreen
 import net.minecraft.client.gui.widget.TextFieldWidget
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.entity.player.PlayerInventory
-import net.minecraft.screen.slot.Slot
-import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.MathHelper
-import java.util.function.Function
 
 class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, title: Text) : HandledScreen<DNDScreenHandler>(handler, playerInventory, title) {
 
@@ -43,10 +39,6 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 		handler.scrollItems(0f)
 	}
 
-	override fun resize(client: MinecraftClient?, width: Int, height: Int) {
-		super.resize(client, width, height)
-	}
-
 	override fun charTyped(chr: Char, modifiers: Int): Boolean {
 		return super.charTyped(chr, modifiers)
 	}
@@ -60,14 +52,14 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 		context.drawText(this.textRenderer, this.title, this.titleX, this.titleY, 4210752, false)
 	}
 
-	override fun drawBackground(context: DrawContext?, deltaTicks: Float, mouseX: Int, mouseY: Int) {
-		context?.drawTexture(RenderLayer::getGuiTextured, INVENTORY, x + 131, y, 0f, 0f, 195, backgroundHeight, 256, 256)
-		context?.drawTexture(RenderLayer::getGuiTextured, EQUIPMENT, x, y + 11, 0f, 0f, 128, 128, 128, 128)
+	override fun drawBackground(context: DrawContext, deltaTicks: Float, mouseX: Int, mouseY: Int) {
+		context.drawTexture(RenderLayer::getGuiTextured, INVENTORY, x + 131, y, 0f, 0f, 195, backgroundHeight, 256, 256)
+		context.drawTexture(RenderLayer::getGuiTextured, EQUIPMENT, x, y + 11, 0f, 0f, 128, 128, 128, 128)
 
 		searchBox.render(context, mouseX, mouseY, deltaTicks)
 
 		val identifier = if (this.hasScrollbar()) SCROLLER_TEXTURE else SCROLLER_DISABLED_TEXTURE
-		context!!.drawGuiTexture(Function { texture: Identifier? -> RenderLayer.getGuiTextured(texture) }, identifier, x + 306, y + 18 + (95f * this.scrollPosition).toInt(), 12, 15)
+		context.drawGuiTexture(RenderLayer::getGuiTextured, identifier, x + 306, y + 18 + (95f * this.scrollPosition).toInt(), 12, 15)
 
 		val player = client?.player ?: return
 		InventoryScreen.drawEntity(context, x + 44, y + 19, x + 84, y + 107, 36, 0f, mouseX.toFloat(), mouseY.toFloat(), player)

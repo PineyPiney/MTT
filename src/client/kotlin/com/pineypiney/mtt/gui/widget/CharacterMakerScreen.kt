@@ -3,6 +3,7 @@ package com.pineypiney.mtt.gui.widget
 import com.pineypiney.mtt.CharacterSheet
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.DNDClientEngine
+import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
 import net.minecraft.client.MinecraftClient
@@ -40,7 +41,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 
 		tabWidgets = arrayOf(
 			SpeciesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
-			ClassTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
+			ClassTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), DNDClass.classes),
 			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
 			BackgroundTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies)
 		)

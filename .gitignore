@@ -1,7 +1,9 @@
 # gradle
 
 .gradle/
+.kotlin/
 build/
+logs/
 out/
 
 # eclipse

@@ -10,7 +10,7 @@ data class DamageRolls(val types: List<DiceDamage>) {
 
 	data class DiceDamage(val type: DamageType, val numDice: Int, val sides: Int, val bonus: Int){
 		constructor(type: String, num: Int, sides: Int, bonus: Int): this(DamageType.find(type), num, sides, bonus)
-		fun typeName() = type.name
+		fun typeName() = type.id
 	}
 
 	companion object {

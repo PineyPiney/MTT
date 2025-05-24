@@ -2,38 +2,22 @@ package com.pineypiney.mtt.gui.widget
 
 import com.pineypiney.mtt.CharacterSheet
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.classes.DNDClass
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
-import net.minecraft.client.gui.Element
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
-import net.minecraft.client.gui.widget.TextWidget
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
+import org.joml.AxisAngle4f
+import org.joml.Quaternionf
+import kotlin.math.PI
 
-class ClassTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, private val species: List<Species>) : CharacterCreatorTabWidget(
-	sheet, client,
-	x,
-	y,
-	width,
-	height,
-	message
-) {
+class ClassTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, private val classes: List<DNDClass>) : CharacterCreatorOptionsTabWidget<DNDClass>(sheet, client, x, y, width, height, message) {
 
-	val speciesSelectChildren = species.map { TextWidget(8, 32, 240, 30, Text.literal(it.id), client.textRenderer) }
-
-	override fun getContentsHeightWithPadding(): Int {
-		return species.size * 30
-	}
-
-	override fun getDeltaYPerScroll(): Double {
-		return 15.0
-	}
-
-	override fun children(): List<Element?>? {
-		return speciesSelectChildren
-	}
+	override val valueSelectChildren = classes.map { ClassEntry(it, 8, 32, 240, 20, Text.literal(it.id)){ clazz ->
+		selected = clazz
+	} }
 
 	override fun renderWidget(
 		context: DrawContext,
@@ -41,28 +25,59 @@ class ClassTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: 
 		mouseY: Int,
 		deltaTicks: Float
 	) {
-		context.enableScissor(x, y, right, bottom)
-		val s = 3f
-		for(i in 0..<speciesSelectChildren.size){
-			val entryY = ((y + 30 + i * 30) / s).toInt()
-			val entryX = ((x + 50) / s).toInt()
+		if(selected != null){
+			val titleText = Text.translatable("mtt.class.${selected?.id}")
+			val titleWidth = client.textRenderer.getWidth(titleText)
+			val s = 2.5f
+			val titleX = (x + (width - titleWidth * s) * .5f)
+			val titleY = y - 20
 			context.matrices.push()
 			context.matrices.scale(s, s, s)
-			context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MTT.Companion.MOD_ID, "textures/gui/character_maker/species_icons/${species[i].id}.png"), entryX, entryY, 0f, 0f, 8, 8, 8, 8)
-			context.drawText(client.textRenderer, Text.translatable("mtt.species.${species[i].id}"), entryX + 10, entryY - 1, 4210752, false)
+			context.drawText(client.textRenderer, titleText, (titleX/s).toInt(), (titleY/s).toInt(), 4210752, false)
 
-			//speciesSelectChildren[i].renderWidget(context, mousex)
+			// New scale = 2.5 * 0.6 = 1.5
+			context.matrices.scale(.6f, .6f, .6f)
+			val backButtonX = ((x + 20) * 0.6666667f).toInt()
+			val backButtonY = ((y - 21) * 0.6666667f).toInt()
+			isBackButtonHovered = mouseX >= backButtonX * 1.5f && mouseY > backButtonY * 1.5f && mouseX < backButtonX * 1.5f + 18 && mouseY < backButtonY * 1.5f + 18
+			if(isBackButtonHovered) DynamicWidgets.drawThinBox(context, backButtonX, backButtonY, 12, 12, -8947552, -3157769, -13158304)
+			else DynamicWidgets.drawThinBox(context, backButtonX, backButtonY, 12, 12, -3750202, -1, -11184811)
+			context.matrices.multiply(Quaternionf(AxisAngle4f(PI.toFloat() * .5f, 0f, 0f, 1f)), backButtonX + 6f, backButtonY + 6f, 0f)
+			context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MTT.MOD_ID, "textures/gui/sprites/widget/button_icon.png"), backButtonX + 2, backButtonY + 4, 0f, 0f, 8, 4, 16, 16)
 			context.matrices.pop()
 		}
+		context.enableScissor(x, y, right, bottom)
+		if(selected == null) {
+			val entryX = x + 50
+			for (i in 0..<classes.size) {
+				val entryY = (y + 30 + i * 30)
+				valueSelectChildren[i].render(context, client.textRenderer, entryX, entryY)
+			}
+		}
 		context.disableScissor()
+
+		optionSelectWidget?.let { widget ->
+			context.fill(0, 0, client.currentScreen!!.width, client.currentScreen!!.height, 0, 2050307381)
+			context.enableScissor(widget.x, widget.y, widget.x + widget.width, widget.y + widget.height)
+			widget.render(context, mouseX, mouseY, deltaTicks)
+			context.disableScissor()
+		}
 		drawScrollbar(context)
 	}
 
-	override fun reposition(start: Int) {
+	override fun setupSelectedPage(selected: DNDClass) {
 
 	}
 
-	override fun appendClickableNarrations(builder: NarrationMessageBuilder?) {
+	class ClassEntry(clazz: DNDClass, x: Int, y: Int, width: Int, height: Int, message: Text, onClick: (DNDClass) -> Unit): Entry<DNDClass>(clazz, x, y, width, height, message, onClick){
 
+		override fun render(context: DrawContext, textRenderer: TextRenderer, x: Int, y: Int){
+			setPosition(x, y)
+			context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MTT.MOD_ID, "textures/gui/character_maker/class_icons/${value.id}.png"), x, y, 0f, 0f, 16, 16, 16, 16)
+			context.matrices.push()
+			context.matrices.scale(2f, 2f, 2f)
+			context.drawText(textRenderer, Text.translatable("mtt.class.${value.id}"), (x / 2) + 10, (y / 2) + 1, 4210752, false)
+			context.matrices.pop()
+		}
 	}
 }

@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.util
 
-import java.util.Optional
+import java.util.*
 import kotlin.jvm.optionals.getOrNull
 
 fun <T: Any> T?.optional(): Optional<T> {

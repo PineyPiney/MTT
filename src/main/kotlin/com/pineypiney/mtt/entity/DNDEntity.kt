@@ -9,13 +9,10 @@ import net.minecraft.entity.LimbAnimator
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.data.DataTracker
 import net.minecraft.entity.data.TrackedDataHandlerRegistry
-import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtList
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
-import net.minecraft.util.math.MathHelper
 import net.minecraft.world.World
 import kotlin.math.min
 
@@ -45,7 +42,7 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 
 	override fun tick() {
 		super.tick()
-		val distance = MathHelper.magnitude(x - lastX, y - lastY, z - lastZ).toFloat()
+		//val distance = MathHelper.magnitude(x - lastX, y - lastY, z - lastZ).toFloat()
 		limbAnimator.updateLimbs(min(1f * 4f, 1f), 0.4f, .75f / hipHeight)
 	}
 

@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.entity
 
-import com.pineypiney.mtt.entity.classes.DNDClass
+import com.pineypiney.mtt.dnd.classes.DNDClass
 import net.minecraft.entity.EntityType
 import net.minecraft.util.math.MathHelper
 import net.minecraft.world.World

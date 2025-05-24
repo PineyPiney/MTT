@@ -20,7 +20,7 @@ open class DNDMeleeItem(settings: Settings, override val weaponType: WeaponType,
 		val bonus = if(weaponType.finesse) max(entity.abilities.strMod, entity.abilities.dexMod) else entity.abilities.strMod
 		val details = StringBuilder(": ${weaponType.numDice}d${weaponType.sides}")
 		if(bonus > 0) details.append(" + $bonus")
-		lore.add(Text.translatable("mtt.damage_type.${weaponType.damageType.name}").append(details.toString()))
+		lore.add(Text.translatable("mtt.damage_type.${weaponType.damageType.id}").append(details.toString()))
 
 
 		components[DataComponentTypes.LORE] = LoreComponent(lore)

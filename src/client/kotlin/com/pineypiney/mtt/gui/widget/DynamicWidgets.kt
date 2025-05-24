@@ -74,6 +74,23 @@ class DynamicWidgets {
 			ctx.fill(renderLayer, r - 3, b - 3, r - 2, b - 2, 0, bottomColour)
 		}
 
+		fun drawThickBoxWithBorder(ctx: DrawContext, x: Int, y: Int, w: Int, h: Int, colour: Int = -6052957, topColour: Int = -9605779, bottomColour: Int = -1, borderColour: Int = -16777216, renderLayer: RenderLayer = RenderLayer.getGui()){
+			drawThickBox(ctx, x + 1, y + 1, w - 2, h - 2, colour, topColour, bottomColour, renderLayer)
+			val r = x + w
+			val b = y + h
+			ctx.fill(renderLayer, x + 2, y, r - 3, y + 1, 0, borderColour)
+			ctx.fill(renderLayer, x + 3, b - 1, r - 2, b, 0, borderColour)
+			ctx.fill(renderLayer, x, y + 2, x + 1, b - 3, 0, borderColour)
+			ctx.fill(renderLayer, r - 1, y + 3, r, b - 2, 0, borderColour)
+			ctx.fill(renderLayer, x + 1, y + 1, x + 2, y + 2, 0, borderColour)
+			ctx.fill(renderLayer, r - 3, y + 1, r - 2, y + 2, 0, borderColour)
+			ctx.fill(renderLayer, r - 2, y + 2, r - 1, y + 3, 0, borderColour)
+			ctx.fill(renderLayer, x + 1, b - 3, x + 2, b - 2, 0, borderColour)
+			ctx.fill(renderLayer, x + 2, b - 2, x + 3, b - 1, 0, borderColour)
+			ctx.fill(renderLayer, r - 2, b - 2, r - 1, b - 1, 0, borderColour)
+
+		}
+
 		fun drawScroller(ctx: DrawContext, x: Int, y: Int, w: Int, h: Int, colour: Int = -3750202, topColour: Int = -1, bottomColour: Int = -11184811, lineColour: Int = -7631989){
 			val r = x + w
 			val b = y + h

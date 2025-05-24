@@ -1,7 +1,6 @@
 package com.pineypiney.mtt.gui
 
 import com.pineypiney.mtt.MTTClient
-import com.pineypiney.mtt.dnd.Rarity
 import com.pineypiney.mtt.item.dnd.DNDItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDMeleeItem
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback
@@ -25,7 +24,7 @@ class MTTTooltips {
 					val damageRoll = StringBuilder(": ${item.weaponType.numDice}d${item.weaponType.sides} ")
 					if(item.weaponType.versatile) damageRoll.append("(${item.weaponType.numDice}d${item.weaponType.sides + 2}) ")
 					if(damageBonus > 0) damageRoll.append("+ $damageBonus ")
-					list.add(Text.translatable("item.mtt.tooltip.damage").append(damageRoll.toString()).append(Text.translatable("mtt.damage_type.${item.weaponType.damageType.name}")))
+					list.add(Text.translatable("item.mtt.tooltip.damage").append(damageRoll.toString()).append(Text.translatable("mtt.damage_type.${item.weaponType.damageType.id}")))
 
 					if(item.weaponType.nearDistance > 0f) list.add(Text.translatable("item.mtt.property.thrown").append(": (${item.weaponType.nearDistance}/${item.weaponType.farDistance})"))
 				}

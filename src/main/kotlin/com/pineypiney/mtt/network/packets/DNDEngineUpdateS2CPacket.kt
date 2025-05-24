@@ -2,7 +2,6 @@ package com.pineypiney.mtt.network.packets
 
 import net.minecraft.network.NetworkSide
 import net.minecraft.network.listener.ClientCommonPacketListener
-import net.minecraft.network.packet.CommonPackets
 import net.minecraft.network.packet.Packet
 import net.minecraft.network.packet.PacketType
 import net.minecraft.util.Identifier

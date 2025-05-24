@@ -34,7 +34,8 @@
 	"proficiency": {
 		"type": "skill",
 		"proficiency": {
-			"choices": 1
+			"choices": 1,
+			"options": "all"
 		}
 	},
 	"feat": {

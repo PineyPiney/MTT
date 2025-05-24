@@ -3,8 +3,9 @@ package com.pineypiney.mtt
 import com.pineypiney.mtt.dnd.CreatureType
 import com.pineypiney.mtt.dnd.DNDServerEngine
 import com.pineypiney.mtt.dnd.Size
+import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.species.Species
-import com.pineypiney.mtt.entity.classes.DNDClass
+import com.pineypiney.mtt.dnd.stats.Abilities
 import net.minecraft.nbt.NbtCompound
 import kotlin.jvm.optionals.getOrNull
 
@@ -16,10 +17,12 @@ class CharacterSheet {
 	var speed = 30
 	var size = Size.MEDIUM
 	var model = "default"
+	var armourClass = 10
 	var darkVision = 0
 
-	val proficiencies = mutableListOf<String>()
+	val abilities = Abilities()
 	val classes = mutableMapOf<DNDClass, Int>()
+	val proficiencies = mutableSetOf<String>()
 
 	fun writeNbt(): NbtCompound{
 		val sheetNbt = NbtCompound()

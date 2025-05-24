@@ -2,7 +2,6 @@ package com.pineypiney.mtt.item.dnd.equipment
 
 import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.Rarity
-import com.pineypiney.mtt.item.dnd.DNDItem
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
 import net.minecraft.text.Text

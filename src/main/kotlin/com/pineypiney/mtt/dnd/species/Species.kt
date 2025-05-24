@@ -3,16 +3,10 @@ package com.pineypiney.mtt.dnd.species
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.CreatureType
 import com.pineypiney.mtt.dnd.Size
-import com.pineypiney.mtt.dnd.traits.CustomTraitComponent
-import com.pineypiney.mtt.dnd.traits.SetTraits
-import com.pineypiney.mtt.dnd.traits.SubspeciesIDComponent
-import com.pineypiney.mtt.dnd.traits.Trait
-import com.pineypiney.mtt.dnd.traits.TraitComponent
-import com.pineypiney.mtt.dnd.traits.TraitComponents
-import com.pineypiney.mtt.dnd.traits.TraitOption
+import com.pineypiney.mtt.dnd.traits.*
 import kotlinx.serialization.json.*
 
-open class Species(val id: String, val type: CreatureType, val speed: Int, val size: Trait<Size>, val model: Trait<String>, val components: List<TraitComponent<*>>, val namedTraits: List<NamedTrait>, val subspecies: List<SubSpecies>) {
+open class Species(val id: String, val type: CreatureType, val speed: Int, val size: Trait<Size>, val model: Trait<String>, val components: List<TraitComponent<*, *>>, val namedTraits: List<NamedTrait>, val subspecies: List<SubSpecies>) {
 
 	class Builder(val id: String){
 		var type = CreatureType.HUMANOID
@@ -20,7 +14,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 		var size: Trait<Size> = SetTraits(Size.MEDIUM)
 		var model: Trait<String> = SetTraits("default")
 
-		val components = mutableListOf<TraitComponent<*>>()
+		val components = mutableListOf<TraitComponent<*, *>>()
 		val namedTraits = mutableListOf<NamedTrait>()
 		val subspecies = mutableListOf<SubSpecies>()
 
@@ -29,11 +23,11 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 		fun size(value: Trait<Size>) = this.apply{ size = value }
 		fun model(value: Trait<String>) = this.apply{ model = value }
 
-		fun addComponents(json: JsonElement, factory: (json: JsonElement, list: MutableList<TraitComponent<*>>) -> Unit){
+		fun addComponents(json: JsonElement, factory: (json: JsonElement, list: MutableList<TraitComponent<*, *>>) -> Unit){
 			factory(json, components)
 		}
 
-		fun addNamedAbility(json: JsonElement, factory: (json: JsonElement, list: MutableList<TraitComponent<*>>) -> Unit){
+		fun addNamedAbility(json: JsonElement, factory: (json: JsonElement, list: MutableList<TraitComponent<*, *>>) -> Unit){
 			factory(json, components)
 		}
 
@@ -95,7 +89,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 										continue
 									}
 
-									val subComps = mutableListOf<TraitComponent<*>>()
+									val subComps = mutableListOf<TraitComponent<*, *>>()
 									val subTraits = mutableListOf<NamedTrait>()
 									for((name, trait) in entry){
 										if(name == "id" || name == "description") continue
@@ -123,7 +117,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 			return builder.build()
 		}
 
-		fun parseTrait(name: String, element: JsonElement, components: MutableList<TraitComponent<*>>, namedTraits: MutableList<NamedTrait>): String{
+		fun parseTrait(name: String, element: JsonElement, components: MutableList<TraitComponent<*, *>>, namedTraits: MutableList<NamedTrait>): String{
 			when(name){
 				"trait" -> {
 					when(element){
@@ -140,19 +134,18 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 			return ""
 		}
 
-		fun parseNamedTrait(element: JsonObject, components: MutableList<TraitComponent<*>>, namedTraits: MutableList<NamedTrait>){
+		fun parseNamedTrait(element: JsonObject, components: MutableList<TraitComponent<*, *>>, namedTraits: MutableList<NamedTrait>){
 			val traitID = element["id"]?.jsonPrimitive?.content ?: return
-			val traitDesc = element["description"]?.jsonPrimitive?.content ?: ""
 			val effect = (element["effect"] as? JsonObject) ?: run {
-				components.add(CustomTraitComponent(traitID, traitDesc))
+				components.add(CustomTraitComponent(traitID))
 				return
 			}
-			val list = mutableListOf<TraitComponent<*>>()
+			val list = mutableListOf<TraitComponent<*, *>>()
 			for((type, json) in effect){
 				val codec = TraitComponents.list[type] ?: continue
 				codec.readFromJson(json, list)
 			}
-			namedTraits.add(NamedTrait(traitID, traitDesc, list))
+			namedTraits.add(NamedTrait(traitID, list))
 		}
 	}
 }

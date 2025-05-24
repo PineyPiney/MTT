@@ -1,7 +1,6 @@
 package com.pineypiney.mtt.network.payloads.c2s
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.network.payloads.s2c.DNDEngineUpdateS2CPayload
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.network.packet.CustomPayload

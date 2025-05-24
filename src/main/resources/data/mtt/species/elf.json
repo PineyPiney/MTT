@@ -7,7 +7,7 @@
 	"language": [
 		"common",
 		{
-			"choice": 2,
+			"choices": 2,
 			"options": [
 				"common_sign",
 				"draconic",
@@ -49,8 +49,7 @@
 			}
 		},
 		{
-			"id": "trance",
-			"description": "You don’t need to sleep, and magic can’t put you to sleep. You can finish a Long Rest in 4 hours if you spend those hours in a trancelike meditation, during which you retain consciousness."
+			"id": "trance"
 		}
 	],
 	"spell_ability": {
@@ -64,7 +63,6 @@
 	"sub_species": [
 		{
 			"id": "drow",
-			"description": "",
 			"dark_vision": 120,
 			"spell": [
 				{

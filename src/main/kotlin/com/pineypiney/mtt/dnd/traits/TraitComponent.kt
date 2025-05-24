@@ -3,17 +3,18 @@ package com.pineypiney.mtt.dnd.traits
 import io.netty.buffer.ByteBuf
 import net.minecraft.text.Text
 
-abstract class TraitComponent<T: TraitComponent<T>>() {
-	abstract fun getCodec(): TraitCodec<T>
-	fun getID(): String = getCodec().ID
+abstract class TraitComponent<T, C: TraitComponent<T, C>>(val root: String = "feature") {
+	open val declarationKey get() = "mtt.$root.${getID()}.declaration"
+	abstract fun getCodec(): TraitCodec<C>
+	open fun getID(): String = getCodec().ID
 
-	// This is formatting for how the component is displayed
-	// telling the player what the value of the component is
-	// Defaults to "Component: Value"
-	open fun getDef(value: T): Text = Text.translatable("mtt.trait.${getID()}: $value")
+	open fun getLabel(): Text = Text.translatable("mtt.$root.${getID()}")
+	open fun getDescription(): Text = Text.translatable("mtt.$root.${getID()}.description")
+	open fun getTranslationKey(value: T): String = "mtt.${getID()}.$value"
+	abstract fun getLines(): List<Any>
 
 	@Suppress("UNCHECKED_CAST")
 	fun encode(buf: ByteBuf){
-		getCodec().encode(buf, this as T)
+		getCodec().encode(buf, this as C)
 	}
 }

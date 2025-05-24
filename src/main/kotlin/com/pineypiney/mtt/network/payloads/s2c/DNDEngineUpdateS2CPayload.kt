@@ -1,13 +1,12 @@
 package com.pineypiney.mtt.network.payloads.s2c
 
-import com.mojang.authlib.minecraft.client.MinecraftClient
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.DNDEngine
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.util.Identifier
-import java.util.UUID
+import java.util.*
 
 class DNDEngineUpdateS2CPayload(val field: String, val data: String) : CustomPayload {
 

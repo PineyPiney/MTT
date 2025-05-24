@@ -1,11 +1,6 @@
 package com.pineypiney.mtt.mixin;
 
 import com.mojang.authlib.GameProfile;
-import com.pineypiney.mtt.dnd.DNDServerEngine;
-import com.pineypiney.mtt.dnd.species.Species;
-import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
-import com.pineypiney.mtt.network.payloads.s2c.SpeciesS2CPayload;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.packet.c2s.common.SyncedClientOptions;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;

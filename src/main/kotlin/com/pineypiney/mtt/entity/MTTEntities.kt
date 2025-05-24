@@ -7,7 +7,6 @@ import net.minecraft.entity.EntityType
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.SpawnGroup
 import net.minecraft.entity.data.TrackedDataHandler
-import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.registry.Registries
@@ -15,8 +14,7 @@ import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.util.Identifier
-import java.util.Optional
-import java.util.UUID
+import java.util.*
 
 class MTTEntities {
 

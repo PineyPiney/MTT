@@ -2,7 +2,7 @@ package com.pineypiney.mtt.dnd
 
 import net.minecraft.util.Colors
 
-class DamageType(val name: String, val colour: Int) {
+class DamageType(val id: String, val colour: Int) {
 
 	companion object {
 
@@ -14,6 +14,6 @@ class DamageType(val name: String, val colour: Int) {
 		val PIERCING = register("piercing", Colors.LIGHT_GRAY)
 		val FIRE = register("fire", 0xFFFF8800u.toInt())
 
-		fun find(name: String) = list.firstOrNull() { it.name == name } ?: SLASHING
+		fun find(name: String) = list.firstOrNull() { it.id == name } ?: SLASHING
 	}
 }

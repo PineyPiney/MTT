@@ -1,0 +1,29 @@
+{
+	"id": "orc",
+	"type": "humanoid",
+	"size": "medium",
+	"speed": 30,
+	"model": "default",
+	"dark_vision": 120,
+	"language": [
+		"common",
+		{
+			"choices": 2,
+			"options": [
+				"common_sign",
+				"draconic",
+				"dwarvish",
+				"elvish",
+				"giant",
+				"gnomish",
+				"goblin",
+				"halfling",
+				"orc"
+			]
+		}
+	],
+	"feature": [
+		"adrenaline_rush",
+		"relentless_endurance"
+	]
+}

@@ -8,6 +8,8 @@ class Abilities {
 	var wisdom: Int = 10
 	var charisma: Int = 10
 
+	operator fun get(ability: Ability) = getStat(ability)
+
 	fun getStat(ability: Ability) = when(ability){
 		Ability.STRENGTH -> strength
 		Ability.DEXTERITY -> dexterity

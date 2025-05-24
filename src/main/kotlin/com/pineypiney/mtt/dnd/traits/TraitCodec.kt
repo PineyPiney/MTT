@@ -1,28 +1,32 @@
 package com.pineypiney.mtt.dnd.traits
 
+import com.pineypiney.mtt.dnd.CreatureType
+import com.pineypiney.mtt.dnd.DamageType
 import com.pineypiney.mtt.dnd.Size
 import com.pineypiney.mtt.dnd.stats.Ability
+import com.pineypiney.mtt.dnd.stats.Skill
+import com.pineypiney.mtt.item.dnd.equipment.WeaponType
 import io.netty.buffer.ByteBuf
 import kotlinx.serialization.json.*
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 
-interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
+interface TraitCodec<C: TraitComponent<*, *>> : PacketCodec<ByteBuf, C>  {
 
 	val ID: String
-	fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>)
+	fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>)
 
 	companion object {
 		val TYPE_CODEC = object : TraitCodec<CreatureTypeComponent>{
 			override val ID: String = "type"
 			override fun decode(buf: ByteBuf): CreatureTypeComponent {
-				return CreatureTypeComponent(decodeTrait(buf, PacketCodecs.STRING))
+				return CreatureTypeComponent(decodeTrait(buf, PacketCodecs.STRING, CreatureType::valueOf))
 			}
 			override fun encode(buf: ByteBuf, value: CreatureTypeComponent) {
-				encodeTrait(buf, value.type, PacketCodecs.STRING)
+				encodeTrait(buf, value.type, PacketCodecs.STRING, CreatureType::name)
 			}
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::content).forEach { list.add(CreatureTypeComponent(it)) }
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
+				getJsonTrait(json){ CreatureType.valueOf(it.content.uppercase()) }.forEach { list.add(CreatureTypeComponent(it)) }
 			}
 		}
 		val SIZE_CODEC = object : TraitCodec<SizeComponent>{
@@ -36,7 +40,7 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 			
 				override val ID = "size"
-				override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+				override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 					getJsonTrait(json) { Size.fromString(it.content) }.forEach { list.add(SizeComponent(it)) }
 				}
 		}
@@ -50,8 +54,8 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 			}
 
 			override val ID = "speed"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::int).forEach { list.add(SpeedComponent(it)) }
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
+				getJsonTrait(json, emptyMap(), JsonPrimitive::int).forEach { list.add(SpeedComponent(it)) }
 			}
 		}
 		val MODEL_CODEC = object : TraitCodec<ModelComponent> {
@@ -65,8 +69,8 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 
 			override val ID = "model"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::content).forEach { list.add(ModelComponent(it)) }
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
+				getJsonTrait(json, emptyMap(), JsonPrimitive::content).forEach { list.add(ModelComponent(it)) }
 			}
 		}
 		val LANGUAGE_CODEC = object : TraitCodec<LanguageComponent> {
@@ -80,24 +84,24 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 
 			override val ID = "language"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::content).forEach { list.add(LanguageComponent(it)) }
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
+				getJsonTrait(json, emptyMap(), JsonPrimitive::content).forEach { list.add(LanguageComponent(it)) }
 			}
 		}
 
 		val DARK_VISION_CODEC = object : TraitCodec<DarkVisionComponent> {
 			override fun decode(buf: ByteBuf): DarkVisionComponent {
-				return DarkVisionComponent(decodeTrait(buf, PacketCodecs.INTEGER))
+				return DarkVisionComponent(PacketCodecs.INTEGER.decode(buf))
 			}
 
 			override fun encode(buf: ByteBuf, value: DarkVisionComponent) {
-				encodeTrait(buf, value.darkVision, PacketCodecs.INTEGER)
+				PacketCodecs.INTEGER.encode(buf, value.darkVision)
 			}
 
 
 			override val ID = "dark_vision"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::int).forEach { list.add(DarkVisionComponent(it)) }
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
+				list.add(DarkVisionComponent(json.jsonPrimitive.int))
 			}
 		}
 		val HEALTH_BONUS_CODEC = object : TraitCodec<HealthBonusComponent>{
@@ -113,7 +117,7 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 				PacketCodecs.INTEGER.encode(buf, value.perLevel)
 			}
 
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 				when (json) {
 					is JsonPrimitive -> list.add(HealthBonusComponent(json.int, 0))
 					is JsonObject -> {
@@ -138,12 +142,12 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 
 			override val ID = "advantage"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 				when (json) {
 					is JsonObject -> {
 						val type = json["type"]?.jsonPrimitive?.content ?: return
 						if (json.contains("advantage")) {
-							getJsonTrait(json["advantage"]!!, JsonPrimitive::content).forEach {
+							getJsonTrait(json["advantage"]!!, emptyMap(), JsonPrimitive::content).forEach {
 								list.add(AdvantageComponent(type, it))
 							}
 						}
@@ -166,15 +170,13 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 
 			override val ID = "resistance"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 				when (json) {
 					is JsonObject -> {
 						val type = json["type"]?.jsonPrimitive?.content ?: "damage"
 						if (json.contains("resistance")) {
-							getJsonTrait(json["resistance"]!!, JsonPrimitive::content).forEach {
-								list.add(
-									ResistanceComponent(type, it)
-								)
+							getJsonTrait(json["resistance"]!!, damageMap, JsonPrimitive::content).forEach {
+								list.add(ResistanceComponent(type, it))
 							}
 						}
 					}
@@ -183,6 +185,10 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 					is JsonPrimitive -> list.add(ResistanceComponent("damage", SetTraits(json.content)))
 				}
 			}
+
+			val damageMap = mapOf(
+				"all" to DamageType.list.map { it.id }
+			)
 		}
 		val PROFICIENCY_CODEC = object : TraitCodec<ProficiencyComponent> {
 			override fun decode(buf: ByteBuf): ProficiencyComponent {
@@ -196,15 +202,19 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 
 			override val ID = "proficiency"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 				when (json) {
 					is JsonObject -> {
 						val type = json["type"]?.jsonPrimitive?.content ?: return
 						if (json.contains("proficiency")) {
-							getJsonTrait(json["proficiency"]!!, JsonPrimitive::content).forEach {
-								list.add(
-									ProficiencyComponent(type, it)
-								)
+							val shortCuts = when(type){
+								"skill" -> skillMap
+								"weapon" -> weaponMap
+								"tool" -> emptyMap()
+								else -> emptyMap()
+							}
+							getJsonTrait(json["proficiency"]!!, shortCuts, JsonPrimitive::content).forEach {
+								list.add(ProficiencyComponent(type, it))
 							}
 						}
 					}
@@ -213,24 +223,31 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 					else -> {}
 				}
 			}
+
+			val skillMap = mapOf("all" to Skill.entries.map { it.name.lowercase() })
+			val weaponMap = mapOf(
+				"all" to WeaponType.set.map { it.id },
+				"simple" to WeaponType.set.filter { !it.martial }.map { it.id },
+				"martial" to WeaponType.set.filter { it.martial }.map { it.id },
+				"melee" to WeaponType.set.filter { !it.ranged }.map { it.id },
+				"ranged" to WeaponType.set.filter { it.ranged }.map { it.id }
+			)
 		}
 		val CUSTOM_TRAIT_CODEC = object : TraitCodec<CustomTraitComponent> {
 			override fun decode(buf: ByteBuf): CustomTraitComponent {
-				return CustomTraitComponent(PacketCodecs.STRING.decode(buf), PacketCodecs.STRING.decode(buf))
+				return CustomTraitComponent(PacketCodecs.STRING.decode(buf))
 			}
 
 			override fun encode(buf: ByteBuf, value: CustomTraitComponent) {
-				PacketCodecs.STRING.encode(buf, value.name)
-				PacketCodecs.STRING.encode(buf, value.description)
+				PacketCodecs.STRING.encode(buf, value.id)
 			}
 
 
 			override val ID = "custom"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 				if (json !is JsonObject) return
-				val name = json["name"]?.jsonPrimitive?.content ?: return
-				val desc = json["description"]?.jsonPrimitive?.content ?: ""
-				list.add(CustomTraitComponent(name, desc))
+				val id = json["id"]?.jsonPrimitive?.content ?: return
+				list.add(CustomTraitComponent(id))
 			}
 		}
 		val SPELLCASTING_ABILITY_CODEC = object : TraitCodec<SpellcastingAbilityComponent> {
@@ -244,7 +261,7 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 
 			override val ID = "spell_ability"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 				getJsonTrait(json) { Ability.get(it.content.uppercase()) }.forEach {
 					list.add(
 						SpellcastingAbilityComponent(it)
@@ -264,7 +281,7 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 
 
 			override val ID = "spell"
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
 				when (json) {
 					is JsonPrimitive -> list.add(SpellComponent(1, SetTraits(json.content)))
 					is JsonObject -> {
@@ -297,8 +314,8 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 				encodeTrait(buf, value.feat, PacketCodecs.STRING)
 			}
 
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::content).forEach { list.add(FeatComponent(it)) }
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
+				getJsonTrait(json, emptyMap(), JsonPrimitive::content).forEach { list.add(FeatComponent(it)) }
 			}
 		}
 		val SUBSPECIES_ID_CODEC = object : TraitCodec<SubspeciesIDComponent> {
@@ -310,8 +327,8 @@ interface TraitCodec<C: TraitComponent<*>> : PacketCodec<ByteBuf, C>  {
 				encodeTrait(buf, value.type, PacketCodecs.STRING)
 			}
 
-			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*>>) {
-				getJsonTrait(json, JsonPrimitive::content).forEach { list.add(SubspeciesIDComponent(it)) }
+			override fun readFromJson(json: JsonElement, list: MutableList<TraitComponent<*, *>>) {
+				getJsonTrait(json, emptyMap(), JsonPrimitive::content).forEach { list.add(SubspeciesIDComponent(it)) }
 			}
 		}
 	}
