@@ -1,18 +1,14 @@
 package com.pineypiney.mtt.gui.widget
 
-import com.pineypiney.mtt.CharacterSheet
-import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.gui.widget.ability_widget.PointBuyWidget
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.Element
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
-import net.minecraft.client.gui.widget.TextWidget
-import net.minecraft.client.render.RenderLayer
 import net.minecraft.text.Text
-import net.minecraft.util.Identifier
 
-class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, private val species: List<Species>) : CharacterCreatorTabWidget(
+class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text) : CharacterCreatorTabWidget(
 	sheet, client,
 	x,
 	y,
@@ -21,10 +17,10 @@ class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int,
 	message
 ) {
 
-	val speciesSelectChildren = species.map { TextWidget(8, 32, 240, 30, Text.literal(it.id), client.textRenderer) }
+	var abilitySelectWidget = PointBuyWidget(this, x + 50, y + 32, width - 100, height - 40)
 
 	override fun getContentsHeightWithPadding(): Int {
-		return species.size * 30
+		return abilitySelectWidget.height
 	}
 
 	override fun getDeltaYPerScroll(): Double {
@@ -32,7 +28,7 @@ class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int,
 	}
 
 	override fun children(): List<Element?>? {
-		return speciesSelectChildren
+		return listOf(abilitySelectWidget)
 	}
 
 	override fun renderWidget(
@@ -42,24 +38,34 @@ class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int,
 		deltaTicks: Float
 	) {
 		context.enableScissor(x, y, right, bottom)
-		val s = 3f
-		for(i in 0..<speciesSelectChildren.size){
-			val entryY = ((y + 30 + i * 30) / s).toInt()
-			val entryX = ((x + 50) / s).toInt()
-			context.matrices.push()
-			context.matrices.scale(s, s, s)
-			context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MTT.MOD_ID, "textures/gui/character_maker/species_icons/${species[i].id}.png"), entryX, entryY, 0f, 0f, 8, 8, 8, 8)
-			context.drawText(client.textRenderer, Text.translatable("mtt.species.${species[i].id}"), entryX + 10, entryY - 1, 4210752, false)
+		val titleText = Text.translatable("mtt.character_maker_screen.abilities")
+		val titleWidth = client.textRenderer.getWidth(titleText)
+		val s = 2.5f
+		val titleX = (x + (width - titleWidth * s) * .5f)
+		val titleY = y + 5
+		context.matrices.push()
+		context.matrices.scale(s, s, s)
+		context.drawText(client.textRenderer, titleText, (titleX/s).toInt(), (titleY/s).toInt(), 4210752, false)
+		context.matrices.pop()
 
-			//speciesSelectChildren[i].renderWidget(context, mousex)
-			context.matrices.pop()
-		}
+		abilitySelectWidget.render(context, mouseX, mouseY, deltaTicks)
+
 		context.disableScissor()
-		drawScrollbar(context)
+	}
+
+	override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+		if(abilitySelectWidget.mouseClicked(mouseX, mouseY, button)) return true
+		return super.mouseClicked(mouseX, mouseY, button)
+	}
+
+	override fun mouseScrolled(mouseX: Double, mouseY: Double, horizontalAmount: Double, verticalAmount: Double): Boolean {
+		if(abilitySelectWidget.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)) return true
+		return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
 	}
 
 	override fun reposition(start: Int) {
-
+		abilitySelectWidget.setPosition(x + 50, y + 32)
+		abilitySelectWidget.setDimensions(width - 100, height - 40)
 	}
 
 	override fun appendClickableNarrations(builder: NarrationMessageBuilder?) {

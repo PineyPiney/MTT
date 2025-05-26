@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.item.dnd
 
 import com.pineypiney.mtt.component.MTTComponents
-import com.pineypiney.mtt.dnd.Rarity
+import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.entity.DNDEntity
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack

@@ -8,5 +8,6 @@ abstract class Feat(val id: String) {
 
 	companion object {
 		val allFeats: MutableSet<Feat> = mutableSetOf()
+		fun getById(id: String) = allFeats.firstOrNull { it.id == id } ?: Feats.None
 	}
 }

@@ -5,7 +5,7 @@ import net.minecraft.text.Text
 
 abstract class TraitComponent<T, C: TraitComponent<T, C>>(val root: String = "feature") {
 	open val declarationKey get() = "mtt.$root.${getID()}.declaration"
-	abstract fun getCodec(): TraitCodec<C>
+	abstract fun getCodec(): TraitCodec<T, C>
 	open fun getID(): String = getCodec().ID
 
 	open fun getLabel(): Text = Text.translatable("mtt.$root.${getID()}")

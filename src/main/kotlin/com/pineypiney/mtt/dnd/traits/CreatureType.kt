@@ -1,4 +1,4 @@
-package com.pineypiney.mtt.dnd
+package com.pineypiney.mtt.dnd.traits
 
 enum class CreatureType {
 	ABERRATION,

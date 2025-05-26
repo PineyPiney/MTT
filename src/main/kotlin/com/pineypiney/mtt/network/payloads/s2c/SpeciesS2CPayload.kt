@@ -1,8 +1,7 @@
 package com.pineypiney.mtt.network.payloads.s2c
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.CreatureType
-import com.pineypiney.mtt.dnd.Size
+import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.species.NamedTrait
 import com.pineypiney.mtt.dnd.species.Species
 import com.pineypiney.mtt.dnd.species.SubSpecies
@@ -34,8 +33,8 @@ class SpeciesS2CPayload(val species: Species) : CustomPayload {
 				val name = PacketCodecs.STRING.decode(buf)
 				val type = PacketCodecs.STRING.decode(buf)
 				val movement = PacketCodecs.INTEGER.decode(buf)
-				val sizeTrait: Trait<Size> = decodeTrait(buf, PacketCodecs.STRING, Size::fromString)
-				val model = decodeTrait(buf, PacketCodecs.STRING)
+				val sizeTrait: Trait<Size> = decodeTrait(buf, PacketCodecs.STRING, CharacterSheet::addSizeSource, Size::fromString)
+				val model = decodeTrait(buf, PacketCodecs.STRING){ set, _ -> model = set.first()}
 
 				val components = decodeTraitList(buf)
 

@@ -1,4 +1,4 @@
-package com.pineypiney.mtt.dnd.stats
+package com.pineypiney.mtt.dnd.traits
 
 enum class Ability {
 	STRENGTH,
@@ -7,6 +7,8 @@ enum class Ability {
 	INTELLIGENCE,
 	WISDOM,
 	CHARISMA;
+
+	val id: String get() = name.lowercase()
 
 	companion object {
 		fun get(name: String): Ability? {

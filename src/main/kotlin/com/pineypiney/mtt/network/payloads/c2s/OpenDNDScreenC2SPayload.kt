@@ -8,7 +8,7 @@ import net.minecraft.util.Identifier
 
 class OpenDNDScreenC2SPayload(val screenType: Int): CustomPayload {
 
-	override fun getId(): CustomPayload.Id<out CustomPayload?>? = ID
+	override fun getId(): CustomPayload.Id<out CustomPayload> = ID
 
 	companion object {
 		val OPEN_SCREEN_PAYLOAD_ID = Identifier.of(MTT.Companion.MOD_ID, "open_screen")

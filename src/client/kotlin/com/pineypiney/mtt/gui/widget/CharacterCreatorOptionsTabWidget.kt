@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.gui.widget
 
-import com.pineypiney.mtt.CharacterSheet
+import com.pineypiney.mtt.dnd.CharacterSheet
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -62,8 +62,10 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 		horizontalAmount: Double,
 		verticalAmount: Double
 	): Boolean {
-		super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
-		if(optionSelectWidget == null) reposition()
+		if(optionSelectWidget == null) {
+			super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
+			reposition()
+		}
 		else optionSelectWidget?.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount)
 		return true
 	}

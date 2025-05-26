@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.entity
 
 import com.pineypiney.mtt.dnd.species.Species
-import com.pineypiney.mtt.dnd.stats.Abilities
+import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.item.dnd.DNDItem
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityType

@@ -1,8 +1,7 @@
 package com.pineypiney.mtt.dnd.species
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.CreatureType
-import com.pineypiney.mtt.dnd.Size
+import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.traits.*
 import kotlinx.serialization.json.*
 
@@ -11,8 +10,8 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 	class Builder(val id: String){
 		var type = CreatureType.HUMANOID
 		var speed = 30
-		var size: Trait<Size> = SetTraits(Size.MEDIUM)
-		var model: Trait<String> = SetTraits("default")
+		var size: Trait<Size> = SetTraits(Size.MEDIUM, CharacterSheet::addSizeSource)
+		var model: Trait<String> = SetTraits("default"){ set, _ -> model = set.first()}
 
 		val components = mutableListOf<TraitComponent<*, *>>()
 		val namedTraits = mutableListOf<NamedTrait>()
@@ -56,9 +55,9 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 						when(element){
 							is JsonObject -> {
 								val options = element["options"]!!.jsonArray
-								builder.size(TraitOption(1, options.map { Size.fromString(it.jsonPrimitive.content) }))
+								builder.size(TraitOption(1, options.map { Size.fromString(it.jsonPrimitive.content) }, CharacterSheet::addSizeSource))
 							}
-							is JsonPrimitive -> builder.size(SetTraits(Size.fromString(element.content)))
+							is JsonPrimitive -> builder.size(SetTraits(CharacterSheet::addSizeSource, Size.fromString(element.content)))
 							else -> {}
 						}
 					}
@@ -67,9 +66,9 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 						when(element){
 							is JsonObject -> {
 								val options = element["options"]!!.jsonArray
-								builder.model(TraitOption(1, options.map { it.jsonPrimitive.content }))
+								builder.model(TraitOption(1, options.map { it.jsonPrimitive.content }){ set, _ -> model = set.first()})
 							}
-							is JsonPrimitive -> builder.model(SetTraits(element.content))
+							is JsonPrimitive -> builder.model(SetTraits(element.content){ set, _ -> model = set.first()})
 							else -> {}
 						}
 					}
@@ -81,7 +80,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 						}
 						for(entry in speciesArray){
 							when(entry){
-								is JsonPrimitive -> builder.components.add(SubspeciesIDComponent(SetTraits(entry.content)))
+								is JsonPrimitive -> builder.components.add(SubspeciesIDComponent(SetTraits(entry.content){ set, _ -> }))
 								is JsonObject -> {
 									val subSpeciesID = entry["id"]?.jsonPrimitive?.content
 									if(subSpeciesID == null){

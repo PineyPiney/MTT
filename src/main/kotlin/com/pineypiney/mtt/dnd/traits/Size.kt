@@ -1,4 +1,4 @@
-package com.pineypiney.mtt.dnd
+package com.pineypiney.mtt.dnd.traits
 
 class Size(val name: String, val shortest: Float, val tallest: Float, val width: Float) : Comparable<Size> {
 

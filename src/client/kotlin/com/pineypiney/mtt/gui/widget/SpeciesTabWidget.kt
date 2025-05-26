@@ -1,13 +1,9 @@
 package com.pineypiney.mtt.gui.widget
 
-import com.pineypiney.mtt.CharacterSheet
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.CreatureType
-import com.pineypiney.mtt.dnd.Size
+import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.species.Species
-import com.pineypiney.mtt.dnd.traits.SetTraits
-import com.pineypiney.mtt.dnd.traits.SubspeciesIDComponent
-import com.pineypiney.mtt.dnd.traits.Trait
+import com.pineypiney.mtt.dnd.traits.*
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -86,19 +82,10 @@ class SpeciesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y
 	}
 
 	override fun setupSelectedPage(selected: Species){
-		selectedPage.add(TraitEntry<CreatureType>(x + 20, y, width - 40, this, Text.translatable("mtt.trait.creature_type"), 0, listOf(
-			TraitEntry.FormattedTrait("mtt.trait.creature_type.declaration", SetTraits(selected.type)), Text.translatable("mtt.trait.creature_type.description")), {"mtt.creature_type.${it.name.lowercase()}"}){ values ->
-			sheet.type = values.firstOrNull() ?: return@TraitEntry
-		})
-		selectedPage.add(TraitEntry<Size>(x + 20, y + 15, width - 40, this, Text.translatable("mtt.trait.size"), 1, listOf(TraitEntry.FormattedTrait("mtt.trait.size.declaration", selected.size), Text.translatable("mtt.trait.size.description")), {"mtt.size.${it.name}"}){ values ->
-			sheet.size = values.firstOrNull() ?: return@TraitEntry
-		})
-		selectedPage.add(TraitEntry(x + 20, y + 30, width - 40, this, Text.translatable("mtt.trait.speed"), 2, listOf(TraitEntry.FormattedTrait("mtt.trait.speed.declaration", SetTraits(selected.speed)), Text.translatable("mtt.trait.speed.description")), {"$it ft"}){ values ->
-			sheet.speed = values.firstOrNull() ?: return@TraitEntry
-		})
-		selectedPage.add(TraitEntry<String>(x + 20, y + 45, width - 40, this, Text.translatable("mtt.trait.model"), 3, listOf(TraitEntry.FormattedTrait("mtt.trait.model.declaration", selected.model), Text.translatable("mtt.trait.model.description")), {"mtt.model.$it"}) { values ->
-			sheet.model = values.firstOrNull() ?: return@TraitEntry
-		})
+		selectedPage.add(TraitEntry.of<CreatureType>(x + 20, y, width - 40, this, Text.translatable("mtt.trait.creature_type"), 0, listOf(TraitEntry.FormattedTrait("mtt.trait.creature_type.declaration", SetTraits(selected.type, CharacterSheet::addTypeSource)), Text.translatable("mtt.trait.creature_type.description"))) { "mtt.creature_type.${it.name.lowercase()}" })
+		selectedPage.add(TraitEntry.of<Size>(x + 20, y + 15, width - 40, this, Text.translatable("mtt.trait.size"), 1, listOf(TraitEntry.FormattedTrait("mtt.trait.size.declaration", selected.size), Text.translatable("mtt.trait.size.description"))) { "mtt.size.${it.name}" })
+		selectedPage.add(TraitEntry.of<Int>(x + 20, y + 30, width - 40, this, Text.translatable("mtt.trait.speed"), 2, listOf(TraitEntry.FormattedTrait("mtt.trait.speed.declaration", SetTraits(selected.speed, CharacterSheet::addSpeedSource)), Text.translatable("mtt.trait.speed.description"))) {"$it ft"})
+		selectedPage.add(TraitEntry.of<String>(x + 20, y + 45, width - 40, this, Text.translatable("mtt.trait.model"), 3, listOf(TraitEntry.FormattedTrait("mtt.trait.model.declaration", selected.model), Text.translatable("mtt.trait.model.description"))) { "mtt.model.$it" })
 		selected.components.forEachIndexed { i, comp ->
 			if(comp is SubspeciesIDComponent) return@forEachIndexed
 			val lines = comp.getLines().toMutableList()
@@ -106,9 +93,7 @@ class SpeciesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y
 				val value = lines[i]
 				if(value is Trait<*>) lines[i] = TraitEntry.FormattedTrait(comp.declarationKey, value)
 			}
-			selectedPage.add(TraitEntry(x + 20, y + 60 + 15 * i, width - 40, this, comp.getLabel(), i + 4, lines, comp::getTranslationKey){
-
-			})
+			selectedPage.add(TraitEntry.of(x + 20, y + 60 + 15 * i, width - 40, this, comp.getLabel(), i + 4, lines, comp::getTranslationKey))
 		}
 	}
 

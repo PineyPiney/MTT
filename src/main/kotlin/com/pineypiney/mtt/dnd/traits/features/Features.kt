@@ -1,11 +1,17 @@
 package com.pineypiney.mtt.dnd.traits.features
 
-import com.pineypiney.mtt.CharacterSheet
-import com.pineypiney.mtt.dnd.stats.Ability
+import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.traits.Ability
 import kotlin.math.max
 import kotlin.random.Random
 
 class Features {
+	class AbilityScoreImprovement(val ability: Ability, val boost: Int) : Feature("ability_score_improvement"){
+		override fun modifyAbility(sheet: CharacterSheet, ability: Ability, initialAbility: Int): Int {
+			return if(ability == this.ability) initialAbility + boost
+			else initialAbility
+		}
+	}
 	object Rage : Feature("rage"){
 		override fun onCreateActions(sheet: CharacterSheet) {
 

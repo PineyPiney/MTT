@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.item.dnd.equipment
 
-import com.pineypiney.mtt.dnd.Rarity
+import com.pineypiney.mtt.dnd.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.traits.Rarity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack

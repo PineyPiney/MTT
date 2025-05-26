@@ -1,7 +1,8 @@
 package com.pineypiney.mtt.gui.widget
 
-import com.pineypiney.mtt.CharacterSheet
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dnd.Background
+import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.DNDClientEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
@@ -41,9 +42,9 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 
 		tabWidgets = arrayOf(
 			SpeciesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
-			ClassTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), DNDClass.classes),
-			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
-			BackgroundTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies)
+			ClassTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Class Widget Text"), DNDClass.classes),
+			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Abilities Widget Text")),
+			BackgroundTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Background Widget Text"), Background.set)
 		)
 		addDrawableChild(tabWidgets[0])
 
@@ -61,6 +62,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		}
 		tabWidgets.forEach {
 			it.x = x + 8
+			it.yOrigin = y + 32
 			it.y = y + 32 + it.yOffset
 			it.reposition()
 		}

@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.item.dnd.equipment
 
-import com.pineypiney.mtt.dnd.Rarity
+import com.pineypiney.mtt.dnd.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.entity.DNDEntity
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.MergedComponentMap
