@@ -31,22 +31,34 @@
 			]
 		}
 	],
-	"proficiency": {
-		"type": "skill",
-		"proficiency": {
-			"choices": 1,
-			"options": "all"
+	"trait": [
+		{
+			"id": "skillful",
+			"effect": {
+				"proficiency": {
+					"type": "skill",
+					"proficiency": {
+						"choices": 1,
+						"options": "all"
+					}
+				}
+			}
+		},
+		{
+			"id": "versatile",
+			"effect": {
+				"feat": {
+					"choices": 1,
+					"options": [
+						"alert",
+						"cleric_initiate",
+						"druid_initiate",
+						"wizard_initiate",
+						"savage_attacker",
+						"skilled"
+					]
+				}
+			}
 		}
-	},
-	"feat": {
-		"choices": 1,
-		"options": [
-			"alert",
-			"cleric_initiate",
-			"druid_initiate",
-			"wizard_initiate",
-			"savage_attacker",
-			"skilled"
-		]
-	}
+	]
 }

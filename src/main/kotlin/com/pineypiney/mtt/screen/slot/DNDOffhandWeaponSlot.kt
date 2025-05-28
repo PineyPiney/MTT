@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.screen.slot
 
-import com.pineypiney.mtt.dnd.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.item.dnd.equipment.DNDEquipmentType
 import com.pineypiney.mtt.item.dnd.equipment.DNDWeaponItem
 import net.minecraft.inventory.Inventory

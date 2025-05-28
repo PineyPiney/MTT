@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.item.dnd.equipment
 
 import com.pineypiney.mtt.component.MTTComponents
-import com.pineypiney.mtt.dnd.proficiencies.ArmourType
+import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
 import com.pineypiney.mtt.dnd.traits.Rarity
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.item.ItemGroup

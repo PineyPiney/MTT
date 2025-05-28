@@ -14,6 +14,6 @@ class DamageType(val id: String, val colour: Int) {
 		val PIERCING = register("piercing", Colors.LIGHT_GRAY)
 		val FIRE = register("fire", 0xFFFF8800u.toInt())
 
-		fun find(name: String) = list.firstOrNull() { it.id == name } ?: SLASHING
+		fun find(name: String) = list.firstOrNull { it.id == name } ?: SLASHING
 	}
 }

@@ -1,6 +1,8 @@
 package com.pineypiney.mtt.gui.widget
 
 import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.network.payloads.c2s.ClickButtonC2SPayload
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -36,7 +38,7 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 				}
 			}
 		}
-	val selectedPage: MutableList<TraitEntry<*>> = mutableListOf()
+	val selectedPage: MutableList<TraitEntry> = mutableListOf()
 
 	override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
 		// If there is a pop up options widget then nothing else should be interactable
@@ -112,18 +114,24 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 		}
 	}
 
-	abstract class Entry<T>(val value: T, x: Int, y: Int, width: Int, height: Int, message: Text, val onClick: (T) -> Unit): ClickableWidget(x, y, width, height, message){
-		override fun renderWidget(context: DrawContext?, mouseX: Int, mouseY: Int, deltaTicks: Float) {
+	abstract class Entry<T>(val value: T, val tab: CharacterCreatorOptionsTabWidget<T>, x: Int, y: Int, width: Int, height: Int, message: Text): ClickableWidget(x, y, width, height, message){
+
+		abstract val type: String
+
+		override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, deltaTicks: Float) {
 
 		}
 
 		abstract fun render(context: DrawContext, textRenderer: TextRenderer, x: Int, y: Int)
 
+		abstract fun getID(value: T): String
 		override fun onClick(mouseX: Double, mouseY: Double) {
-			onClick(value)
+			val payload = ClickButtonC2SPayload(type, getID(value))
+			ClientPlayNetworking.send(payload)
+			tab.selected = value
 		}
 
-		override fun appendClickableNarrations(builder: NarrationMessageBuilder?) {
+		override fun appendClickableNarrations(builder: NarrationMessageBuilder) {
 
 		}
 	}

@@ -4,6 +4,7 @@ import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.traits.Trait
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.item.ItemStack
@@ -15,12 +16,17 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 
 	val sheet = CharacterSheet()
 
-	fun setSpecies(species: Species){
+	val speciesTraits = mutableListOf<Trait<*>>()
+	val classTraits = mutableListOf<Trait<*>>()
+	val backgroundTraits = mutableListOf<Trait<*>>()
 
+	fun setSpecies(species: Species){
+		sheet.species = species
 	}
 
 	fun setClass(clazz: DNDClass){
-
+		sheet.classes.clear()
+		sheet.classes[clazz] = 1
 	}
 
 	fun setBackground(background: Background){

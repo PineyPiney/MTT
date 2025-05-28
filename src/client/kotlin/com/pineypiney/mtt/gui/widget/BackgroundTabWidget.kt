@@ -3,11 +3,9 @@ package com.pineypiney.mtt.gui.widget
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
-import com.pineypiney.mtt.dnd.proficiencies.Proficiency
-import com.pineypiney.mtt.dnd.traits.Ability
-import com.pineypiney.mtt.dnd.traits.SetTraits
-import com.pineypiney.mtt.dnd.traits.TraitCodec
-import com.pineypiney.mtt.dnd.traits.feats.Feat
+import com.pineypiney.mtt.dnd.traits.LiteralPart
+import com.pineypiney.mtt.dnd.traits.TallyPart
+import com.pineypiney.mtt.util.Localisation
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -18,19 +16,10 @@ import org.joml.AxisAngle4f
 import org.joml.Quaternionf
 import kotlin.math.PI
 
-class BackgroundTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, backgrounds: Set<Background>) : CharacterCreatorOptionsTabWidget<Background>(
-	sheet, client,
-	x,
-	y,
-	width,
-	height,
-	message
-) {
+class BackgroundTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, backgrounds: Set<Background>) : CharacterCreatorOptionsTabWidget<Background>(sheet, client, x, y, width, height, message) {
 
 	override val valueSelectChildren: List<Entry<Background>> = backgrounds.map {
-		BackgroundEntry(it, 8, 32, 240, 20, Text.literal(it.id)){ background ->
-			selected = background
-		}
+		BackgroundEntry(it, this, 8, 32, 240, 20, Text.literal(it.id))
 	}
 
 	override fun renderWidget(
@@ -88,83 +77,23 @@ class BackgroundTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int
 	override fun setupSelectedPage(selected: Background) {
 		val x = x + 20
 		val w = width - 40
-		selectedPage.add(TraitEntry.of<Proficiency>(x, y + 0, w, this, Text.translatable("mtt.feature.proficiency"), 0, listOf(TraitEntry.FormattedTrait("mtt.feature.proficiency.declaration", SetTraits(CharacterSheet::addProficiencies, selected.skill1, selected.skill2)))){ prof -> "mtt.skill.${prof.id}" })
-		selectedPage.add(TraitEntry.of<Proficiency>(x, y + 15, w, this, Text.translatable("mtt.feature.proficiency"), 1, listOf(TraitEntry.FormattedTrait("mtt.feature.proficiency.declaration", selected.tool))){ prof -> "mtt.tool.${prof.id}" })
-		selectedPage.add(TraitEntry.of<Feat>(x, y + 30, w, this, Text.translatable("mtt.feature.feat"), 2, listOf(TraitEntry.FormattedTrait("mtt.feature.feat.declaration", SetTraits(TraitCodec.FEAT_CODEC::apply, selected.feat)))){ feat -> "mtt.feat.${feat.id}" })
-		selectedPage.add(TraitEntry(x, y + 45, w, this, Text.translatable("mtt.feature.ability_score"), 3, listOf(AbilityScoreSegment(setOf(selected.ability1, selected.ability2, selected.ability3), 3, client.textRenderer))))
+		selectedPage.add(TraitEntry.newOf(x, y + 0, w, this, Text.translatable("mtt.feature.proficiency"), 0, listOf(LiteralPart("mtt.feature.proficiency.declaration", Localisation.translateList(listOf(selected.skill1, selected.skill2), false){ prof -> "mtt.skill.${prof.id}" }))))
+		selectedPage.add(TraitEntry.newOf(x, y + 15, w, this, Text.translatable(selected.tool.getLabelKey()), 1, selected.tool.getParts()))
+		selectedPage.add(TraitEntry.newOf(x, y + 30, w, this, Text.translatable("mtt.feature.feat"), 2, listOf(LiteralPart("mtt.feature.feat.declaration", Text.translatable("mtt.feat.${selected.feat.id}")))))
+		selectedPage.add(TraitEntry(x, y + 45, w, this, Text.translatable("mtt.feature.ability_score"), 3, listOf(
+			TraitEntry.TallySegment(TallyPart(setOf(selected.ability1, selected.ability2, selected.ability3), 3){ "mtt.ability.${it.id}"}))
+		))
 	}
 
-	class AbilityScoreSegment(abilities: Set<Ability>, val points: Int, textRenderer: TextRenderer) : TraitEntry.Segment<Ability> {
+	class BackgroundEntry(background: Background, tab: BackgroundTabWidget, x: Int, y: Int, width: Int, height: Int, message: Text): Entry<Background>(background, tab, x, y, width, height, message){
 
-		val labels = abilities.map { Text.translatable("mtt.ability.${it.id}") }
-		private val map = abilities.map { 0 }.toMutableList()
-		override val height: Int get() = 9 + 12 * map.size
-		val pointsLeft get() = points - map.sum()
+		override val type: String = "background"
+		override fun getID(value: Background): String = value.id
 
-		var hoveredIcon = -1
-
-		override fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry<Ability>, shadow: Boolean) {
-			val textRenderer = entry.tab.client.textRenderer
-			val labelWidth = labels.maxOf { textRenderer.getWidth(it) } + 20
-
-			val pointsText = Text.literal("$pointsLeft/$points")
-			ctx.drawText(textRenderer, pointsText, x + labelWidth + 5 * points + 3 - textRenderer.getWidth(pointsText) / 2, y, 16777215, shadow)
-
-			var i = 0
-			hoveredIcon = -1
-			for(value in map){
-				val buttonY = y + 12 * (i + 1)
-				val hoveringRow = mouseY >= buttonY && mouseY < buttonY + 7
-				ctx.drawText(textRenderer, labels[i], x + labelWidth - textRenderer.getWidth(labels[i]), buttonY, 16777215, shadow)
-				for(j in 0..<points){
-					val on = value > j
-					val buttonX = x + labelWidth + 5 + 10 * j
-					val hoveringButton = hoveringRow && mouseX >= buttonX && mouseX < buttonX + 7
-					if(hoveringButton) hoveredIcon = (i shl 8) or (j and 255)
-					val backgroundColour = if(on) -1385984 else -16777216
-
-					ctx.drawHorizontalLine(buttonX + 1, buttonX + 5, buttonY, backgroundColour)
-					ctx.drawHorizontalLine(buttonX + 1, buttonX + 5, buttonY + 6, backgroundColour)
-					ctx.drawVerticalLine(buttonX, buttonY, buttonY + 6, backgroundColour)
-					ctx.drawVerticalLine(buttonX + 6, buttonY, buttonY + 6, backgroundColour)
-
-					if(on){
-						if(hoveringButton) ctx.fill(buttonX + 1, buttonY + 1, buttonX + 6, buttonY + 6, 1575672320)
-						ctx.fill(buttonX + 2, buttonY + 2, buttonX + 5, buttonY + 5, -1385984)
-					}
-					else{
-						if(hoveringButton) ctx.fill(buttonX + 2, buttonY + 2, buttonX + 5, buttonY + 5, 1575672320)
-					}
-				}
-				i++
-			}
-		}
-
-		override fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry<Ability>): Boolean {
-			if(hoveredIcon != -1){
-				val row = hoveredIcon shr 8
-				val index = hoveredIcon and 255
-				val score = map[row]
-				val adding = index >= score
-				if(adding && pointsLeft > 0) map[row]++
-				else if(!adding && map[row] > 0) map[row]--
-				return true
-			}
-			return false
-		}
-	}
-
-	class BackgroundEntry(background: Background, x: Int, y: Int, width: Int, height: Int, message: Text, onClick: (Background) -> Unit): Entry<Background>(background, x, y, width, height, message, onClick){
-		override fun render(
-			context: DrawContext,
-			textRenderer: TextRenderer,
-			x: Int,
-			y: Int
-		) {
+		override fun render(context: DrawContext, textRenderer: TextRenderer, x: Int, y: Int) {
 			setPosition(x, y)
 			context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MTT.MOD_ID, "textures/gui/character_maker/background_icons/${value.id}.png"), (x / 2), (y / 2), 0f, 0f, 8, 8, 8, 8)
 			context.drawText(textRenderer, Text.translatable("mtt.background.${value.id}"), (x / 2) + 10, (y / 2) + 1, 4210752, false)
 		}
-
 	}
 }

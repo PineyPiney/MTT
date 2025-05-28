@@ -3,8 +3,8 @@ package com.pineypiney.mtt.item.dnd
 import com.mojang.datafixers.util.Function3
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.component.MTTComponents
-import com.pineypiney.mtt.dnd.proficiencies.ArmourType
-import com.pineypiney.mtt.dnd.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
+import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.item.dnd.equipment.*
 import net.minecraft.component.DataComponentTypes

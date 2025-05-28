@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.entity
 
 import com.pineypiney.mtt.component.MTTComponents
-import com.pineypiney.mtt.dnd.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.screen.DNDScreenHandler
 import com.pineypiney.mtt.serialisation.MTTCodecs
 import com.pineypiney.mtt.util.optional

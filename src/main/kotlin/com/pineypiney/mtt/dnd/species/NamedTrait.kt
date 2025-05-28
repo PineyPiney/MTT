@@ -1,8 +1,8 @@
 package com.pineypiney.mtt.dnd.species
 
-import com.pineypiney.mtt.dnd.traits.TraitComponent
+import com.pineypiney.mtt.dnd.traits.Trait
 
-class NamedTrait(val name: String, val components: List<TraitComponent<*, *>>) {
+class NamedTrait<T: Trait<T>>(val name: String, val traits: Set<Trait<T>>) {
 
 	override fun toString(): String {
 		return "Trait($name)"

@@ -28,7 +28,7 @@
 			"id": "fey_ancestry",
 			"effect": {
 				"advantage": {
-					"type": "spell",
+					"type": "condition",
 					"advantage": "charmed"
 				}
 			}
@@ -59,7 +59,6 @@
 			"charisma"
 		]
 	},
-	"sub_species_id": "elven_lineage",
 	"sub_species": [
 		{
 			"id": "drow",

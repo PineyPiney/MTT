@@ -10,12 +10,11 @@ import net.minecraft.util.math.MathHelper
 import kotlin.math.max
 import kotlin.math.min
 
-class OptionsSelectWidget<T>(val textRenderer: TextRenderer, title: Text, currentSelection: List<T?>, val options: List<T>, val getText: (T) -> Text, x: Int, midY: Int, w: Int, h: Int, message: Text, val delete: (selected: List<T>) -> Unit) : ContainerWidget(x, midY, w, h, message) {
+class OptionsSelectWidget<T>(val textRenderer: TextRenderer, title: Text, currentSelection: List<T>, val numChoices: Int, val options: List<T>, val getText: (T) -> Text, x: Int, midY: Int, w: Int, h: Int, message: Text, val delete: (selected: List<T>) -> Unit) : ContainerWidget(x, midY, w, h, message) {
 
 	val titleLines = textRenderer.wrapLines(title, width - 12)
 	val texts = options.map { getText(it) }
 
-	val numChoices = currentSelection.size
 	val selectedOptions: MutableList<T> = currentSelection.filterNotNull().toMutableList()
 
 	init {

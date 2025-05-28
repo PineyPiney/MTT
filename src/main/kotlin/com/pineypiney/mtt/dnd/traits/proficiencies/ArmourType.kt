@@ -1,4 +1,4 @@
-package com.pineypiney.mtt.dnd.proficiencies
+package com.pineypiney.mtt.dnd.traits.proficiencies
 
 enum class ArmourType : EquipmentType {
 	LIGHT,

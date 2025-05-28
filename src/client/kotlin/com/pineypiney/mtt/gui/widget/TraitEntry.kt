@@ -2,11 +2,12 @@ package com.pineypiney.mtt.gui.widget
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.CharacterSheet
-import com.pineypiney.mtt.dnd.traits.SetTraits
+import com.pineypiney.mtt.dnd.traits.GivenAndOptionsPart
+import com.pineypiney.mtt.dnd.traits.LiteralPart
+import com.pineypiney.mtt.dnd.traits.OneChoicePart
 import com.pineypiney.mtt.dnd.traits.Source
-import com.pineypiney.mtt.dnd.traits.Trait
-import com.pineypiney.mtt.dnd.traits.TraitOption
-import com.pineypiney.mtt.util.Localisation
+import com.pineypiney.mtt.dnd.traits.TallyPart
+import com.pineypiney.mtt.dnd.traits.TraitPart
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
@@ -23,9 +24,7 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.min
 
-class TraitEntry<T>(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTabWidget<*>, private val label: Text, private val index: Int, private val segments: List<Segment<T>>): ClickableWidget(x, y, width, 13, Text.literal("Trait Entry ${label.string}")){
-
-	private val pickText = Text.translatable("mtt.trait.pick_a", label)
+class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTabWidget<*>, private val label: Text, private val index: Int, private val segments: List<Segment>): ClickableWidget(x, y, width, 13, Text.literal("Trait Entry ${label.string}")){
 
 	// The absolute value is the opening time and the input of the easing function,
 	// if positive it is opening and if negative it is closing
@@ -33,7 +32,11 @@ class TraitEntry<T>(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptions
 
 	private var hoveredSegment = -1
 
-	val isReady = segments.all { if(it is TraitSegment) it.trait.isReady else true }
+	//val isReady = segments.
+
+	init {
+		segments.forEach { it.init(this) }
+	}
 
 	override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, deltaTicks: Float) {
 		updateEase(deltaTicks * .2f)
@@ -108,21 +111,20 @@ class TraitEntry<T>(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptions
 
 	}
 
-	data class FormattedTrait<T>(val formatKey: String, val trait: Trait<T>)
-
-	interface Segment<T>{
+	interface Segment{
 		val height: Int
-		fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry<T>, shadow: Boolean)
-		fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry<T>) = true
+		fun init(entry: TraitEntry) {}
+		fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry, shadow: Boolean)
+		fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry) = true
 		fun apply(sheet: CharacterSheet, source: Source){}
 	}
 
-	interface TextSegment<T> : Segment<T>{
+	interface TextSegment : Segment{
 		override val height: Int get() = getNumLines * 9
 		val getNumLines: Int
 	}
 
-	class LiteralTextSegment<T>(val lines: List<Text>): TextSegment<T>{
+	class LiteralTextSegment(val lines: List<Text>): TextSegment{
 		override val getNumLines: Int get() = lines.size
 		override fun render(
 			ctx: DrawContext,
@@ -131,7 +133,7 @@ class TraitEntry<T>(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptions
 			mouseX: Int,
 			mouseY: Int,
 			i: Int,
-			entry: TraitEntry<T>,
+			entry: TraitEntry,
 			shadow: Boolean
 		) {
 			var lineY = y
@@ -141,32 +143,24 @@ class TraitEntry<T>(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptions
 			}
 		}
 	}
-	class TraitSegment<T>(val formatKey: String, val translateKey: (T) -> String, val trait: TraitOption<T>): TextSegment<T>{
-		val decisions = MutableList<T?>(trait.choices){ null }
+
+	class OneChoiceSegment<T>(val part: OneChoicePart<T>): TextSegment{
 		val traitLines  = mutableListOf<OrderedText>()
 		override val getNumLines: Int get() = 1 + traitLines.size
 
 		fun generateTraitLines(textRenderer: TextRenderer, width: Int){
-			val currentDecisions = decisions.filterNotNull()
 			traitLines.clear()
-			if(currentDecisions.isNotEmpty()) {
-				val text = Localisation.translateList(currentDecisions, false, translateKey)
-				traitLines.addAll(textRenderer.wrapLines(Text.translatable(formatKey, text), width))
+			val currentDecision = part.decision
+			if(currentDecision != null) {
+				val text = Text.translatable(part.declarationKey, Text.translatable(part.translationKey(currentDecision)), *part.args)
+				traitLines.addAll(textRenderer.wrapLines(text, width))
 			}
 		}
 
-		override fun render(
-			ctx: DrawContext,
-			x: Int,
-			y: Int,
-			mouseX: Int,
-			mouseY: Int,
-			i: Int,
-			entry: TraitEntry<T>,
-			shadow: Boolean
-		) {
+		override fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry, shadow: Boolean) {
 			val colour = if (entry.hoveredSegment == i && entry.tab.optionSelectWidget == null) 6791374 else 16777215
-			ctx.drawText(entry.tab.client.textRenderer, entry.pickText, x, y, colour, shadow)
+			val pickText = if(part.isReady()) Text.translatable("mtt.trait.change_answer") else Text.translatable("mtt.trait.pick_a", part.label)
+			ctx.drawText(entry.tab.client.textRenderer, pickText, x, y, colour, shadow)
 			var lineY = y + 9
 			for(line in traitLines){
 				ctx.drawText(entry.tab.client.textRenderer, line, x, lineY, 16777215, shadow)
@@ -174,13 +168,10 @@ class TraitEntry<T>(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptions
 			}
 		}
 
-		override fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry<T>): Boolean {
+		override fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry): Boolean {
 			val height = entry.tab.client.currentScreen?.height ?: return false
-			entry.tab.optionSelectWidget = OptionsSelectWidget(entry.tab.client.textRenderer, entry.pickText, decisions, trait.options, { Text.translatable(translateKey(it)) }, entry.x + (entry.width / 2) - 75, height / 2, 150, 100, Text.literal("OptionSelect")){
-				for(i in 0..<decisions.size){
-					if(it.size > i) decisions[i] = it[i]
-					else decisions[i] = null
-				}
+			entry.tab.optionSelectWidget = OptionsSelectWidget(entry.tab.client.textRenderer, part.label, listOfNotNull(part.decision), 1, part.choices.toList(), { Text.translatable(part.translationKey(it)) }, entry.x + (entry.width / 2) - 75, height / 2, 150, 100, Text.literal("OptionSelect")){
+				part.decision = it.firstOrNull()
 				generateTraitLines(entry.tab.client.textRenderer, entry.width - 10)
 				entry.height = 13 + entry.getBoxHeight()
 				entry.tab.reposition(entry.index)
@@ -191,40 +182,131 @@ class TraitEntry<T>(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptions
 		}
 
 		override fun apply(sheet: CharacterSheet, source: Source) {
-			trait.applyWithValues(sheet, source)
+			//part.applyWithValues(sheet, source)
+		}
+	}
+
+	class GiveNOptsSegment<T>(val part: GivenAndOptionsPart<T>): TextSegment{
+		val traitLines  = mutableListOf<OrderedText>()
+		override val getNumLines: Int get() = 1 + traitLines.size
+
+		override fun init(entry: TraitEntry) {
+			generateTraitLines(entry.tab.client.textRenderer, entry.width)
+		}
+
+		fun generateTraitLines(textRenderer: TextRenderer, width: Int){
+			traitLines.clear()
+			if(part.decisions.isNotEmpty() || part.data.given.isNotEmpty()) {
+				val text = part.getCurrentList()
+				traitLines.addAll(textRenderer.wrapLines(Text.translatable(part.declarationKey, text, *part.args), width))
+			}
+		}
+
+		override fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry, shadow: Boolean) {
+			val colour = if (entry.hoveredSegment == i && entry.tab.optionSelectWidget == null) 6791374 else 16777215
+
+			val pickText = if(part.isReady()) Text.translatable("mtt.trait.change_answer")
+			else {
+				val remaining = part.data.numChoices - part.decisions.size
+				if(remaining == 1) Text.translatable("mtt.trait.pick_a", part.label)
+				else Text.translatable("mtt.trait.pick_n", part.label, remaining)
+			}
+			ctx.drawText(entry.tab.client.textRenderer, pickText, x, y, colour, shadow)
+			var lineY = y + 9
+			for(line in traitLines){
+				ctx.drawText(entry.tab.client.textRenderer, line, x, lineY, 16777215, shadow)
+				lineY += 9
+			}
+		}
+
+		override fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry): Boolean {
+			val height = entry.tab.client.currentScreen?.height ?: return false
+			entry.tab.optionSelectWidget = OptionsSelectWidget(entry.tab.client.textRenderer, part.label, part.decisions, part.data.numChoices, part.data.options.toList(), { Text.translatable(part.translationKey(it)) }, entry.x + (entry.width / 2) - 75, height / 2, 150, 100, Text.literal("OptionSelect")){
+				part.decisions.clear()
+				part.decisions.addAll(it)
+				
+				generateTraitLines(entry.tab.client.textRenderer, entry.width - 10)
+				entry.height = 13 + entry.getBoxHeight()
+				entry.tab.reposition(entry.index)
+
+				entry.tab.optionSelectWidget = null
+			}
+			return true
+		}
+
+		override fun apply(sheet: CharacterSheet, source: Source) {
+			//trait.applyWithValues(sheet, source)
+		}
+	}
+
+	class TallySegment<T>(val part: TallyPart<T>) : Segment {
+
+		val labels = part.options.map { Text.translatable(part.translationKey(it)) }
+		override val height: Int get() = 9 + 12 * labels.size
+
+		var hoveredIcon = -1
+
+		override fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry, shadow: Boolean) {
+			val textRenderer = entry.tab.client.textRenderer
+			val labelWidth = labels.maxOf { textRenderer.getWidth(it) } + 20
+
+			val pointsText = Text.literal("${part.pointsLeft}/${part.points}")
+			ctx.drawText(textRenderer, pointsText, x + labelWidth + 5 * part.points + 3 - textRenderer.getWidth(pointsText) / 2, y, 16777215, shadow)
+
+			var i = 0
+			hoveredIcon = -1
+			for(value in part.map){
+				val buttonY = y + 12 * (i + 1)
+				val hoveringRow = mouseY >= buttonY && mouseY < buttonY + 7
+				ctx.drawText(textRenderer, labels[i], x + labelWidth - textRenderer.getWidth(labels[i]), buttonY, 16777215, shadow)
+				for(j in 0..<part.points){
+					val on = value > j
+					val buttonX = x + labelWidth + 5 + 10 * j
+					val hoveringButton = hoveringRow && mouseX >= buttonX && mouseX < buttonX + 7
+					if(hoveringButton) hoveredIcon = (i shl 8) or (j and 255)
+					val backgroundColour = if(on) -1385984 else -16777216
+
+					ctx.drawHorizontalLine(buttonX + 1, buttonX + 5, buttonY, backgroundColour)
+					ctx.drawHorizontalLine(buttonX + 1, buttonX + 5, buttonY + 6, backgroundColour)
+					ctx.drawVerticalLine(buttonX, buttonY, buttonY + 6, backgroundColour)
+					ctx.drawVerticalLine(buttonX + 6, buttonY, buttonY + 6, backgroundColour)
+
+					if(on){
+						if(hoveringButton) ctx.fill(buttonX + 1, buttonY + 1, buttonX + 6, buttonY + 6, 1575672320)
+						ctx.fill(buttonX + 2, buttonY + 2, buttonX + 5, buttonY + 5, -1385984)
+					}
+					else{
+						if(hoveringButton) ctx.fill(buttonX + 2, buttonY + 2, buttonX + 5, buttonY + 5, 1575672320)
+					}
+				}
+				i++
+			}
+		}
+
+		override fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry): Boolean {
+			if(hoveredIcon != -1){
+				val row = hoveredIcon shr 8
+				val index = hoveredIcon and 255
+				val score = part.map[row]
+				val adding = index >= score
+				if(adding && part.pointsLeft > 0) part.map[row]++
+				else if(!adding && part.map[row] > 0) part.map[row]--
+				return true
+			}
+			return false
 		}
 	}
 
 	companion object {
-		fun <T> of(x: Int, y: Int, width: Int, tab: CharacterCreatorOptionsTabWidget<*>, label: Text, index: Int, parts: List<Any>, translateKey: (T) -> String): TraitEntry<T>{
-			@Suppress("UNCHECKED_CAST")
-			val segments: List<Segment<T>> = parts.mapNotNull { part ->
+		fun newOf(x: Int, y: Int, width: Int, tab: CharacterCreatorOptionsTabWidget<*>, label: Text, index: Int, parts: Collection<TraitPart>): TraitEntry{
+			val segments: List<Segment> = parts.map { part ->
 				when (part) {
-					is Text -> LiteralTextSegment(tab.client.textRenderer.textHandler.wrapLines(part, width - 10, Style.EMPTY)
+					is LiteralPart -> LiteralTextSegment(tab.client.textRenderer.textHandler.wrapLines(part.text, width - 10, Style.EMPTY)
 						.map { line -> Text.literal(line.string) })
 
-					is FormattedTrait<*> -> {
-						when (part.trait) {
-							is SetTraits<*> -> {
-								try {
-									val string = Text.translatable(part.formatKey, Localisation.translateList((part.trait.values as Collection<T>).toList(), false, translateKey))
-									LiteralTextSegment(tab.client.textRenderer.textHandler.wrapLines(string, width - 10, Style.EMPTY)
-										.map { line -> Text.literal(line.string) })
-								} catch (e: Exception) {
-									MTT.logger.warn("Couldn't make LineSegment from trait ${part.trait}:\n${e.message}")
-									null
-								}
-							}
-
-							is TraitOption<*> -> {
-								try { TraitSegment(part.formatKey, translateKey, part.trait as TraitOption<T>) } catch (e: Exception){ null }
-
-							}
-
-							else -> null
-						}
-					}
-					else -> null
+					is OneChoicePart<*> -> OneChoiceSegment(part)
+					is GivenAndOptionsPart<*> -> GiveNOptsSegment(part)
+					is TallyPart<*> -> TallySegment(part)
 				}
 			}
 			return TraitEntry(x, y, width, tab, label, index, segments)

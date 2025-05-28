@@ -1,4 +1,4 @@
-package com.pineypiney.mtt.dnd.proficiencies
+package com.pineypiney.mtt.dnd.traits.proficiencies
 
 class Proficiency(val id: String, val type: String, val tags: Set<String>) {
 
@@ -11,6 +11,32 @@ class Proficiency(val id: String, val type: String, val tags: Set<String>) {
 	companion object {
 
 		val set: MutableSet<Proficiency> = mutableSetOf()
+
+		val STRENGTH = Proficiency("strength", "ability")
+		val DEXTERITY = Proficiency("dexterity", "ability")
+		val CONSTITUTION = Proficiency("constitution", "ability")
+		val INTELLIGENCE = Proficiency("intelligence", "ability")
+		val WISDOM = Proficiency("wisdom", "ability")
+		val CHARISMA = Proficiency("charisma", "ability")
+
+		val ACROBATICS = Proficiency("acrobatics", "skill")
+		val ANIMAL_HANDLING = Proficiency("animal_handling", "skill")
+		val ARCANA = Proficiency("arcana", "skill")
+		val ATHLETICS = Proficiency("athletics", "skill")
+		val DECEPTION = Proficiency("deception", "skill")
+		val HISTORY = Proficiency("history", "skill")
+		val INSIGHT = Proficiency("insight", "skill")
+		val INTIMIDATION = Proficiency("intimidation", "skill")
+		val INVESTIGATION = Proficiency("investigation", "skill")
+		val MEDICINE = Proficiency("medicine", "skill")
+		val NATURE = Proficiency("nature", "skill")
+		val PERCEPTION = Proficiency("perception", "skill")
+		val PERFORMANCE = Proficiency("performance", "skill")
+		val PERSUASION = Proficiency("persuasion", "skill")
+		val RELIGION = Proficiency("religion", "skill")
+		val SLEIGHT_OF_HAND = Proficiency("sleight_of_hand", "skill")
+		val STEALTH = Proficiency("stealth", "skill")
+		val SURVIVAL = Proficiency("survival", "skill")
 
 		val NONE = Proficiency("none", "none")
 		val SIMPLE = Proficiency("simple", "weapon")
@@ -42,33 +68,6 @@ class Proficiency(val id: String, val type: String, val tags: Set<String>) {
 		val LIGHT_ARMOUR = Proficiency("light_armour", "armour")
 		val MEDIUM_ARMOUR = Proficiency("medium_armour", "armour")
 		val HEAVY_ARMOUR = Proficiency("heavy_armour", "armour")
-
-		val STRENGTH = Proficiency("strength", "ability")
-		val DEXTERITY = Proficiency("dexterity", "ability")
-		val CONSTITUTION = Proficiency("constitution", "ability")
-		val INTELLIGENCE = Proficiency("intelligence", "ability")
-		val WISDOM = Proficiency("wisdom", "ability")
-		val CHARISMA = Proficiency("charisma", "ability")
-
-		val ACROBATICS = Proficiency("acrobatics", "skill")
-		val ANIMAL_HANDLING = Proficiency("animal_handling", "skill")
-		val ARCANA = Proficiency("arcana", "skill")
-		val ATHLETICS = Proficiency("athletics", "skill")
-		val DECEPTION = Proficiency("deception", "skill")
-		val HISTORY = Proficiency("history", "skill")
-		val INSIGHT = Proficiency("insight", "skill")
-		val INTIMIDATION = Proficiency("intimidation", "skill")
-		val INVESTIGATION = Proficiency("investigation", "skill")
-		val MEDICINE = Proficiency("medicine", "skill")
-		val NATURE = Proficiency("nature", "skill")
-		val PERCEPTION = Proficiency("perception", "skill")
-		val PERFORMANCE = Proficiency("performance", "skill")
-		val PERSUASION = Proficiency("persuasion", "skill")
-		val RELIGION = Proficiency("religion", "skill")
-		val SLEIGHT_OF_HAND = Proficiency("sleight_of_hand", "skill")
-		val STEALTH = Proficiency("stealth", "skill")
-		val SURVIVAL = Proficiency("survival", "skill")
-
 
 		val ALCHEMISTS_SUPPLIES = Proficiency("alchemists_supplies", "tool", "artisan")
 		val BREWERS_SUPPLIES = Proficiency("brewers_supplies", "tool", "artisan")

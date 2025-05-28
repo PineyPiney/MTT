@@ -3,9 +3,6 @@ package com.pineypiney.mtt.gui.widget
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.classes.DNDClass
-import com.pineypiney.mtt.dnd.proficiencies.Proficiency
-import com.pineypiney.mtt.dnd.traits.SetTraits
-import com.pineypiney.mtt.dnd.traits.TraitOption
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -18,9 +15,9 @@ import kotlin.math.PI
 
 class ClassTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: Int, width: Int, height: Int, message: Text, private val classes: List<DNDClass>) : CharacterCreatorOptionsTabWidget<DNDClass>(sheet, client, x, y, width, height, message) {
 
-	override val valueSelectChildren = classes.map { ClassEntry(it, 8, 32, 240, 20, Text.literal(it.id)){ clazz ->
-		selected = clazz
-	} }
+	override val valueSelectChildren = classes.map {
+		ClassEntry(it, this, 8, 32, 240, 20, Text.literal(it.id))
+	}
 
 	override fun renderWidget(
 		context: DrawContext,
@@ -76,21 +73,16 @@ class ClassTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: 
 		var i = 0
 		val w = width - 40
 		for(trait in selected.coreTraits){
-			val type = when (trait) {
-				is TraitOption -> (trait.options.firstOrNull() as? Proficiency)?.type
-				is SetTraits -> (trait.values.firstOrNull() as? Proficiency)?.type
-				else -> null
-			} ?: "skill"
-			val formatted = TraitEntry.FormattedTrait("mtt.feature.proficiency.declaration", trait)
-			val entry = TraitEntry.of<Proficiency>(x, y + 15 * i, w, this, Text.translatable("mtt.feature.proficiency.$type"), i, listOf(formatted)){ proficiency ->
-				"mtt.${proficiency.type}.${proficiency.id}"
-			}
+			val entry = TraitEntry.newOf(x, y + 15 * i, w, this, Text.translatable(trait.getLabelKey()), i, trait.getParts())
 			selectedPage.add(entry)
 			i++
 		}
 	}
 
-	class ClassEntry(clazz: DNDClass, x: Int, y: Int, width: Int, height: Int, message: Text, onClick: (DNDClass) -> Unit): Entry<DNDClass>(clazz, x, y, width, height, message, onClick){
+	class ClassEntry(clazz: DNDClass, tab: ClassTabWidget, x: Int, y: Int, width: Int, height: Int, message: Text): Entry<DNDClass>(clazz, tab, x, y, width, height, message){
+
+		override val type: String = "class"
+		override fun getID(value: DNDClass): String = value.id
 
 		override fun render(context: DrawContext, textRenderer: TextRenderer, x: Int, y: Int){
 			setPosition(x, y)

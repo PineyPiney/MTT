@@ -3,7 +3,7 @@ package com.pineypiney.mtt.gui.widget
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.species.Species
-import com.pineypiney.mtt.dnd.traits.*
+import com.pineypiney.mtt.dnd.traits.LiteralPart
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -23,9 +23,9 @@ class SpeciesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y
 	message
 ) {
 
-	override val valueSelectChildren = species.mapIndexed { i, species -> SpeciesEntry(species, 0, 0, width - 100, 24, 3f, Text.literal("Species Entry")){ species ->
-		selected = species
-	} }
+	override val valueSelectChildren = species.map {
+		SpeciesEntry(it, this, 0, 0, width - 100, 24, 3f, Text.literal("Species Entry"))
+	}
 
 	override fun renderWidget(
 		context: DrawContext,
@@ -82,22 +82,27 @@ class SpeciesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y
 	}
 
 	override fun setupSelectedPage(selected: Species){
-		selectedPage.add(TraitEntry.of<CreatureType>(x + 20, y, width - 40, this, Text.translatable("mtt.trait.creature_type"), 0, listOf(TraitEntry.FormattedTrait("mtt.trait.creature_type.declaration", SetTraits(selected.type, CharacterSheet::addTypeSource)), Text.translatable("mtt.trait.creature_type.description"))) { "mtt.creature_type.${it.name.lowercase()}" })
-		selectedPage.add(TraitEntry.of<Size>(x + 20, y + 15, width - 40, this, Text.translatable("mtt.trait.size"), 1, listOf(TraitEntry.FormattedTrait("mtt.trait.size.declaration", selected.size), Text.translatable("mtt.trait.size.description"))) { "mtt.size.${it.name}" })
-		selectedPage.add(TraitEntry.of<Int>(x + 20, y + 30, width - 40, this, Text.translatable("mtt.trait.speed"), 2, listOf(TraitEntry.FormattedTrait("mtt.trait.speed.declaration", SetTraits(selected.speed, CharacterSheet::addSpeedSource)), Text.translatable("mtt.trait.speed.description"))) {"$it ft"})
-		selectedPage.add(TraitEntry.of<String>(x + 20, y + 45, width - 40, this, Text.translatable("mtt.trait.model"), 3, listOf(TraitEntry.FormattedTrait("mtt.trait.model.declaration", selected.model), Text.translatable("mtt.trait.model.description"))) { "mtt.model.$it" })
-		selected.components.forEachIndexed { i, comp ->
-			if(comp is SubspeciesIDComponent) return@forEachIndexed
-			val lines = comp.getLines().toMutableList()
-			for(i in 0..<lines.size){
-				val value = lines[i]
-				if(value is Trait<*>) lines[i] = TraitEntry.FormattedTrait(comp.declarationKey, value)
-			}
-			selectedPage.add(TraitEntry.of(x + 20, y + 60 + 15 * i, width - 40, this, comp.getLabel(), i + 4, lines, comp::getTranslationKey))
+		selectedPage.add(TraitEntry.newOf(x + 20, y, width - 40, this, Text.translatable("mtt.trait.creature_type"), 0, listOf(
+			LiteralPart("mtt.trait.creature_type.declaration", Text.translatable("mtt.creature_type.${selected.type}"))
+		)))
+		selectedPage.add(TraitEntry.newOf(x + 20, y + 15, width - 40, this, Text.translatable("mtt.trait.size"), 1, selected.size.getParts()))
+		selectedPage.add(TraitEntry.newOf(x + 20, y + 30, width - 40, this, Text.translatable("mtt.trait.speed"), 2, listOf(
+			LiteralPart("mtt.trait.speed.declaration", "${selected.speed} ft"),
+		)))
+		selectedPage.add(TraitEntry.newOf(x + 20, y + 45, width - 40, this, Text.translatable("mtt.trait.model"), 3, selected.model.getParts()))
+		var i = 4
+		selected.traits.forEach { trait ->
+			selectedPage.add(TraitEntry.newOf(x + 20, y + 15 * i, width - 40, this, Text.translatable(trait.getLabelKey()), i++, trait.getParts()))
+		}
+		selected.namedTraits.forEach { namedTrait ->
+			selectedPage.add(TraitEntry.newOf(x + 20, y + 15 * i, width - 40, this, Text.translatable("mtt.feature.${namedTrait.name}"), i++, namedTrait.traits.flatMap { it.getParts() }.toSet()))
 		}
 	}
 
-	class SpeciesEntry(species: Species, x: Int, y: Int, width: Int, height: Int, private val renderScale: Float, message: Text, onClick: (Species) -> Unit): Entry<Species>(species, x, y, width, height, message, onClick){
+	class SpeciesEntry(species: Species, tab: SpeciesTabWidget, x: Int, y: Int, width: Int, height: Int, private val renderScale: Float, message: Text): Entry<Species>(species, tab, x, y, width, height, message){
+
+		override val type: String = "species"
+		override fun getID(value: Species): String = value.id
 
 		override fun render(context: DrawContext, textRenderer: TextRenderer, x: Int, y: Int){
 			setPosition(x, y)

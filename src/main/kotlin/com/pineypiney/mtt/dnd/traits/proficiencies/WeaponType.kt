@@ -1,8 +1,9 @@
-package com.pineypiney.mtt.dnd.proficiencies
+package com.pineypiney.mtt.dnd.traits.proficiencies
 
 import com.pineypiney.mtt.dnd.DamageType
 
-class WeaponType(override val id: String, val damageType: DamageType, val numDice: Int, val sides: Int, val martial: Boolean, val ranged: Boolean, val finesse: Boolean, val heavy: Boolean, val light: Boolean, val reach: Boolean, val twoHanded: Boolean, val versatile: Boolean, val nearDistance: Float, val farDistance: Float) : EquipmentType {
+class WeaponType(override val id: String, val damageType: DamageType, val numDice: Int, val sides: Int, val martial: Boolean, val ranged: Boolean, val finesse: Boolean, val heavy: Boolean, val light: Boolean, val reach: Boolean, val twoHanded: Boolean, val versatile: Boolean, val nearDistance: Float, val farDistance: Float) :
+	EquipmentType {
 
 	companion object {
 
