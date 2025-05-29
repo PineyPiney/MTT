@@ -30,7 +30,7 @@ class OptionsSelectWidget<T>(val textRenderer: TextRenderer, title: Text, curren
 	}
 
 	override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, deltaTicks: Float) {
-		DynamicWidgets.drawThickBoxWithBorder(context, x, y, width, height, -3750202, -1, -11184811)
+		DynamicWidgets.drawThickBoxWithBorder(context, x, y, width, height)
 		context.enableScissor(x + 6, y + 6, x + width - 6, y + height - 6)
 
 		var y = y + 6

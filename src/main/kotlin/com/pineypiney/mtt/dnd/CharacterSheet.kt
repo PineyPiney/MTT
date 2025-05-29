@@ -1,19 +1,24 @@
 package com.pineypiney.mtt.dnd
 
 import com.pineypiney.mtt.dnd.classes.DNDClass
-import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.dnd.species.Species
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
 import com.pineypiney.mtt.dnd.traits.Source
 import com.pineypiney.mtt.dnd.traits.features.Feature
+import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs
+import io.netty.buffer.ByteBuf
 import net.minecraft.nbt.NbtCompound
+import net.minecraft.network.codec.PacketCodec
+import net.minecraft.network.codec.PacketCodecs
 import kotlin.jvm.optionals.getOrNull
 
 class CharacterSheet {
 	var name = "Unnamed Character"
 	var species: Species = Species.NONE
+	var background: Background = Background.NONE
 	var level = 1
 	private val typeProperty = Property(CreatureType.HUMANOID){ src, value -> src.overridePower }
 	val type get() = typeProperty.getValue()
@@ -77,6 +82,37 @@ class CharacterSheet {
 		else proficiencies[src] = newProficiencies.toMutableSet()
 	}
 
+	fun <T, C> encodePropertyMap(buf: ByteBuf, property: Property<T>, codec: PacketCodec<ByteBuf, C>, get: (T) -> C){
+		PacketCodecs.INTEGER.encode(buf, property.sources.size)
+		for((src, value) in property.sources){
+			MTTPacketCodecs.SOURCE_CODEC.encode(buf, src)
+			codec.encode(buf, get(value))
+		}
+	}
+
+	fun <T, C> decodePropertyMap(buf: ByteBuf, property: Property<T>, codec: PacketCodec<ByteBuf, C>, get: (C) -> T){
+		val size = PacketCodecs.INTEGER.decode(buf)
+		property.sources.clear()
+		for(i in 0..<size){
+			val src = MTTPacketCodecs.SOURCE_CODEC.decode(buf)
+			val value = get(codec.decode(buf))
+			property.sources[src] = value
+		}
+
+	}
+
+	fun encodeProperties(buf: ByteBuf){
+		encodePropertyMap(buf, typeProperty, PacketCodecs.STRING, CreatureType::name)
+		encodePropertyMap(buf, speedProperty, PacketCodecs.INTEGER, Int::toInt)
+		encodePropertyMap(buf, sizeProperty, PacketCodecs.STRING, Size::name)
+	}
+
+	fun decodeProperties(buf: ByteBuf){
+		decodePropertyMap(buf, typeProperty, PacketCodecs.STRING, CreatureType::valueOf)
+		decodePropertyMap(buf, speedProperty, PacketCodecs.INTEGER, Int::toInt)
+		decodePropertyMap(buf, sizeProperty, PacketCodecs.STRING, Size::fromString)
+	}
+
 	fun writeNbt(): NbtCompound {
 		val sheetNbt = NbtCompound()
 		sheetNbt.putString("name", name)
@@ -91,7 +127,7 @@ class CharacterSheet {
 
 	fun readNbt(nbt: NbtCompound, engine: DNDServerEngine){
 		nbt.getString("name").getOrNull()?.let { name = it }
-		nbt.getString("species").getOrNull()?.let{ species = engine.loadedSpecies[it] ?: return@let }
+		nbt.getString("species").getOrNull()?.let{ species = Species.findById(it) }
 		nbt.getInt("level").getOrNull()?.let { level = it }
 		//nbt.getInt("speed").getOrNull()?.let { speed = it }
 		//nbt.getString("size").getOrNull()?.let{ size = Size.Companion.fromString(it) }

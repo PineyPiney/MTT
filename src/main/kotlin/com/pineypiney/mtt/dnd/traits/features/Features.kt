@@ -2,6 +2,9 @@ package com.pineypiney.mtt.dnd.traits.features
 
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.traits.Ability
+import io.netty.buffer.ByteBuf
+import net.minecraft.network.codec.PacketCodec
+import net.minecraft.network.codec.PacketCodecs
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -11,16 +14,41 @@ class Features {
 			return if(ability == this.ability) initialAbility + boost
 			else initialAbility
 		}
-	}
-	object Rage : Feature("rage"){
-		override fun onCreateActions(sheet: CharacterSheet) {
 
+		override fun encode(buf: ByteBuf) {
+			CODEC.encode(buf, this)
+		}
+
+		companion object {
+			val CODEC = PacketCodec.tuple(
+				Ability.CODEC, AbilityScoreImprovement::ability,
+				PacketCodecs.INTEGER, AbilityScoreImprovement::boost,
+				::AbilityScoreImprovement
+			)
 		}
 	}
-	class UnarmouredDefense(val second: Ability) : Feature("unarmoured_defense"){
+	class UnarmouredDefense(val second: Ability) : Feature("unarmoured_defense_${second.id}") {
 		override fun modifyArmour(sheet: CharacterSheet, initialArmourClass: Int): Int {
 			return if(initialArmourClass > 10) initialArmourClass
 			else initialArmourClass + sheet.abilities.dexMod + sheet.abilities.getMod(second)
+		}
+
+		override fun encode(buf: ByteBuf) {
+			CODEC.encode(buf, this)
+		}
+
+		companion object {
+			val CODEC = PacketCodec.tuple(
+				Ability.CODEC, UnarmouredDefense::second,
+				::UnarmouredDefense
+			)
+		}
+	}
+
+
+	object Rage : Feature("rage"){
+		override fun onCreateActions(sheet: CharacterSheet) {
+
 		}
 	}
 	object RecklessAttack : Feature("reckless_attack"){
@@ -42,5 +70,22 @@ class Features {
 
 	object RelentlessEndurance : Feature("relentless_endurance"){
 
+	}
+
+	companion object {
+
+		val set = mutableSetOf<Feature>()
+		val classCodecs = mutableMapOf<String, PacketCodec<ByteBuf, *>>()
+
+		init {
+			set.add(Rage)
+			set.add(RecklessAttack)
+			set.add(DangerSense)
+			set.add(AdrenalineRush)
+			set.add(RelentlessEndurance)
+
+			classCodecs["ability_score_improvement"] = AbilityScoreImprovement.CODEC
+			classCodecs["unarmoured_defense"] = UnarmouredDefense.CODEC
+		}
 	}
 }

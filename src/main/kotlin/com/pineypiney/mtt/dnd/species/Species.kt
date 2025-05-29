@@ -6,6 +6,13 @@ import kotlinx.serialization.json.*
 
 open class Species(val id: String, val type: CreatureType, val speed: Int, val size: SizeTrait, val model: ModelTrait, val traits: List<Trait<*>>, val namedTraits: List<NamedTrait<*>>, val subspecies: List<SubSpecies>) {
 
+	fun getAllTraits(subspecies: SubSpecies? = null): Set<Trait<*>>{
+		val set = mutableSetOf(CreatureTypeTrait(type), SpeedTrait(speed), size, model)
+		set.addAll(traits)
+		for(namedTrait in namedTraits) set.addAll(namedTrait.traits)
+		return set
+	}
+
 	class Builder(val id: String){
 		var type = CreatureType.HUMANOID
 		var speed = 30
@@ -32,6 +39,10 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 
 		val NONE = Builder("None").build()
 
+		@JvmField
+		val set = mutableSetOf<Species>()
+		fun findById(id: String) = set.firstOrNull { it.id == id } ?: NONE
+
 		@Throws(Exception::class)
 		fun parse(json: JsonObject): Species{
 			val speciesID = (json["id"] as? JsonPrimitive)?.content ?: throw Exception()
@@ -42,9 +53,8 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 					"id" -> continue
 					"type" -> builder.type(CreatureType.valueOf(element.jsonPrimitive.content.uppercase()))
 					"speed"-> builder.speed(element.jsonPrimitive.int)
-					"size" -> builder.size(SizeTrait(TraitCodec.readJsonList(json) { Size.fromString(it.content) }
-						.toSet()))
-					"model" -> builder.model(ModelTrait(TraitCodec.readJsonList(json, JsonPrimitive::content).toSet()))
+					"size" -> builder.size(SizeTrait(TraitCodec.readJsonList(element) { Size.fromString(it.content) }.toSet()))
+					"model" -> builder.model(ModelTrait(TraitCodec.readJsonList(element, JsonPrimitive::content).toSet()))
 
 					"sub_species" -> {
 						val speciesArray = (element as? JsonArray)

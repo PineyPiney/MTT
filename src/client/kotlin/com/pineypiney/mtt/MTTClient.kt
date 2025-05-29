@@ -14,6 +14,7 @@ class MTTClient : ClientModInitializer {
 		MTTScreens.registerScreens()
 		MTTTooltips.registerTooltips()
 		MTTRenderers.registerRenderers()
+		MTTKeybinds.registerKeyBindings()
 	}
 
 	companion object {

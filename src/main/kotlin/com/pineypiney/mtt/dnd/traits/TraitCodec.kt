@@ -1,9 +1,10 @@
 package com.pineypiney.mtt.dnd.traits
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.dnd.traits.feats.Feat
-import com.pineypiney.mtt.dnd.traits.feats.Feats
+import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.decodeList
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.encodeCollection
 import io.netty.buffer.ByteBuf
 import kotlinx.serialization.json.*
 import net.minecraft.network.codec.PacketCodec
@@ -19,23 +20,6 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 	fun readFromJson(json: JsonElement, traits: MutableCollection<Trait<*>>)
 
 	companion object {
-
-		fun <T> decodeList(buf: ByteBuf, codec: PacketCodec<ByteBuf, T>): List<T>{
-			val length = PacketCodecs.INTEGER.decode(buf)
-			return List(length){ codec.decode(buf) }
-		}
-		fun <T, C> decodeList(buf: ByteBuf, codec: PacketCodec<ByteBuf, C>, getter: (C) -> T): List<T>{
-			val length = PacketCodecs.INTEGER.decode(buf)
-			return List(length){ getter(codec.decode(buf)) }
-		}
-		fun <T> encodeCollection(buf: ByteBuf, collection: Collection<T>, codec: PacketCodec<ByteBuf, T>){
-			PacketCodecs.INTEGER.encode(buf, collection.size)
-			collection.forEach { codec.encode(buf, it) }
-		}
-		fun <T, C> encodeCollection(buf: ByteBuf, collection: Collection<T>, codec: PacketCodec<ByteBuf, C>, getter: (T) -> C){
-			PacketCodecs.INTEGER.encode(buf, collection.size)
-			collection.forEach { codec.encode(buf, getter(it)) }
-		}
 
 		fun <T> decodeGivenAndOptions(buf: ByteBuf, codec: PacketCodec<ByteBuf, T>): GivenAndOptions<T> {
 			val given = decodeList(buf, codec).toSet()
@@ -64,7 +48,10 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 			return when(json){
 				is JsonPrimitive -> listOf(getter(json))
 				is JsonArray -> json.filterIsInstance<JsonPrimitive>().map(getter)
-				else -> listOf()
+				is JsonObject -> {
+					val options = json["options"] ?: return emptyList()
+					readJsonList(options, getter)
+				}
 			}
 		}
 
@@ -377,11 +364,35 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 
 		}
 
+		val ABILITY_IMPROVEMENT_CODEC = object : TraitCodec<AbilityImprovementTrait>{
+			override val ID: String = "ability_score"
+
+			override fun decode(buf: ByteBuf): AbilityImprovementTrait {
+				return AbilityImprovementTrait(decodeList(buf, PacketCodecs.STRING, Ability::valueOf).toSet(), PacketCodecs.INTEGER.decode(buf))
+			}
+
+			override fun encode(buf: ByteBuf, value: AbilityImprovementTrait) {
+				encodeCollection(buf, value.options, PacketCodecs.STRING, Ability::name)
+				PacketCodecs.INTEGER.encode(buf, value.points)
+			}
+
+			override fun readFromJson(json: JsonElement, traits: MutableCollection<Trait<*>>) {
+				when(json){
+					is JsonPrimitive -> traits.add(AbilityImprovementTrait(setOf(Ability.valueOf(json.content.uppercase())), 1))
+					is JsonObject -> {
+
+					}
+					is JsonArray -> json.forEach { readFromJson(it, traits) }
+				}
+			}
+
+		}
+
 		val FEAT_CODEC = object : TraitCodec<FeatTrait>{
 			override val ID: String = "feat"
 
 			override fun decode(buf: ByteBuf): FeatTrait {
-				return FeatTrait(decodeList(buf, PacketCodecs.STRING){ Feats.getById(it) } .toSet())
+				return FeatTrait(decodeList(buf, PacketCodecs.STRING){ Feat.findById(it) } .toSet())
 			}
 
 			override fun encode(buf: ByteBuf, value: FeatTrait) {
@@ -390,8 +401,8 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 
 			override fun readFromJson(json: JsonElement, traits: MutableCollection<Trait<*>>) {
 				when(json){
-					is JsonPrimitive -> traits.add(FeatTrait(setOf(Feats.getById(json.content))))
-					is JsonObject -> traits.add(FeatTrait(readJsonChoice(json){ Feats.getById(it.content) }.second.toSet()))
+					is JsonPrimitive -> traits.add(FeatTrait(setOf(Feat.findById(json.content))))
+					is JsonObject -> traits.add(FeatTrait(readJsonChoice(json){ Feat.findById(it.content) }.second.toSet()))
 					is JsonArray -> {}
 				}
 			}

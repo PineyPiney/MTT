@@ -1,15 +1,19 @@
 package com.pineypiney.mtt.gui.widget.ability_widget
 
 import com.pineypiney.mtt.dnd.traits.Ability
+import com.pineypiney.mtt.dnd.traits.AbilityPointBuyPart
 import com.pineypiney.mtt.gui.widget.AbilitiesTabWidget
 import com.pineypiney.mtt.gui.widget.DynamicWidgets
+import com.pineypiney.mtt.network.payloads.c2s.UpdateTraitC2SPayload
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.text.Text
 
 class PointBuyWidget(tab: AbilitiesTabWidget, x: Int, y: Int, w: Int, h: Int): AbilitySelectorWidget(tab, x, y, w, h, Text.literal("Point Buy Widget")) {
 
-	val totalPoints = 27
-	var pointsLeft = 27
+	val part = AbilityPointBuyPart()
+	override val isReady: Boolean get() = part.isReady()
+	override val points: IntArray get() = part.points
 
 	val labelText = Text.translatable("mtt.character_maker_screen.points_left")
 	val labelW = tab.client.textRenderer.getWidth(labelText)
@@ -20,7 +24,7 @@ class PointBuyWidget(tab: AbilitiesTabWidget, x: Int, y: Int, w: Int, h: Int): A
 
 		context.drawText(tab.client.textRenderer, labelText, x + (width - labelW) / 2, y, 4210752, false)
 
-		val pointTallyText = Text.literal("$pointsLeft/$totalPoints")
+		val pointTallyText = Text.literal("${part.pointsLeft}/${part.totalPoints}")
 		val tallyW = tab.client.textRenderer.getWidth(pointTallyText)
 
 		context.drawText(tab.client.textRenderer, pointTallyText, x + (width - tallyW) / 2, y + 12, 4210752, false)
@@ -60,31 +64,10 @@ class PointBuyWidget(tab: AbilitiesTabWidget, x: Int, y: Int, w: Int, h: Int): A
 		if(hoveredButton != -1){
 			val ability = hoveredButton shr 1
 			val plus = (hoveredButton and 1) == 1
-			if(!plus){
-				if(points[ability] > 8){
-					points[ability]--
-					updatePoints()
-				}
-			}
-			else{
-				if(points[ability] < 15 && pointsLeft >= 1){
-					if(points[ability] < 13 || pointsLeft >= 2){
-						points[ability]++
-						updatePoints()
-					}
-				}
-			}
+			val func = if(plus) AbilityPointBuyPart::increment else AbilityPointBuyPart::decrement
+			if(func(part, ability)) ClientPlayNetworking.send(UpdateTraitC2SPayload("ability", 0, 0, listOf(ability.toString(), points[ability].toString())))
 			return true
 		}
 		else return false
-	}
-
-	fun updatePoints(){
-		var spentPoints = 0
-		for(i in points){
-			spentPoints += if(i > 13) (2 * i - 21)
-			else (i - 8)
-		}
-		pointsLeft = totalPoints - spentPoints
 	}
 }

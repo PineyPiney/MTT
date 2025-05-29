@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.mixin;
 
 import com.pineypiney.mtt.dnd.DNDServerEngine;
+import com.pineypiney.mtt.dnd.species.Species;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import com.pineypiney.mtt.network.payloads.s2c.SpeciesS2CPayload;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -21,7 +22,7 @@ public class PlayerManagerMixin {
 		var engine = ((DNDEngineHolder<?>) player.server).getDNDEngine();
 		
 		if(engine instanceof DNDServerEngine) {
-			((DNDServerEngine) engine).getLoadedSpecies().forEach((name, species) -> {
+			Species.set.forEach(species -> {
 				var payload = new SpeciesS2CPayload(species);
 				ServerPlayNetworking.send(player, payload);
 			});

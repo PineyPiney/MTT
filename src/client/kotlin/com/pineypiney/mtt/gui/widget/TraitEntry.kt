@@ -2,12 +2,9 @@ package com.pineypiney.mtt.gui.widget
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.CharacterSheet
-import com.pineypiney.mtt.dnd.traits.GivenAndOptionsPart
-import com.pineypiney.mtt.dnd.traits.LiteralPart
-import com.pineypiney.mtt.dnd.traits.OneChoicePart
-import com.pineypiney.mtt.dnd.traits.Source
-import com.pineypiney.mtt.dnd.traits.TallyPart
-import com.pineypiney.mtt.dnd.traits.TraitPart
+import com.pineypiney.mtt.dnd.traits.*
+import com.pineypiney.mtt.network.payloads.c2s.UpdateTraitC2SPayload
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder
@@ -26,11 +23,19 @@ import kotlin.math.min
 
 class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTabWidget<*>, private val label: Text, private val index: Int, private val segments: List<Segment>): ClickableWidget(x, y, width, 13, Text.literal("Trait Entry ${label.string}")){
 
+	val src = when(tab){
+		is SpeciesTabWidget -> "species"
+		is ClassTabWidget -> "class"
+		is BackgroundTabWidget -> "background"
+		else -> "null"
+	}
 	// The absolute value is the opening time and the input of the easing function,
 	// if positive it is opening and if negative it is closing
 	private var openness = 0f
 
 	private var hoveredSegment = -1
+
+	val isReady get() = segments.all { it.isReady }
 
 	//val isReady = segments.
 
@@ -61,10 +66,13 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 			val shadow = tab.optionSelectWidget == null
 			val hoveringX = mouseX >= x && mouseX < x + width - 10
 
+			val scrollTop = tab.y + tab.headerHeight
+			val scrollBottom = tab.y + tab.height - tab.footerHeight
+
 			hoveredSegment = -1
 			for(i in 0..<segments.size){
 				val segment = segments[i]
-				if(hoveringX && mouseY >= y && mouseY < y + segment.height) hoveredSegment = i
+				if(hoveringX && mouseY >= y && mouseY > scrollTop && mouseY < y + segment.height && mouseY < scrollBottom) hoveredSegment = i
 				segment.render(context, x, y, mouseX, mouseY, i, this, shadow)
 				y += segment.height + 3
 			}
@@ -113,6 +121,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 
 	interface Segment{
 		val height: Int
+		val isReady: Boolean
 		fun init(entry: TraitEntry) {}
 		fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry, shadow: Boolean)
 		fun onClick(mouseX: Double, mouseY: Double, entry: TraitEntry) = true
@@ -126,6 +135,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 
 	class LiteralTextSegment(val lines: List<Text>): TextSegment{
 		override val getNumLines: Int get() = lines.size
+		override val isReady: Boolean = true
 		override fun render(
 			ctx: DrawContext,
 			x: Int,
@@ -144,9 +154,10 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 		}
 	}
 
-	class OneChoiceSegment<T>(val part: OneChoicePart<T>): TextSegment{
+	class OneChoiceSegment<T>(val part: OneChoicePart<T>, val index: Int): TextSegment{
 		val traitLines  = mutableListOf<OrderedText>()
 		override val getNumLines: Int get() = 1 + traitLines.size
+		override val isReady: Boolean get() = part.isReady()
 
 		fun generateTraitLines(textRenderer: TextRenderer, width: Int){
 			traitLines.clear()
@@ -159,7 +170,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 
 		override fun render(ctx: DrawContext, x: Int, y: Int, mouseX: Int, mouseY: Int, i: Int, entry: TraitEntry, shadow: Boolean) {
 			val colour = if (entry.hoveredSegment == i && entry.tab.optionSelectWidget == null) 6791374 else 16777215
-			val pickText = if(part.isReady()) Text.translatable("mtt.trait.change_answer") else Text.translatable("mtt.trait.pick_a", part.label)
+			val pickText = if(isReady) Text.translatable("mtt.trait.change_answer") else Text.translatable("mtt.trait.pick_a", part.label)
 			ctx.drawText(entry.tab.client.textRenderer, pickText, x, y, colour, shadow)
 			var lineY = y + 9
 			for(line in traitLines){
@@ -175,8 +186,8 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 				generateTraitLines(entry.tab.client.textRenderer, entry.width - 10)
 				entry.height = 13 + entry.getBoxHeight()
 				entry.tab.reposition(entry.index)
-
 				entry.tab.optionSelectWidget = null
+				ClientPlayNetworking.send(UpdateTraitC2SPayload(entry.src, entry.index, index, it.map(part.unparse)))
 			}
 			return true
 		}
@@ -186,9 +197,10 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 		}
 	}
 
-	class GiveNOptsSegment<T>(val part: GivenAndOptionsPart<T>): TextSegment{
+	class GiveNOptsSegment<T>(val part: GivenAndOptionsPart<T>, val index: Int): TextSegment{
 		val traitLines  = mutableListOf<OrderedText>()
 		override val getNumLines: Int get() = 1 + traitLines.size
+		override val isReady: Boolean get() = part.isReady()
 
 		override fun init(entry: TraitEntry) {
 			generateTraitLines(entry.tab.client.textRenderer, entry.width)
@@ -230,6 +242,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 				entry.tab.reposition(entry.index)
 
 				entry.tab.optionSelectWidget = null
+				ClientPlayNetworking.send(UpdateTraitC2SPayload(entry.src, entry.index, index, it.map(part.unparse)))
 			}
 			return true
 		}
@@ -239,10 +252,11 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 		}
 	}
 
-	class TallySegment<T>(val part: TallyPart<T>) : Segment {
+	class TallySegment<T>(val part: TallyPart<T>, val index: Int) : Segment {
 
 		val labels = part.options.map { Text.translatable(part.translationKey(it)) }
 		override val height: Int get() = 9 + 12 * labels.size
+		override val isReady: Boolean get() = part.isReady()
 
 		var hoveredIcon = -1
 
@@ -255,7 +269,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 
 			var i = 0
 			hoveredIcon = -1
-			for(value in part.map){
+			for(value in part.tallies){
 				val buttonY = y + 12 * (i + 1)
 				val hoveringRow = mouseY >= buttonY && mouseY < buttonY + 7
 				ctx.drawText(textRenderer, labels[i], x + labelWidth - textRenderer.getWidth(labels[i]), buttonY, 16777215, shadow)
@@ -287,10 +301,19 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 			if(hoveredIcon != -1){
 				val row = hoveredIcon shr 8
 				val index = hoveredIcon and 255
-				val score = part.map[row]
+				val score = part.tallies[row]
 				val adding = index >= score
-				if(adding && part.pointsLeft > 0) part.map[row]++
-				else if(!adding && part.map[row] > 0) part.map[row]--
+				if(adding && part.pointsLeft > 0) part.tallies[row]++
+				else if(!adding && part.tallies[row] > 0) part.tallies[row]--
+
+				val list = mutableListOf<String>()
+				var i = 0
+				for(option in part.options){
+					val str = part.unparse(option)
+					val pointsInOption = part.tallies[i++]
+					for(j in 1..pointsInOption) list.add(str)
+				}
+				ClientPlayNetworking.send(UpdateTraitC2SPayload(entry.src, entry.index, this.index, list))
 				return true
 			}
 			return false
@@ -299,14 +322,14 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 
 	companion object {
 		fun newOf(x: Int, y: Int, width: Int, tab: CharacterCreatorOptionsTabWidget<*>, label: Text, index: Int, parts: Collection<TraitPart>): TraitEntry{
-			val segments: List<Segment> = parts.map { part ->
+			val segments: List<Segment> = parts.mapIndexed { partIndex, part ->
 				when (part) {
 					is LiteralPart -> LiteralTextSegment(tab.client.textRenderer.textHandler.wrapLines(part.text, width - 10, Style.EMPTY)
 						.map { line -> Text.literal(line.string) })
 
-					is OneChoicePart<*> -> OneChoiceSegment(part)
-					is GivenAndOptionsPart<*> -> GiveNOptsSegment(part)
-					is TallyPart<*> -> TallySegment(part)
+					is OneChoicePart<*> -> OneChoiceSegment(part, partIndex)
+					is GivenAndOptionsPart<*> -> GiveNOptsSegment(part, partIndex)
+					is TallyPart<*> -> TallySegment(part, partIndex)
 				}
 			}
 			return TraitEntry(x, y, width, tab, label, index, segments)

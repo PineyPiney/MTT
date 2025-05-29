@@ -1,6 +1,5 @@
 package com.pineypiney.mtt.gui.screens
 
-import com.pineypiney.mtt.gui.widget.CharacterMakerScreen
 import com.pineypiney.mtt.screen.MTTScreenHandlers
 import net.minecraft.client.gui.screen.ingame.HandledScreens
 

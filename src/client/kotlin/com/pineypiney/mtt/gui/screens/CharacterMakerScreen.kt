@@ -1,12 +1,16 @@
-package com.pineypiney.mtt.gui.widget
+package com.pineypiney.mtt.gui.screens
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.DNDClientEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
+import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.gui.widget.*
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
+import com.pineypiney.mtt.network.payloads.c2s.ClickButtonC2SPayload
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.ingame.HandledScreen
@@ -18,6 +22,7 @@ import net.minecraft.util.Identifier
 
 class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory: PlayerInventory, title: Text) : HandledScreen<CharacterMakerScreenHandler>(handler, playerInventory, title) {
 
+	var isReady = false
 	val engine = (MinecraftClient.getInstance() as DNDEngineHolder<*>).dndEngine as DNDClientEngine
 	val sheet = CharacterSheet()
 
@@ -37,14 +42,46 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		backgroundHeight = 252
 	}
 
+	var doneButton = ButtonWidget.builder(Text.translatable("gui.done"), {
+		val payload = ClickButtonC2SPayload("sheet_maker", "done")
+		ClientPlayNetworking.send(payload)
+	}).dimensions(x + 64, y + 222, 128, 24).build()
+
 	override fun init() {
 		super.init()
 
 		tabWidgets = arrayOf(
-			SpeciesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Species Widget Text"), engine.receivedSpecies),
-			ClassTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Class Widget Text"), DNDClass.classes),
+			SpeciesTabWidget(
+				sheet,
+				client!!,
+				x + 8,
+				y + 32,
+				240,
+				212,
+				Text.literal("Species Widget Text"),
+				Species.set
+			),
+			ClassTabWidget(
+				sheet,
+				client!!,
+				x + 8,
+				y + 32,
+				240,
+				212,
+				Text.literal("Class Widget Text"),
+				DNDClass.Companion.classes
+			),
 			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Abilities Widget Text")),
-			BackgroundTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Background Widget Text"), Background.set)
+			BackgroundTabWidget(
+				sheet,
+				client!!,
+				x + 8,
+				y + 32,
+				240,
+				212,
+				Text.literal("Background Widget Text"),
+				Background.Companion.set
+			)
 		)
 		addDrawableChild(tabWidgets[0])
 
@@ -62,10 +99,10 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		}
 		tabWidgets.forEach {
 			it.x = x + 8
-			it.yOrigin = y + 32
-			it.y = y + 32 + it.yOffset
+			it.y = y + 32
 			it.reposition()
 		}
+		doneButton.setPosition(x + 64, y + 222)
 	}
 
 	override fun mouseScrolled(
@@ -88,6 +125,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 	}
 
 	override fun drawBackground(context: DrawContext, deltaTicks: Float, mouseX: Int, mouseY: Int) {
+		checkReady()
 		for(i in 0..3){
 			if(i != tabOpen) {
 				context.drawTexture(RenderLayer::getGuiTextured, BACKGROUND, x + 64 * i, y, 192f, 0f, 64, 32, 256, 256)
@@ -108,7 +146,20 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		ctx.drawText(textRenderer, text, x - (width / 2), y, 4210752, false)
 	}
 
+	fun checkReady(){
+		val ready = tabWidgets.all { it.isReady }
+		tabWidgets.forEach { it.shouldShowDone = ready }
+		if(ready && !isReady) {
+			addDrawableChild(doneButton)
+			isReady = true
+		}
+		else if(isReady && !ready) {
+			remove(doneButton)
+			isReady = false
+		}
+	}
+
 	companion object {
-		val BACKGROUND = Identifier.of(MTT.MOD_ID, "textures/gui/character_maker/background.png")
+		val BACKGROUND = Identifier.of(MTT.Companion.MOD_ID, "textures/gui/character_maker/background.png")
 	}
 }

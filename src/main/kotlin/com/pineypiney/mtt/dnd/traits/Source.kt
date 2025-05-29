@@ -4,7 +4,6 @@ import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.DNDServerEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.species.Species
-import com.pineypiney.mtt.dnd.traits.features.Feature
 import net.minecraft.nbt.NbtCompound
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -53,16 +52,16 @@ sealed interface Source {
 			return background.hashCode()
 		}
 	}
-	class FeatureSource(val feature: Feature): Source {
+	class FeatureSource(val id: String): Source {
 		override val overridePower: Int = 16
 		override fun writeNbt(nbt: NbtCompound) {
-			nbt.putString("feature", feature.id)
+			nbt.putString("feature", id)
 		}
 		override fun equals(other: Any?): Boolean {
-			return other is FeatureSource && feature == other.feature
+			return other is FeatureSource && id == other.id
 		}
 		override fun hashCode(): Int {
-			return feature.hashCode()
+			return id.hashCode()
 		}
 	}
 
@@ -90,8 +89,8 @@ sealed interface Source {
 
 		fun readNbt(nbt: NbtCompound, engine: DNDServerEngine): Source?{
 			nbt.getString("species").getOrNull()?.let {
-				val species = engine.loadedSpecies[it]
-				if(species != null) return SpeciesSource(species)
+				val species = Species.findById(it)
+				return SpeciesSource(species)
 			}
 			nbt.getString("class").getOrNull()?.let { id ->
 				val clazz = DNDClass.classes.firstOrNull { it.id == id }

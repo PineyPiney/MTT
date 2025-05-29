@@ -1,5 +1,7 @@
 package com.pineypiney.mtt.dnd
 
+import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.entity.DNDPlayerEntity
 import net.minecraft.network.packet.CustomPayload
 import java.util.*
@@ -9,11 +11,14 @@ abstract class DNDEngine {
 	open var running: Boolean = false
 	open var DM: UUID? = null
 
-	abstract val players: List<DNDPlayerEntity>
-	fun getPlayerCharacters() = players
+	val characters = mutableListOf<Character>()
+	val playerCharacters = mutableMapOf<UUID, SheetCharacter>()
 
-	fun getPlayer(name: String): DNDPlayerEntity? = players.firstOrNull { it.name == name }
-	fun getPlayer(uuid: UUID): DNDPlayerEntity? = players.firstOrNull { uuid == (it.controllingPlayer) }
+	abstract val playerEntities: List<DNDPlayerEntity>
+	fun getPlayerCharacters() = playerEntities
+
+	fun getPlayer(name: String): DNDPlayerEntity? = playerEntities.firstOrNull { it.name == name }
+	fun getPlayer(uuid: UUID): DNDPlayerEntity? = playerEntities.firstOrNull { uuid == (it.controllingPlayer) }
 
 	fun tick(){
 

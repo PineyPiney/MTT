@@ -1,12 +1,13 @@
 {
-  "required": true,
-  "package": "com.pineypiney.mtt.mixin.client",
-  "compatibilityLevel": "JAVA_21",
-  "client": [
-	"ClientPlayerEntityMixin",
-	"MinecraftClientMixin"
-  ],
-  "injectors": {
-	"defaultRequire": 1
-  }
+	"required": true,
+	"package": "com.pineypiney.mtt.mixin.client",
+	"compatibilityLevel": "JAVA_21",
+	"client": [
+		"ClientPlayerEntityMixin",
+		"DrawContextMixin",
+		"MinecraftClientMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }

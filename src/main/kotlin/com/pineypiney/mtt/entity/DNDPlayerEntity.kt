@@ -20,7 +20,7 @@ import kotlin.math.max
 
 class DNDPlayerEntity(type: EntityType<*>, world: World): DNDClassEntity(type, world), NamedScreenHandlerFactory {
 
-	val screenHandler = DNDScreenHandler(1, inventory)
+	val screenHandler = DNDScreenHandler(1, character.inventory)
 
 	val weaponProficiencies = mutableListOf<WeaponType>()
 
@@ -45,20 +45,20 @@ class DNDPlayerEntity(type: EntityType<*>, world: World): DNDClassEntity(type, w
 	}
 
 	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int{
-		var i = if(weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
+		var i = if(weaponType.finesse) max(character.abilities.strMod, character.abilities.dexMod) else character.abilities.strMod
 		if(weaponProficiencies.contains(weaponType)) i += calculateProficiencyBonus()
 		i += stack[MTTComponents.HIT_BONUS_TYPE] ?: 0
 		return i
 	}
 
 	fun getDamageBonus(weaponType: WeaponType, stack: ItemStack): Int{
-		var i = if(weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
+		var i = if(weaponType.finesse) max(character.abilities.strMod, character.abilities.dexMod) else character.abilities.strMod
 		i += stack[MTTComponents.DAMAGE_BONUS_TYPE] ?: 0
 		return i
 	}
 
 	override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity?): ScreenHandler? {
-		return DNDScreenHandler(syncId, playerInventory, inventory)
+		return DNDScreenHandler(syncId, playerInventory, character.inventory)
 	}
 
 	override fun writeCustomDataToNbt(nbt: NbtCompound) {

@@ -1,5 +1,8 @@
 package com.pineypiney.mtt.dnd.traits
 
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.SOURCE_CODEC
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.int
+import io.netty.buffer.ByteBuf
 import java.util.*
 
 class Abilities {
@@ -53,4 +56,40 @@ class Abilities {
 	val wisMod get() = getMod(Ability.WISDOM)
 	val chaMod get() = getMod(Ability.CHARISMA)
 	fun getMod(ability: Ability) = (getStat(ability) - 10).floorDiv(2)
+
+	fun decode(buf: ByteBuf) {
+		strength = int.decode(buf)
+		dexterity = int.decode(buf)
+		constitution = int.decode(buf)
+		intelligence = int.decode(buf)
+		wisdom = int.decode(buf)
+		charisma = int.decode(buf)
+
+		for((_, list) in modifications){
+			list.clear()
+			val listSize = int.decode(buf)
+			for(i in 1..listSize){
+				val value = int.decode(buf)
+				val src = SOURCE_CODEC.decode(buf)
+				list.add(value to src)
+			}
+		}
+	}
+
+	fun encode(buf: ByteBuf) {
+		int.encode(buf, strength)
+		int.encode(buf, dexterity)
+		int.encode(buf, constitution)
+		int.encode(buf, intelligence)
+		int.encode(buf, wisdom)
+		int.encode(buf, charisma)
+
+		for((_, list) in modifications){
+			int.encode(buf, list.size)
+			for((value, src) in list){
+				int.encode(buf, value)
+				SOURCE_CODEC.encode(buf, src)
+			}
+		}
+	}
 }

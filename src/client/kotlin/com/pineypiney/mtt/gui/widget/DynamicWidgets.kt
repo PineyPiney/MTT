@@ -74,7 +74,7 @@ class DynamicWidgets {
 			ctx.fill(renderLayer, r - 3, b - 3, r - 2, b - 2, 0, bottomColour)
 		}
 
-		fun drawThickBoxWithBorder(ctx: DrawContext, x: Int, y: Int, w: Int, h: Int, colour: Int = -6052957, topColour: Int = -9605779, bottomColour: Int = -1, borderColour: Int = -16777216, renderLayer: RenderLayer = RenderLayer.getGui()){
+		fun drawThickBoxWithBorder(ctx: DrawContext, x: Int, y: Int, w: Int, h: Int, colour: Int = -3750202, topColour: Int = -1, bottomColour: Int = -11184811, borderColour: Int = -16777216, renderLayer: RenderLayer = RenderLayer.getGui()){
 			drawThickBox(ctx, x + 1, y + 1, w - 2, h - 2, colour, topColour, bottomColour, renderLayer)
 			val r = x + w
 			val b = y + h

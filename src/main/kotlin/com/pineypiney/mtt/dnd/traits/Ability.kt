@@ -1,5 +1,8 @@
 package com.pineypiney.mtt.dnd.traits
 
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs
+import net.minecraft.network.codec.PacketCodecs
+
 enum class Ability {
 	STRENGTH,
 	DEXTERITY,
@@ -15,5 +18,7 @@ enum class Ability {
 			return try { valueOf(name) }
 			catch (e: IllegalArgumentException){ null }
 		}
+
+		val CODEC = MTTPacketCodecs.from(PacketCodecs.STRING, Ability::name, Ability::valueOf)
 	}
 }

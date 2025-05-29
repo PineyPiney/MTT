@@ -8,7 +8,6 @@ class Feats {
 		init {
 			allFeats.addAll(setOf(None, Alert, ClericInitiate, DruidInitiate, WizardInitiate, SavageAttacker, Skilled))
 		}
-		fun getById(id: String) = allFeats.firstOrNull { it.id == id } ?: None
 	}
 
 	object None : Feat("none")

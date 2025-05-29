@@ -1,6 +1,46 @@
 {
-	"mtt.screen.dnd_inventory": "Inventory",
+	"category.mtt": "MTT",
+
+	"key.mtt.character_sheet": "Open Character Sheet",
+
+	"item.mtt.dagger": "Dagger",
+	"item.mtt.short_sword": "Short Sword",
+	"item.mtt.long_sword": "Long Sword",
+	"item.mtt.great_sword": "Great Sword",
+	"item.mtt.great_club": "Great Club",
+
+	"item.mtt.shortbow": "Shortbow",
+	"item.mtt.longbow": "Longbow",
+	"item.mtt.light_crossbow": "Light Crossbow",
+	"item.mtt.heavy_crossbow": "Heavy Crossbow",
+
+	"item.mtt.leather_armour": "Leather Armour",
+	"item.mtt.scale_mail": "Scale Mail",
+	"item.mtt.splint": "Splint",
+
+	"item.mtt.iron_helmet": "Iron Helmet",
+	"item.mtt.shield": "Shield",
+
+	"item.mtt.property.thrown": "Thrown",
+
+	"item.mtt.tooltip.rarity": "Rarity",
+	"item.mtt.tooltip.common": "Common",
+	"item.mtt.tooltip.uncommon": "Uncommon",
+	"item.mtt.tooltip.rare": "Rare",
+	"item.mtt.tooltip.very_rare": "Very rare",
+	"item.mtt.tooltip.legendary": "Legendary",
+	"item.mtt.tooltip.artifact": "Artifact",
+
+	"item.mtt.tooltip.hit_bonus": "Hit Bonus",
+	"item.mtt.tooltip.damage": "Damage",
+
+	"itemGroup.mtt.melee_weapons": "Melee Weapons",
+	"itemGroup.mtt.ranged_weapons": "Ranged Weapons",
+	"itemGroup.mtt.armour": "Armour",
+
+	"mtt.screen.dnd_inventory": "DND Inventory",
 	"mtt.screen.character_maker": "Character Maker",
+	"mtt.screen.character_sheet": "Character Sheet",
 
 	"mtt.character_maker_screen.species": "Species",
 	"mtt.character_maker_screen.class": "Class",
@@ -150,11 +190,17 @@
 	"mtt.feat.savage_attacker": "Savage Attacker",
 
 	"mtt.ability.strength": "Strength",
+	"mtt.ability.strength.abbr": "Str",
 	"mtt.ability.dexterity": "Dexterity",
+	"mtt.ability.dexterity.abbr": "Dex",
 	"mtt.ability.constitution": "Constitution",
+	"mtt.ability.constitution.abbr": "Con",
 	"mtt.ability.intelligence": "Intelligence",
+	"mtt.ability.intelligence.abbr": "Int",
 	"mtt.ability.wisdom": "Wisdom",
+	"mtt.ability.wisdom.abbr": "Wis",
 	"mtt.ability.charisma": "Charisma",
+	"mtt.ability.charisma.abbr": "Cha",
 
 	"mtt.skill.acrobatics": "Acrobatics",
 	"mtt.skill.animal_handling":"Animal Handling",
@@ -248,41 +294,6 @@
 	"mtt.tool.pan_flute": "Pan Flute",
 	"mtt.tool.shawm": "Shawm",
 	"mtt.tool.viol": "Viol",
-
-	"itemGroup.mtt.melee_weapons": "Melee Weapons",
-	"itemGroup.mtt.ranged_weapons": "Ranged Weapons",
-	"itemGroup.mtt.armour": "Armour",
-
-	"item.mtt.dagger": "Dagger",
-	"item.mtt.short_sword": "Short Sword",
-	"item.mtt.long_sword": "Long Sword",
-	"item.mtt.great_sword": "Great Sword",
-	"item.mtt.great_club": "Great Club",
-
-	"item.mtt.shortbow": "Shortbow",
-	"item.mtt.longbow": "Longbow",
-	"item.mtt.light_crossbow": "Light Crossbow",
-	"item.mtt.heavy_crossbow": "Heavy Crossbow",
-
-	"item.mtt.leather_armour": "Leather Armour",
-	"item.mtt.scale_mail": "Scale Mail",
-	"item.mtt.splint": "Splint",
-
-	"item.mtt.iron_helmet": "Iron Helmet",
-	"item.mtt.shield": "Shield",
-
-	"item.mtt.property.thrown": "Thrown",
-
-	"item.mtt.tooltip.rarity": "Rarity",
-	"item.mtt.tooltip.common": "Common",
-	"item.mtt.tooltip.uncommon": "Uncommon",
-	"item.mtt.tooltip.rare": "Rare",
-	"item.mtt.tooltip.very_rare": "Very rare",
-	"item.mtt.tooltip.legendary": "Legendary",
-	"item.mtt.tooltip.artifact": "Artifact",
-
-	"item.mtt.tooltip.hit_bonus": "Hit Bonus",
-	"item.mtt.tooltip.damage": "Damage",
 
 	"mtt.damage_type.slashing": "Slashing",
 	"mtt.damage_type.bludgeoning": "Bludgeoning",

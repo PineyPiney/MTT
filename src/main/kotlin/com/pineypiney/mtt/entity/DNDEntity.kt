@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.entity
 
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.species.Species
-import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.item.dnd.DNDItem
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityType
@@ -18,6 +18,7 @@ import kotlin.math.min
 
 abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world) {
 
+	abstract val character: Character
 	var species: Species = Species.NONE
 	var hipHeight: Float = .75f
 	val limbAnimator = LimbAnimator()
@@ -29,10 +30,6 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 	var inCombat: Boolean
 		get() = dataTracker.get(IN_COMBAT)
 		set(value) { dataTracker.set(IN_COMBAT, value) }
-
-	val inventory = DNDInventory()
-
-	val abilities = Abilities()
 
 	override fun initDataTracker(builder: DataTracker.Builder) {
 		builder.add(MAX_HEALTH, 10)
@@ -47,11 +44,11 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 	}
 
 	fun addItemStack(stack: ItemStack){
-		inventory.insertStack(-1, stack)
+		character.inventory.insertStack(-1, stack)
 		(stack.item as? DNDItem)?.addToCharacter(this, stack)
 	}
 
-	fun calculateCarryCapacity() = 15 * abilities.strength
+	fun calculateCarryCapacity() = 15 * character.abilities.strength
 	abstract fun calculateProficiencyBonus(): Int
 
 	override fun damage(
@@ -72,11 +69,11 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 
 	override fun readCustomDataFromNbt(nbt: NbtCompound) {
 		val inventoryData = nbt.getListOrEmpty("Inventory")
-		inventory.readNbt(inventoryData, world.registryManager)
+		character.inventory.readNbt(inventoryData, world.registryManager)
 	}
 
 	override fun writeCustomDataToNbt(nbt: NbtCompound) {
-		nbt.put("Inventory", inventory.writeNbt(world.registryManager))
+		nbt.put("Inventory", character.inventory.writeNbt(world.registryManager))
 	}
 
 	companion object {

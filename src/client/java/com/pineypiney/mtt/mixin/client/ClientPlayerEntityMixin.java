@@ -34,7 +34,7 @@ public class ClientPlayerEntityMixin extends AbstractClientPlayerEntity {
 			return vec;
 		}
 		if(!engine.getRunning() || uuid.equals(engine.getDM())) return vec;
-		if(engine.getPlayerCharacters().stream().anyMatch(entity -> entity.getInCombat() && uuid.equals(entity.getControllingPlayer()))) return new Vec2f(0f, 0f);
+		if(engine.getPlayerEntities().stream().anyMatch(entity -> entity.getInCombat() && uuid.equals(entity.getControllingPlayer()))) return new Vec2f(0f, 0f);
 		return vec;
 	}
 }

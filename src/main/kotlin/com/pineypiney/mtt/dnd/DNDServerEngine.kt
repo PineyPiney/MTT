@@ -17,8 +17,6 @@ import java.util.*
 
 class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 
-	var loadedSpecies = mutableMapOf<String, Species>()
-
 	override var running: Boolean
 		get() = super.running
 		set(value) {
@@ -33,7 +31,7 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 			addStringPayload("dm", value.toString())
 		}
 
-	override val players: List<DNDPlayerEntity> get() = server.worlds.flatMap { it.getEntitiesByType(MTTEntities.PLAYER){ true } }
+	override val playerEntities: List<DNDPlayerEntity> get() = server.worlds.flatMap { it.getEntitiesByType(MTTEntities.PLAYER){ true } }
 
 	init {
 		val allSpeciesFiles = server.resourceManager.findResources("species"){ id ->
@@ -45,13 +43,13 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 			try {
 				val json = Json.parseToJsonElement(resource.reader.readText()).jsonObject
 				val species = Species.parse(json)
-				loadedSpecies[species.id] = species
+				Species.set.add(species)
 			}
 			catch (e: Exception){
 				MTT.logger.warn("Couldn't parse species json $id: ${e.message}")
 			}
 		}
-		MTT.logger.info("Successfully loaded ${loadedSpecies.size} DND species: [${loadedSpecies.keys.joinToString()}]")
+		MTT.logger.info("Successfully loaded ${Species.set.size} DND species: [${Species.set.joinToString{it.id}}]")
 	}
 
 	fun tickServer(server: MinecraftServer){
@@ -63,13 +61,13 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 			}
 		}
 
-		for(player in players){
+		for(player in playerEntities){
 			player.screenHandler.sendContentUpdates()
 		}
 	}
 
 	fun addPlayer(name: String, world: World, position: Vec3d, controlling: UUID? = null): Boolean{
-		if(players.any { it.name == name }){
+		if(playerEntities.any { it.name == name }){
 			return false
 		}
 		val newEntity = DNDPlayerEntity(MTTEntities.PLAYER, world)
@@ -85,7 +83,7 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 	}
 
 	fun removePlayer(name: String): Boolean{
-		for(player in players){
+		for(player in playerEntities){
 			if (player.name == name){
 				player.remove(Entity.RemovalReason.DISCARDED)
 				return true

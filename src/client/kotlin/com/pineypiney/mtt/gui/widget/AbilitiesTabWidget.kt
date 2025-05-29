@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.gui.widget
 
 import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.gui.widget.ability_widget.AbilitySelectorWidget
 import com.pineypiney.mtt.gui.widget.ability_widget.PointBuyWidget
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
@@ -17,7 +18,8 @@ class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int,
 	message
 ) {
 
-	var abilitySelectWidget = PointBuyWidget(this, x + 50, y + 32, width - 100, height - 40)
+	override val isReady: Boolean get() = abilitySelectWidget.isReady
+	var abilitySelectWidget: AbilitySelectorWidget = PointBuyWidget(this, x + 50, y + 32, width - 100, height - 40)
 
 	override fun getContentsHeightWithPadding(): Int {
 		return abilitySelectWidget.height
@@ -31,12 +33,7 @@ class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int,
 		return listOf(abilitySelectWidget)
 	}
 
-	override fun renderWidget(
-		context: DrawContext,
-		mouseX: Int,
-		mouseY: Int,
-		deltaTicks: Float
-	) {
+	override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, deltaTicks: Float) {
 		context.enableScissor(x, y, right, bottom)
 		val titleText = Text.translatable("mtt.character_maker_screen.abilities")
 		val titleWidth = client.textRenderer.getWidth(titleText)
@@ -51,6 +48,10 @@ class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int,
 		abilitySelectWidget.render(context, mouseX, mouseY, deltaTicks)
 
 		context.disableScissor()
+	}
+
+	override fun apply(sheet: CharacterSheet) {
+		abilitySelectWidget.apply(sheet)
 	}
 
 	override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
