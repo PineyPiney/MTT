@@ -25,6 +25,23 @@ class DynamicWidgets {
 			else 				(2f.pow(10f - s * 20f) * sin((20 * s - 11.125f) * c5)) * .5f + 1f
 
 		}
+
+		fun drawRoundedBorder(ctx: DrawContext, x: Int, y: Int, w: Int, h: Int, colour: Int = -12632257, fill: Int = 0){
+			val r = x + w
+			val b = y + h
+			if(fill != 0) ctx.fill(x + 1, y + 1, r - 1, b - 1, fill)
+
+			ctx.drawHorizontalLine(x + 2, r - 3, y, colour)
+			ctx.drawHorizontalLine(x + 2, r - 3, b - 1, colour)
+			ctx.drawVerticalLine(x, y + 1, b - 2, colour)
+			ctx.drawVerticalLine(r - 1, y + 1, b - 2, colour)
+
+			ctx.fill(x + 1, y + 1, x + 2, y + 2, colour)
+			ctx.fill(r - 2, y + 1, r - 1, y + 2, colour)
+			ctx.fill(x + 1, b - 2, x + 2, b - 1, colour)
+			ctx.fill(r - 2, b - 2, r - 1, b - 1, colour)
+		}
+
 		fun drawThinBox(ctx: DrawContext, x: Int, y: Int, w: Int, h: Int, colour: Int = -3750202, topColour: Int = -1, bottomColour: Int = -11184811) {
 			if(h <= 1) return
 

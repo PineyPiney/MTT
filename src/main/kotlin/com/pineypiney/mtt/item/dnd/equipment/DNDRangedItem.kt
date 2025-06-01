@@ -1,7 +1,8 @@
 package com.pineypiney.mtt.item.dnd.equipment
 
-import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.traits.Rarity
+import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
@@ -12,6 +13,10 @@ import net.minecraft.world.World
 
 class DNDRangedItem(settings: Settings, override val weaponType: WeaponType, override val value: Int, override val weight: Float, override val rarity: Rarity = Rarity.COMMON): DNDWeaponItem(settings) {
 	override val type: DNDEquipmentType = DNDEquipmentType.RANGED_WEAPON
+
+	override fun equip(character: Character) {
+
+	}
 
 	override fun onStoppedUsing(
 		stack: ItemStack?,

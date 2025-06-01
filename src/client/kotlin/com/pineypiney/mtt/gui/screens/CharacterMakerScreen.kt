@@ -23,7 +23,7 @@ import net.minecraft.util.Identifier
 class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory: PlayerInventory, title: Text) : HandledScreen<CharacterMakerScreenHandler>(handler, playerInventory, title) {
 
 	var isReady = false
-	val engine = (MinecraftClient.getInstance() as DNDEngineHolder<*>).dndEngine as DNDClientEngine
+	val engine = (MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as DNDClientEngine
 	val sheet = CharacterSheet()
 
 	var tabOpen = 0
@@ -89,6 +89,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 			button.setPosition(x + i * 64, y)
 			addSelectableChild(button)
 		}
+		doneButton.setPosition(x + 64, y + 222)
 	}
 
 	override fun refreshWidgetPositions() {

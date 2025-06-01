@@ -11,14 +11,36 @@ abstract class DNDEngine {
 	open var running: Boolean = false
 	open var DM: UUID? = null
 
-	val characters = mutableListOf<Character>()
-	val playerCharacters = mutableMapOf<UUID, SheetCharacter>()
+	protected val characters = mutableListOf<Character>()
+
+	// Maps players UUIDs to characters UUIDs
+	protected val playerCharacters = mutableMapOf<UUID, UUID>()
 
 	abstract val playerEntities: List<DNDPlayerEntity>
-	fun getPlayerCharacters() = playerEntities
 
-	fun getPlayer(name: String): DNDPlayerEntity? = playerEntities.firstOrNull { it.name == name }
-	fun getPlayer(uuid: UUID): DNDPlayerEntity? = playerEntities.firstOrNull { uuid == (it.controllingPlayer) }
+	open fun addCharacter(character: Character){
+		characters.add(character)
+	}
+	fun getCharacter(name: String): Character? = characters.firstOrNull { it.name == name }
+	fun getCharacter(uuid: UUID): Character? = characters.firstOrNull { it.uuid == uuid }
+	fun getPlayerCharacter(player: UUID): SheetCharacter? {
+		val characterUUID = playerCharacters[player] ?: return null
+		return getCharacter(characterUUID) as? SheetCharacter
+	}
+
+	open fun associatePlayer(player: UUID, character: UUID){
+		playerCharacters[player] = character
+	}
+	fun getControlling(character: Character): UUID?{
+		return playerCharacters.entries.firstOrNull { it.value == character.uuid }?.key
+	}
+	open fun dissociatePlayer(player: UUID){
+		playerCharacters.remove(player)
+	}
+
+	fun getAllPlayerCharacters() = playerCharacters.mapNotNull { getPlayerCharacter(it.key) }
+
+	fun isInCombat(character: Character) = false
 
 	fun tick(){
 

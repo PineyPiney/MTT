@@ -1,39 +1,28 @@
 package com.pineypiney.mtt.entity
 
-import com.pineypiney.mtt.component.MTTComponents
-import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.screen.DNDScreenHandler
-import com.pineypiney.mtt.serialisation.MTTCodecs
 import com.pineypiney.mtt.util.optional
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.data.DataTracker
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.entity.player.PlayerInventory
-import net.minecraft.item.ItemStack
-import net.minecraft.nbt.NbtCompound
-import net.minecraft.screen.NamedScreenHandlerFactory
-import net.minecraft.screen.ScreenHandler
 import net.minecraft.world.World
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
-import kotlin.math.max
 
-class DNDPlayerEntity(type: EntityType<*>, world: World): DNDClassEntity(type, world), NamedScreenHandlerFactory {
+class DNDPlayerEntity(type: EntityType<*>, world: World): DNDClassEntity(type, world) {
+
+	constructor(type: EntityType<*>, world: World, character: SheetCharacter): this(type, world){
+		this.character = character
+		this.name = character.name
+		this.setPosition(character.pos)
+		dataTracker.set(CHARACTER_UUID, character.uuid)
+	}
 
 	val screenHandler = DNDScreenHandler(1, character.inventory)
-
-	val weaponProficiencies = mutableListOf<WeaponType>()
 
 	var controllingPlayer: UUID?
 		get() = this.dataTracker[CONTROLLING_PLAYER].getOrNull()
 		set(value) { dataTracker[CONTROLLING_PLAYER] = value.optional() }
-
-	var creating = true
-	var targetLevel = 1
-
-	constructor(type: EntityType<*>, world: World, name: String): this(type, world){
-		this.name = name
-	}
 
 	init {
 		isCustomNameVisible = true
@@ -42,33 +31,6 @@ class DNDPlayerEntity(type: EntityType<*>, world: World): DNDClassEntity(type, w
 	override fun initDataTracker(builder: DataTracker.Builder) {
 		super.initDataTracker(builder)
 		builder.add(CONTROLLING_PLAYER, Optional.empty())
-	}
-
-	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int{
-		var i = if(weaponType.finesse) max(character.abilities.strMod, character.abilities.dexMod) else character.abilities.strMod
-		if(weaponProficiencies.contains(weaponType)) i += calculateProficiencyBonus()
-		i += stack[MTTComponents.HIT_BONUS_TYPE] ?: 0
-		return i
-	}
-
-	fun getDamageBonus(weaponType: WeaponType, stack: ItemStack): Int{
-		var i = if(weaponType.finesse) max(character.abilities.strMod, character.abilities.dexMod) else character.abilities.strMod
-		i += stack[MTTComponents.DAMAGE_BONUS_TYPE] ?: 0
-		return i
-	}
-
-	override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity?): ScreenHandler? {
-		return DNDScreenHandler(syncId, playerInventory, character.inventory)
-	}
-
-	override fun writeCustomDataToNbt(nbt: NbtCompound) {
-		super.writeCustomDataToNbt(nbt)
-		controllingPlayer?.let { nbt.put("controlling", MTTCodecs.UUID_CODEC, it) }
-	}
-
-	override fun readCustomDataFromNbt(nbt: NbtCompound) {
-		super.readCustomDataFromNbt(nbt)
-		controllingPlayer = nbt.get("controlling", MTTCodecs.UUID_CODEC).getOrNull()
 	}
 
 	companion object {

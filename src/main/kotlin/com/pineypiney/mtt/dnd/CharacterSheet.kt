@@ -7,12 +7,14 @@ import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
 import com.pineypiney.mtt.dnd.traits.Source
 import com.pineypiney.mtt.dnd.traits.features.Feature
+import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import io.netty.buffer.ByteBuf
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
+import net.minecraft.util.math.MathHelper
 import kotlin.jvm.optionals.getOrNull
 
 class CharacterSheet {
@@ -27,6 +29,8 @@ class CharacterSheet {
 	private val sizeProperty = Property(Size.MEDIUM){ src, value -> src.overridePower }
 	val size get() = sizeProperty.getValue()
 	var model = "default"
+	var maxHealth: Int = 6
+	var health = 6
 	var armourClass = 10
 	var darkVision = 0
 
@@ -36,7 +40,6 @@ class CharacterSheet {
 	val resistances = mutableMapOf<Source, MutableSet<String>>()
 	val proficiencies = mutableMapOf<Source, MutableSet<Proficiency>>()
 	val features = mutableMapOf<Source, MutableSet<Feature>>()
-
 
 	fun addTypeSource(type: CreatureType, src: Source){
 		typeProperty.sources[src] = type
@@ -81,6 +84,13 @@ class CharacterSheet {
 		if(current != null) current.addAll(newProficiencies)
 		else proficiencies[src] = newProficiencies.toMutableSet()
 	}
+
+	fun isProficientIn(equipmentType: EquipmentType): Boolean{
+		val proficiency = Proficiency.findById(equipmentType.id)
+		return proficiencies.any { it.value.contains(proficiency) }
+	}
+
+	fun calculateProficiencyBonus() = MathHelper.ceilDiv(classes.values.sum(), 4) + 1
 
 	fun <T, C> encodePropertyMap(buf: ByteBuf, property: Property<T>, codec: PacketCodec<ByteBuf, C>, get: (T) -> C){
 		PacketCodecs.INTEGER.encode(buf, property.sources.size)

@@ -1,14 +1,20 @@
 package com.pineypiney.mtt.item.dnd.equipment
 
 import com.pineypiney.mtt.component.MTTComponents
-import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.traits.Rarity
+import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
 
-open class DNDArmourItem(settings: Settings, override val value: Int, override val weight: Float, val armourClass: Int, val armourType: ArmourType, val stealthDisadvantage: Boolean, override val rarity: Rarity = Rarity.COMMON) : DNDEquipmentItem(settings) {
+open class DNDArmourItem(settings: Settings, value: Int, weight: Float, model: String, texture: String, val armourClass: Int, val armourType: ArmourType, val stealthDisadvantage: Boolean, rarity: Rarity = Rarity.COMMON) : VisibleAccessoryItem(settings, value, weight, DNDEquipmentType.ARMOUR, model, texture, rarity
+) {
 	override val type: DNDEquipmentType = DNDEquipmentType.ARMOUR
+
+	override fun equip(character: Character) {
+		character.baseArmourClass = armourClass
+	}
 
 	companion object {
 		fun getStack(item: DNDEquipmentItem, value: Int, level: Int, rarityBoost: Int): ItemStack{

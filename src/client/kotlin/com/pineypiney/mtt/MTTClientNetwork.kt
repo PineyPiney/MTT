@@ -1,11 +1,12 @@
 package com.pineypiney.mtt
 
 import com.pineypiney.mtt.dnd.DNDClientEngine
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
-import com.pineypiney.mtt.network.payloads.s2c.CharacterSheetS2CPayload
+import com.pineypiney.mtt.network.payloads.s2c.CharacterS2CPayload
 import com.pineypiney.mtt.network.payloads.s2c.DNDEngineUpdateS2CPayload
+import com.pineypiney.mtt.network.payloads.s2c.EntityDNDEquipmentUpdateS2CPayload
 import com.pineypiney.mtt.network.payloads.s2c.SpeciesS2CPayload
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 
@@ -13,7 +14,7 @@ class MTTClientNetwork {
 
 	companion object {
 
-		fun getEngine(ctx: ClientPlayNetworking.Context) = (ctx.client() as? DNDEngineHolder<*>)?.dndEngine as? DNDClientEngine
+		fun getEngine(ctx: ClientPlayNetworking.Context) = (ctx.client() as? DNDEngineHolder<*>)?.`mtt$getDNDEngine`() as? DNDClientEngine
 		@Suppress("UNCHECKED_CAST")
 		fun registerPayloads(){
 			ClientPlayNetworking.registerGlobalReceiver(DNDEngineUpdateS2CPayload.ID){ payload, ctx ->
@@ -29,11 +30,14 @@ class MTTClientNetwork {
 				Species.set.add(payload.species)
 			}
 
-			ClientPlayNetworking.registerGlobalReceiver(CharacterSheetS2CPayload.ID){ payload, ctx ->
+			ClientPlayNetworking.registerGlobalReceiver(CharacterS2CPayload.ID){ payload, ctx ->
 				val engine = getEngine(ctx) ?: return@registerGlobalReceiver
-				val character = SheetCharacter(payload.sheet)
-				engine.characters.add(character)
-				if(payload.associatedPlayer.isPresent) engine.playerCharacters[payload.associatedPlayer.get()] = character
+				engine.addCharacter(payload.character)
+			}
+
+			ClientPlayNetworking.registerGlobalReceiver(EntityDNDEquipmentUpdateS2CPayload.ID){ payload, ctx ->
+				val entity = ctx.client().world?.getEntityById(payload.entityID) as? DNDEntity ?: return@registerGlobalReceiver
+				for((slot, stack) in payload.changes) entity.character.inventory.equipment[slot] = stack
 			}
 		}
 	}

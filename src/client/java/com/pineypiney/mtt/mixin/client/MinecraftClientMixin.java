@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.mixin.client;
 
 import com.pineypiney.mtt.dnd.DNDClientEngine;
-import com.pineypiney.mtt.entity.DNDPlayerEntity;
+import com.pineypiney.mtt.dnd.characters.SheetCharacter;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import com.pineypiney.mtt.network.payloads.c2s.OpenDNDScreenC2SPayload;
 import com.pineypiney.mtt.render.MTTRenderers;
@@ -29,13 +29,14 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientE
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void init(RunArgs args, CallbackInfo ci) {
-		MTTRenderers.Companion.registerAllBipedModels();
+		MTTRenderers.Companion.registerBipedModels();
+		MTTRenderers.Companion.registerEquipmentModels();
 	}
 
 	@Debug(export = true)
 	@Redirect(method = "handleInputEvents", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/MinecraftClient;setScreen(Lnet/minecraft/client/gui/screen/Screen;)V", ordinal = 1))
 	private void openDNDInventory(MinecraftClient instance, Screen screen){
-		DNDPlayerEntity character = getDNDCharacter();
+		SheetCharacter character = getDNDCharacter();
 		if(!dndEngine.getRunning() || character == null) setScreen(screen);
 		else if (player != null) {
 			CustomPayload payload = new OpenDNDScreenC2SPayload(0);
@@ -47,15 +48,15 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientE
 	DNDClientEngine dndEngine = new DNDClientEngine((MinecraftClient)(Object)this);
 
 	@Override
-	public DNDClientEngine getDNDEngine() {
+	public DNDClientEngine mtt$getDNDEngine() {
 		return dndEngine;
 	}
 
 	@Unique
 	@Nullable
-	public DNDPlayerEntity getDNDCharacter(){
+	public SheetCharacter getDNDCharacter(){
 		ClientPlayerEntity player = this.player;
 		if(player == null) return null;
-		return dndEngine.getPlayer(player.getUuid());
+		return dndEngine.getPlayerCharacter(player.getUuid());
 	}
 }

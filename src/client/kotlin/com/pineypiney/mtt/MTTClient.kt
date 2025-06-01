@@ -1,6 +1,6 @@
 package com.pineypiney.mtt
 
-import com.pineypiney.mtt.entity.DNDPlayerEntity
+import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.gui.MTTTooltips
 import com.pineypiney.mtt.gui.screens.MTTScreens
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
@@ -18,10 +18,10 @@ class MTTClient : ClientModInitializer {
 	}
 
 	companion object {
-		fun getClientCharacter(): DNDPlayerEntity? {
+		fun getClientCharacter(): SheetCharacter? {
 			val client = MinecraftClient.getInstance() ?: return null
-			val dndEngine = (client as? DNDEngineHolder<*>)?.dndEngine ?: return null
-			return dndEngine.getPlayer(client.player?.uuid ?: return null)
+			val dndEngine = (client as? DNDEngineHolder<*>)?.`mtt$getDNDEngine`() ?: return null
+			return dndEngine.getPlayerCharacter(client.player?.uuid ?: return null)
 		}
 	}
 }

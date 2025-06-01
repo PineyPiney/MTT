@@ -44,7 +44,7 @@ class DNDItemGroups {
 				DNDArmourItem.addTo(DNDItems.SCALE_MAIL, entries, 1500, 5000, 18000, 1)
 				DNDArmourItem.addTo(DNDItems.SPLINT, entries, 	3600, 10000, 21000, 1)
 
-				entries.add(DNDItems.IRON_HELMET)
+				entries.add(DNDItems.STEEL_HELMET)
 
 				DNDArmourItem.addTo(DNDItems.SHIELD, entries, 800, 3000, 12000, 0)
 			}

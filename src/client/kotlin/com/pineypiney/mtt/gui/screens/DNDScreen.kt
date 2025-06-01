@@ -44,8 +44,8 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 	}
 
 	fun hasScrollbar(): Boolean{
-		val character = (client as DNDEngineHolder<*>).dndEngine.getPlayer(client?.player?.uuid ?: return false) ?: return false
-		return character.character.inventory.size() > DNDInventory.EQUIPMENT_SIZE + 63
+		val character = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`().getPlayerCharacter(client?.player?.uuid ?: return false) ?: return false
+		return character.inventory.size() > DNDInventory.EQUIPMENT_SIZE + 63
 	}
 
 	override fun drawForeground(context: DrawContext, mouseX: Int, mouseY: Int) {

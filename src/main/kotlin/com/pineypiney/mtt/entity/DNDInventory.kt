@@ -1,5 +1,7 @@
 package com.pineypiney.mtt.entity
 
+import com.pineypiney.mtt.item.dnd.equipment.DNDArmourItem
+import com.pineypiney.mtt.item.dnd.equipment.DNDEquipmentItem
 import com.pineypiney.mtt.screen.DNDScreenHandler
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
@@ -160,6 +162,16 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 
 	}
 
+	fun getVisualEquipment(i: Int) = if(equipment[i + 1].isEmpty) equipment[i] else equipment[i + 1]
+	fun getVisualHelmet(): ItemStack = getVisualEquipment(0)
+	fun getVisualCloak(): ItemStack = getVisualEquipment(2)
+	fun getVisualArmour(): ItemStack = getVisualEquipment(4)
+	fun getVisualBracers(): ItemStack = getVisualEquipment(6)
+	fun getVisualBoots(): ItemStack = getVisualEquipment(8)
+
+	fun getArmour(): DNDArmourItem? = equipment[4].item as? DNDArmourItem
+	fun getOffhand(): DNDEquipmentItem? = equipment[11].item as? DNDEquipmentItem
+
 	fun writeNbt(manager: DynamicRegistryManager, nbt: NbtList = NbtList()): NbtList{
 		val equipment = NbtList()
 		for(i in 0..<EQUIPMENT_SIZE){
@@ -188,7 +200,7 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 		val equipmentData = nbt.getListOrEmpty(0)
 		if(!equipmentData.isEmpty) {
 			equipment.clear()
-			for (i in 0..<EQUIPMENT_SIZE) {
+			for (i in 0..<equipmentData.size) {
 				val compound = equipmentData.getCompoundOrEmpty(i)
 				val slot = compound.getByte("Slot").getOrNull() ?: continue
 				val stack = ItemStack.fromNbt(manager, compound).orElse(ItemStack.EMPTY)

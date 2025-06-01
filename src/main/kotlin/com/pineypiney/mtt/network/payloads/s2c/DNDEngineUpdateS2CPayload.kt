@@ -15,13 +15,24 @@ class DNDEngineUpdateS2CPayload(val field: String, val data: String) : CustomPay
 	fun apply(engine: DNDEngine){
 		when(field){
 			"running" -> engine.running = data[0].code == 1
-			"dm" -> engine.DM = UUID.fromString(data)
-			//"added player" -> engine.addPlayer(data, )
-			//"removed player" -> engine.removePlayer(data)
-			//"set controlling" -> {
-			//	val (character, uuid) = data.split(';')
-			//	engine.getPlayer(character)?.controllingPlayer = UUID.fromString(uuid)
-			//}
+			"dm" -> {
+				engine.DM = if(data.isEmpty()) null
+				else try {UUID.fromString(data) } catch(_: IllegalArgumentException) { null }
+			}
+			"player" -> {
+				val index = data.indexOf('/')
+				val player = if(index == -1) data else data.substring(0, index)
+				val playerUUID = try { UUID.fromString(player) } catch (_: IllegalArgumentException) { return }
+				if(playerUUID == null) return
+
+				if(index == -1) engine.dissociatePlayer(playerUUID)
+				else {
+					val character = data.substring(index + 1)
+					val characterUUID = try { UUID.fromString(character) } catch (_: IllegalArgumentException) { null }
+					if (characterUUID == null) engine.dissociatePlayer(playerUUID)
+					else engine.associatePlayer(playerUUID, characterUUID)
+				}
+			}
 		}
 	}
 

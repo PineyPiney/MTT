@@ -3,9 +3,9 @@ package com.pineypiney.mtt.item.dnd
 import com.mojang.datafixers.util.Function3
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.component.MTTComponents
+import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
-import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.item.dnd.equipment.*
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.DyedColorComponent
@@ -33,67 +33,51 @@ class DNDItems {
 		val HEAVY_CROSSBOW = registerWeapon("heavy_crossbow", WeaponType.HEAVY_CROSSBOW, 50, 18f, ::DNDRangedItem)
 
 		// https://roll20.net/compendium/dnd5e/Armor#content
-		val LEATHER_ARMOUR = registerArmour("leather_armour", 10, 10f, 11, ArmourType.LIGHT, false, Item.Settings().component(DataComponentTypes.DYED_COLOR, DyedColorComponent(-6265536)))
-		val SCALE_MAIL = registerArmour("scale_mail", 50, 45f, 14, ArmourType.MEDIUM, true, Item.Settings())
-		val SPLINT = registerArmour("splint", 200, 60f, 17, ArmourType.HEAVY, true, Item.Settings())
+		val LEATHER_ARMOUR = registerArmour("leather_armour", 10, 10f, "armour", "leather_armour", 11, ArmourType.LIGHT, false, Item.Settings().component(DataComponentTypes.DYED_COLOR, DyedColorComponent(-6265536)))
+		val SCALE_MAIL = registerArmour("scale_mail", 50, 45f, "armour", "scale_mail", 14, ArmourType.MEDIUM, true, Item.Settings())
+		val SPLINT = registerArmour("splint", 200, 60f, "armour", "splint", 17, ArmourType.HEAVY, true, Item.Settings())
 
-		val IRON_HELMET = registerAccessory("iron_helmet", 25, 3f, DNDEquipmentType.HELMET, Item.Settings().component(MTTComponents.ARMOUR_CLASS_BONUS_TYPE, 1))
-		val SHIELD = registerAccessory("shield", 10, 6f, DNDEquipmentType.MELEE_WEAPON, Item.Settings())
+		val STEEL_HELMET = registerVisibleAccessory("steel_helmet", 25, 3f, "horned_helmet", "steel_helmet", DNDEquipmentType.HELMET, Item.Settings().component(MTTComponents.ARMOUR_CLASS_BONUS_TYPE, 1))
+		val SHIELD = register("shield"){ s -> DNDShieldItem(s, 10, 6f, 2) }
+
+		@Suppress("UNCHECKED_CAST")
+		fun <E: DNDItem> register(mishapartyy: String, settings: Item.Settings = Item.Settings(), factory: (Item.Settings) -> E): E{
+			return Items.register(
+				RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, mishapartyy)),
+				{ s -> factory(s) },
+				settings
+			) as E
+		}
 
 		fun register(path: String, factory: Function3<Item.Settings, Float, Float, Item>, value: Float, weight: Float, settings: Item.Settings): Item {
-			Items.LEATHER_CHESTPLATE
-			val registryKey: RegistryKey<Item?>? = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path))
-			return Items.register(registryKey, { s -> factory.apply(s, value, weight) }, settings)
+			return Items.register(
+				RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)),
+				{ s -> factory.apply(s, value, weight) },
+				settings
+			)
 		}
 
-		fun registerEquipment(path: String, value: Int, weight: Float, type: DNDEquipmentType, settings: Item.Settings, rarity: Int = 0, factory: Function5<Item.Settings, Int, Float, Int, DNDEquipmentType, Item>): Item{
-			val registryKey: RegistryKey<Item?>? = RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path))
-			return Items.register(registryKey, { s -> factory.invoke(s, value, weight, rarity, type) }, settings.maxCount(1))
-		}
-
-		fun registerArmour(path: String, value: Int, weight: Float, armourClass: Int, armourType: ArmourType, stealthDisadvantage: Boolean, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): DNDArmourItem {
+		private fun registerArmour(path: String, value: Int, weight: Float, model: String, texture: String, armourClass: Int, armourType: ArmourType, stealthDisadvantage: Boolean, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): DNDArmourItem {
 			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s ->
-				DNDArmourItem(
-					s,
-					value,
-					weight,
-					armourClass,
-					armourType,
-					stealthDisadvantage,
-					rarity
-				)
+				DNDArmourItem(s, value, weight, model, texture, armourClass, armourType, stealthDisadvantage, rarity)
 			}, settings.maxCount(1)) as DNDArmourItem
 		}
 
-		fun registerAccessory(path: String, value: Int, weight: Float, type: DNDEquipmentType, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): DNDAccessoryItem {
+		private fun registerVisibleAccessory(path: String, value: Int, weight: Float, model: String, texture: String, type: DNDEquipmentType, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): VisibleAccessoryItem {
 			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s ->
-				DNDAccessoryItem(
-					s,
-					value,
-					weight,
-					type,
-					rarity
-				)
+				VisibleAccessoryItem(s, value, weight, type, model, texture, rarity)
+			}, settings.maxCount(1)) as VisibleAccessoryItem
+		}
+
+		private fun registerAccessory(path: String, value: Int, weight: Float, type: DNDEquipmentType, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): DNDAccessoryItem {
+			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s ->
+				DNDAccessoryItem(s, value, weight, type, rarity)
 			}, settings.maxCount(1)) as DNDAccessoryItem
 		}
 
 		@Suppress("UNCHECKED_CAST")
-		fun <E: DNDWeaponItem> registerWeapon(path: String, type: WeaponType, value: Int, weight: Float, factory: (Item.Settings, WeaponType, Int, Float, Rarity) -> E, settings: Item.Settings = Item.Settings(), rarity: Rarity = Rarity.COMMON): E{
+		private fun <E: DNDWeaponItem> registerWeapon(path: String, type: WeaponType, value: Int, weight: Float, factory: (Item.Settings, WeaponType, Int, Float, Rarity) -> E, settings: Item.Settings = Item.Settings(), rarity: Rarity = Rarity.COMMON): E{
 			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s -> factory(s, type, value, weight, rarity) }, settings.maxCount(1)) as E
-		}
-
-		fun registerDefaultMeleeWeapon(path: String, type: WeaponType, commonValue: Int, uncommonValue: Int, rareValue: Int, vRareVal: Int, weight: Float, settings: Item.Settings): DNDDefaultMeleeItem {
-			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s ->
-				DNDDefaultMeleeItem(
-					s,
-					type,
-					weight,
-					commonValue,
-					uncommonValue,
-					rareValue,
-					vRareVal
-				)
-			}, settings.maxCount(1)) as DNDDefaultMeleeItem
 		}
 	}
 }

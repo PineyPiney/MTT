@@ -3,6 +3,7 @@ package com.pineypiney.mtt.mixin.client;
 import com.mojang.authlib.GameProfile;
 import com.pineypiney.mtt.MTT;
 import com.pineypiney.mtt.dnd.DNDEngine;
+import com.pineypiney.mtt.dnd.characters.SheetCharacter;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -28,13 +29,14 @@ public class ClientPlayerEntityMixin extends AbstractClientPlayerEntity {
 
 	@ModifyVariable(method = "tickMovementInput", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/network/ClientPlayerEntity;applyMovementSpeedFactors(Lnet/minecraft/util/math/Vec2f;)Lnet/minecraft/util/math/Vec2f;"), ordinal = 0)
 	private Vec2f freezeDndPlayers(Vec2f vec){
-		DNDEngine engine = ((DNDEngineHolder<?>) client).getDNDEngine();
+		DNDEngine engine = ((DNDEngineHolder<?>) client).mtt$getDNDEngine();
 		if(engine == null){
-			MTT.Companion.getLogger().debug("Client does not have DNDEngine");
+			MTT.Companion.getLogger().warn("Client does not have DNDEngine");
 			return vec;
 		}
 		if(!engine.getRunning() || uuid.equals(engine.getDM())) return vec;
-		if(engine.getPlayerEntities().stream().anyMatch(entity -> entity.getInCombat() && uuid.equals(entity.getControllingPlayer()))) return new Vec2f(0f, 0f);
-		return vec;
+		SheetCharacter character = engine.getPlayerCharacter(uuid);
+		if(character == null) return vec;
+		return engine.isInCombat(character) ? new Vec2f(0f, 0f) : vec;
 	}
 }

@@ -1,9 +1,9 @@
 package com.pineypiney.mtt.dnd.classes
 
-import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.dnd.traits.ProficiencyTrait
 import com.pineypiney.mtt.dnd.traits.Trait
 import com.pineypiney.mtt.dnd.traits.features.Feature
+import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 
 object Fighter : DNDClass("fighter", 10) {
 	override val coreTraits: List<Trait<*>> = listOf(

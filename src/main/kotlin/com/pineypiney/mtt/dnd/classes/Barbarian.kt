@@ -1,11 +1,11 @@
 package com.pineypiney.mtt.dnd.classes
 
-import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.dnd.traits.ProficiencyTrait
 import com.pineypiney.mtt.dnd.traits.Trait
 import com.pineypiney.mtt.dnd.traits.features.Feature
 import com.pineypiney.mtt.dnd.traits.features.Features
+import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 
 object Barbarian : DNDClass("barbarian", 12) {
 

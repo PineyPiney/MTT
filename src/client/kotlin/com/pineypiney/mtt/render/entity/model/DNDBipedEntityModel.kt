@@ -4,7 +4,6 @@ import com.pineypiney.mtt.render.entity.state.DNDBipedEntityRenderState
 import net.minecraft.client.model.ModelPart
 import net.minecraft.client.render.entity.model.EntityModel
 import net.minecraft.client.render.entity.model.EntityModelPartNames
-import kotlin.math.cos
 import kotlin.math.sin
 
 open class DNDBipedEntityModel<S: DNDBipedEntityRenderState>(root: ModelPart): EntityModel<S>(root) {
@@ -18,9 +17,9 @@ open class DNDBipedEntityModel<S: DNDBipedEntityRenderState>(root: ModelPart): E
 	override fun setAngles(state: S) {
 		super.setAngles(state)
 		leftLeg.pitch = sin(state.limbSwingAnimationProgress * 0.666f) * state.limbSwingAmplitude
-		rightLeg.pitch = cos(state.limbSwingAnimationProgress * 0.666f) * state.limbSwingAmplitude
+		rightLeg.pitch = -sin(state.limbSwingAnimationProgress * 0.666f) * state.limbSwingAmplitude
 		leftArm.pitch = -sin(state.limbSwingAnimationProgress * 0.666f) * state.limbSwingAmplitude
-		rightArm.pitch = -cos(state.limbSwingAnimationProgress * 0.666f) * state.limbSwingAmplitude
-		head.yaw = state.limbSwingAnimationProgress * .2f
+		rightArm.pitch = sin(state.limbSwingAnimationProgress * 0.666f) * state.limbSwingAmplitude
+		head.yaw = state.relativeHeadYaw
 	}
 }

@@ -35,6 +35,7 @@
 			"environment": "client"
 		}
 	],
+	"accessWidener": "mtt.accesswidener",
 	"depends": {
 		"fabricloader": ">=0.16.14",
 		"minecraft": "~1.21.5",

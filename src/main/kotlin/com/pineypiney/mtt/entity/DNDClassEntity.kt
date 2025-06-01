@@ -1,15 +1,11 @@
 package com.pineypiney.mtt.entity
 
-import com.pineypiney.mtt.dnd.CharacterSheet
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import net.minecraft.entity.EntityType
-import net.minecraft.util.math.MathHelper
 import net.minecraft.world.World
 
 open class DNDClassEntity(type: EntityType<*>, world: World): DNDEntity(type, world) {
 
-	override var character: SheetCharacter = SheetCharacter(CharacterSheet())
 	val classes = mutableMapOf<DNDClass, Int>()
 
 	fun calculateHealthFromClass(): Int{
@@ -23,6 +19,4 @@ open class DNDClassEntity(type: EntityType<*>, world: World): DNDEntity(type, wo
 		}
 		return health
 	}
-
-	override fun calculateProficiencyBonus() = MathHelper.ceilDiv(classes.values.sum(), 4) + 1
 }

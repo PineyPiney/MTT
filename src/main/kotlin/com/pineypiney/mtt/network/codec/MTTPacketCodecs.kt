@@ -2,6 +2,8 @@ package com.pineypiney.mtt.network.codec
 
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.species.Species
 import com.pineypiney.mtt.dnd.traits.Source
@@ -9,6 +11,7 @@ import com.pineypiney.mtt.dnd.traits.features.Feature
 import com.pineypiney.mtt.dnd.traits.features.Features
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import io.netty.buffer.ByteBuf
+import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import java.util.*
@@ -20,6 +23,11 @@ class MTTPacketCodecs {
 		val str get() = PacketCodecs.STRING
 		val int get() = PacketCodecs.INTEGER
 
+		fun <B: ByteBuf> INT() = object : PacketCodec<B, Int>{
+			override fun decode(buf: B) = buf.readInt()
+			override fun encode(buf: B, value: Int) { buf.writeInt(value) }
+		}
+
 		fun <T> decodeList(buf: ByteBuf, codec: PacketCodec<ByteBuf, T>): List<T>{
 			val length = PacketCodecs.INTEGER.decode(buf)
 			return List(length){ codec.decode(buf) }
@@ -28,7 +36,12 @@ class MTTPacketCodecs {
 			val length = int.decode(buf)
 			return List(length){ getter(codec.decode(buf)) }
 		}
-		fun <T> encodeCollection(buf: ByteBuf, collection: Collection<T>, codec: PacketCodec<ByteBuf, T>){
+		fun <B: ByteBuf, T> decodeCollection(buf: B, codec: PacketCodec<B, T>, dst: MutableCollection<T>): MutableCollection<T>{
+			val length = int.decode(buf)
+			for(i in 1..length) dst.add(codec.decode(buf))
+			return dst
+		}
+		fun <B: ByteBuf, T> encodeCollection(buf: B, collection: Collection<T>, codec: PacketCodec<B, T>){
 			int.encode(buf, collection.size)
 			collection.forEach { codec.encode(buf, it) }
 		}
@@ -88,6 +101,26 @@ class MTTPacketCodecs {
 				int.encode(buf, value.size)
 				value.forEach { codec.encode(buf, it) }
 			}
+		}
+
+		fun <B: ByteBuf, K, V> map(keyCodec: PacketCodec<B, K>, valueCodec: PacketCodec<B, V>) = object : PacketCodec<B, Map<K, V>>{
+			override fun decode(buf: B): Map<K, V> {
+				val map = mutableMapOf<K, V>()
+				for(i in 1..buf.readInt()){
+					map[keyCodec.decode(buf)] = valueCodec.decode(buf)
+				}
+				return map
+			}
+
+			override fun encode(buf: B, value: Map<K, V>) {
+				buf.writeInt(value.size)
+				for((k, v) in value){
+					keyCodec.encode(buf, k)
+					valueCodec.encode(buf, v)
+				}
+
+			}
+
 		}
 
 		val UUID_CODEC = PacketCodec.tuple(
@@ -208,6 +241,20 @@ class MTTPacketCodecs {
 				encodeMap(buf, value.resistances, SOURCE_CODEC, collection(str, ::mutableSetOf))
 				encodeMap(buf, value.proficiencies, SOURCE_CODEC, collection(Proficiency.CODEC, ::mutableSetOf))
 				encodeMap(buf, value.features, SOURCE_CODEC, collection(FEATURE_CODEC, ::mutableSetOf))
+			}
+		}
+
+		val CHARACTER_CODEC = object : PacketCodec<RegistryByteBuf, Character>{
+			override fun decode(buf: RegistryByteBuf): Character {
+				val type = str.decode(buf)
+				return when(type){
+					"sheet" -> SheetCharacter.load(buf)
+					else -> throw Exception("Cannot parse character: no character type $type")
+				}
+			}
+
+			override fun encode(buf: RegistryByteBuf, value: Character) {
+				value.save(buf)
 			}
 		}
 	}

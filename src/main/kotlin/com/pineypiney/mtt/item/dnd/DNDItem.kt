@@ -1,8 +1,8 @@
 package com.pineypiney.mtt.item.dnd
 
 import com.pineypiney.mtt.component.MTTComponents
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.traits.Rarity
-import com.pineypiney.mtt.entity.DNDEntity
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 
@@ -11,8 +11,7 @@ abstract class DNDItem(settings: Settings) : Item(settings) {
 	abstract val weight: Float
 	abstract val rarity: Rarity
 
-	open fun addToCharacter(entity: DNDEntity, stack: ItemStack){
-	}
+	open fun addToCharacter(character: Character, stack: ItemStack){}
 
 	companion object {
 		fun getValue(stack: ItemStack): Int{

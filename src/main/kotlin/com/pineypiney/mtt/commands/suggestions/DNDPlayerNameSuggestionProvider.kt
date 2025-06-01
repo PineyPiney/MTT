@@ -17,7 +17,7 @@ class DNDPlayerNameSuggestionProvider: SuggestionProvider<ServerCommandSource> {
 		val engine = MTTCommands.getEngine(context)
 
 		// Add all player names to the builder.
-		for (player in engine.getPlayerCharacters()) {
+		for (player in engine.getAllPlayerCharacters()) {
 			builder.suggest(player.name)
 		}
 
