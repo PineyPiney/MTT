@@ -1,11 +1,14 @@
 package com.pineypiney.mtt.dnd
 
+import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.entity.DNDPlayerEntity
 import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.minecraft.client.MinecraftClient
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.util.math.Box
+import java.util.*
 
 class DNDClientEngine(val client: MinecraftClient) : DNDEngine() {
 
@@ -25,5 +28,26 @@ class DNDClientEngine(val client: MinecraftClient) : DNDEngine() {
 
 	companion object {
 		fun getInstance() = (MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as DNDClientEngine
+		fun getClientCharacter(): SheetCharacter?{
+			val client = MinecraftClient.getInstance()
+			val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`()
+			return engine.getPlayerCharacter(client.player?.uuid ?: return null)
+		}
+		fun getClientCharacterUUID(): UUID?{
+			val client = MinecraftClient.getInstance()
+			val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`()
+			return engine.getPlayerCharacterUUID(client.player?.uuid ?: return null)
+		}
+		fun getRunningAndPlayerCharacter(player: PlayerEntity?): SheetCharacter? {
+			val engine = getInstance()
+			if(!engine.running) return null
+			return engine.getPlayerCharacter(player?.uuid ?: return null)
+		}
+		fun getRunningAndPlayerCharacterEntity(player: PlayerEntity?): DNDPlayerEntity? {
+			val engine = getInstance()
+			if(!engine.running) return null
+			val characterUUID = engine.getPlayerCharacterUUID(player?.uuid ?: return null) ?: return null
+			return engine.getCharacterEntity(characterUUID)
+		}
 	}
 }

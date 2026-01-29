@@ -1,6 +1,6 @@
 {
-  "parent": "item/handheld",
+  "parent": "mtt:item/upright_weapon",
   "textures": {
-    "layer0": "minecraft:item/iron_sword"
+    "layer0": "mtt:item/long_sword"
   }
 }

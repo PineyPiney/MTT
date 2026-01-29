@@ -24,18 +24,8 @@ class Background(val id: String, val ability1: Ability,val ability2: Ability,val
 
 		val set = mutableSetOf<Background>()
 
-		fun findById(id: String) = set.firstOrNull { it.id == id } ?: NONE
+		fun findById(id: String) = set.firstOrNull { it.id == id } ?: throw IllegalArgumentException("No Background with id $id")
 
-		val NONE = Background(
-			"none",
-			Ability.STRENGTH,
-			Ability.STRENGTH,
-			Ability.STRENGTH,
-			Feats.None,
-			Proficiency.NONE,
-			Proficiency.NONE,
-			ProficiencyTrait("tool", Proficiency.NONE)
-		)
 		val ACOLYTE = Background(
 			"acolyte",
 			Ability.INTELLIGENCE,

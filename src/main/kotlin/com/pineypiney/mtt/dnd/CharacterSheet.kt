@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.dnd
 
 import com.pineypiney.mtt.dnd.classes.DNDClass
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
@@ -19,8 +19,8 @@ import kotlin.jvm.optionals.getOrNull
 
 class CharacterSheet {
 	var name = "Unnamed Character"
-	var species: Species = Species.NONE
-	var background: Background = Background.NONE
+	var race: Race = Race.NONE
+	var background: Background = Background.ACOLYTE
 	var level = 1
 	private val typeProperty = Property(CreatureType.HUMANOID){ src, value -> src.overridePower }
 	val type get() = typeProperty.getValue()
@@ -108,7 +108,6 @@ class CharacterSheet {
 			val value = get(codec.decode(buf))
 			property.sources[src] = value
 		}
-
 	}
 
 	fun encodeProperties(buf: ByteBuf){
@@ -126,7 +125,7 @@ class CharacterSheet {
 	fun writeNbt(): NbtCompound {
 		val sheetNbt = NbtCompound()
 		sheetNbt.putString("name", name)
-		sheetNbt.putString("species", species.id)
+		sheetNbt.putString("race", race.id)
 		sheetNbt.putInt("level", level)
 		sheetNbt.putInt("speed", speed)
 		sheetNbt.putString("size", size.name)
@@ -137,7 +136,7 @@ class CharacterSheet {
 
 	fun readNbt(nbt: NbtCompound, engine: DNDServerEngine){
 		nbt.getString("name").getOrNull()?.let { name = it }
-		nbt.getString("species").getOrNull()?.let{ species = Species.findById(it) }
+		nbt.getString("race").getOrNull()?.let{ race = Race.findById(it) }
 		nbt.getInt("level").getOrNull()?.let { level = it }
 		//nbt.getInt("speed").getOrNull()?.let { speed = it }
 		//nbt.getString("size").getOrNull()?.let{ size = Size.Companion.fromString(it) }

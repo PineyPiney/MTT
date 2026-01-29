@@ -24,7 +24,7 @@ import kotlin.math.min
 class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTabWidget<*>, private val label: Text, private val index: Int, private val segments: List<Segment>): ClickableWidget(x, y, width, 13, Text.literal("Trait Entry ${label.string}")){
 
 	val src = when(tab){
-		is SpeciesTabWidget -> "species"
+		is RaceTabWidget -> "race"
 		is ClassTabWidget -> "class"
 		is BackgroundTabWidget -> "background"
 		else -> "null"
@@ -46,7 +46,14 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 	override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, deltaTicks: Float) {
 		updateEase(deltaTicks * .2f)
 
+		// Render the name of the entry
 		context.drawText(tab.client.textRenderer, label, x + 2, y + 2, 4210752, false)
+
+		if(!this.isReady){
+			context.drawTexture(RenderLayer::getGuiTextured, Identifier.ofVanilla("textures/gui/sprites/icon/unseen_notification.png"), x + width - 20, y + 2, 0f, 0f, 8, 8, 8, 8)
+		}
+
+		// Render the Open/Close button
 		DynamicWidgets.drawThinBox(context, x + width - 12, y, 12, 12, -3750202, -1, -11184811)
 
 		context.matrices.push()
@@ -55,6 +62,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 		context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MTT.MOD_ID, "textures/gui/sprites/widget/button_icon.png"), x + width - 10, y + 4, 0f, 0f, 8, 4, 16, 16)
 		context.matrices.pop()
 
+		// Render the content
 		if(openness != 0f) {
 
 			DynamicWidgets.drawThickBox(context, x, y + 13, width, getBoxHeight())
@@ -267,9 +275,8 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 			val pointsText = Text.literal("${part.pointsLeft}/${part.points}")
 			ctx.drawText(textRenderer, pointsText, x + labelWidth + 5 * part.points + 3 - textRenderer.getWidth(pointsText) / 2, y, 16777215, shadow)
 
-			var i = 0
 			hoveredIcon = -1
-			for(value in part.tallies){
+			for((i, value) in part.tallies.withIndex()){
 				val buttonY = y + 12 * (i + 1)
 				val hoveringRow = mouseY >= buttonY && mouseY < buttonY + 7
 				ctx.drawText(textRenderer, labels[i], x + labelWidth - textRenderer.getWidth(labels[i]), buttonY, 16777215, shadow)
@@ -293,7 +300,6 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 						if(hoveringButton) ctx.fill(buttonX + 2, buttonY + 2, buttonX + 5, buttonY + 5, 1575672320)
 					}
 				}
-				i++
 			}
 		}
 

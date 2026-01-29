@@ -12,17 +12,18 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(WorldRenderer.class)
-public abstract class PlayerEntityRendererMixin {
+public abstract class WorldRendererMixin {
 
 	@Shadow protected abstract void renderEntity(Entity entity, double cameraX, double cameraY, double cameraZ, float tickProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers);
 
 	@Redirect(method = "renderEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/WorldRenderer;renderEntity(Lnet/minecraft/entity/Entity;DDDFLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;)V"))
 	private void dontRenderPlayer(WorldRenderer instance, Entity entity, double cameraX, double cameraY, double cameraZ, float tickProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers){
-		if(entity instanceof ClientPlayerEntity) {
-			var engine = DNDClientEngine.Companion.getInstance();
+		var engine = DNDClientEngine.Companion.getInstance();
+		if(engine.getRunning()){
 			// Don't render the players while the engine is running
-			if(engine.getRunning()) return;
+			if(entity instanceof ClientPlayerEntity) return;
 		}
+
 		renderEntity(entity, cameraX, cameraY, cameraZ, tickProgress, matrices, vertexConsumers);
 	}
 }

@@ -1,4 +1,4 @@
-package com.pineypiney.mtt.dnd.species
+package com.pineypiney.mtt.dnd.race
 
 import com.pineypiney.mtt.dnd.traits.Trait
 

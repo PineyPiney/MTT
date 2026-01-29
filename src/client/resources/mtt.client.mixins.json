@@ -3,10 +3,15 @@
 	"package": "com.pineypiney.mtt.mixin.client",
 	"compatibilityLevel": "JAVA_21",
 	"client": [
+		"ARBBufferManagerMixin",
 		"ClientPlayerEntityMixin",
+		"ClientPlayNetworkHandlerMixin",
 		"ClientWorldMixin",
+		"HeldItemRendererMixin",
+		"InGameHudMixin",
 		"MinecraftClientMixin",
-		"PlayerEntityRendererMixin"
+		"MouseMixin",
+		"WorldRendererMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

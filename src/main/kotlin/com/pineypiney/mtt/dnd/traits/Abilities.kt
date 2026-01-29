@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.dnd.traits
 
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.SOURCE_CODEC
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.int
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.SOURCE_CODEC
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.int
 import io.netty.buffer.ByteBuf
 import java.util.*
 

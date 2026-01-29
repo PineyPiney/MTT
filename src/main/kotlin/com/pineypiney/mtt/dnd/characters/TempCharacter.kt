@@ -1,5 +1,6 @@
 package com.pineypiney.mtt.dnd.characters
 
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
@@ -9,7 +10,10 @@ import net.minecraft.world.World
 import java.util.*
 
 object TempCharacter : Character(UUID.randomUUID()){
-	override val name: String get() = "temp"
+	override var name: String
+		get() = "temp"
+		set(value) {}
+	override val race: Race get() = Race.NONE
 	override val type: CreatureType get() = CreatureType.HUMANOID
 	override val size: Size get() = Size.MEDIUM
 	override val speed: Int get() = 0

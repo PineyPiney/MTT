@@ -3,7 +3,6 @@
 	"type": "humanoid",
 	"size": "medium",
 	"speed": 30,
-	"model": "short",
 	"language": [
 		"common",
 		{

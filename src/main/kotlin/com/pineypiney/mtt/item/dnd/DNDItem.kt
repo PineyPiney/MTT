@@ -1,22 +1,23 @@
 package com.pineypiney.mtt.item.dnd
 
 import com.pineypiney.mtt.component.MTTComponents
+import com.pineypiney.mtt.dnd.CoinValue
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.traits.Rarity
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 
 abstract class DNDItem(settings: Settings) : Item(settings) {
-	abstract val value: Int
+	abstract val value: CoinValue
 	abstract val weight: Float
 	abstract val rarity: Rarity
 
 	open fun addToCharacter(character: Character, stack: ItemStack){}
 
 	companion object {
-		fun getValue(stack: ItemStack): Int{
+		fun getValue(stack: ItemStack): CoinValue {
 			val item = stack.item
-			if(item !is DNDItem) return 0
+			if(item !is DNDItem) return CoinValue.ZERO
 			return stack.components[MTTComponents.VALUE_OVERRIDE_TYPE] ?: item.value
 		}
 		fun getWeight(stack: ItemStack): Float{

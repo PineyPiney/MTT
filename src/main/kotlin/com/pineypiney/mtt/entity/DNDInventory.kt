@@ -2,7 +2,9 @@ package com.pineypiney.mtt.entity
 
 import com.pineypiney.mtt.item.dnd.equipment.DNDArmourItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDEquipmentItem
+import com.pineypiney.mtt.item.dnd.equipment.DNDWeaponItem
 import com.pineypiney.mtt.screen.DNDScreenHandler
+import net.minecraft.component.DataComponentTypes
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.Inventories
@@ -14,6 +16,8 @@ import net.minecraft.nbt.NbtList
 import net.minecraft.registry.DynamicRegistryManager
 import net.minecraft.screen.ScreenHandler
 import net.minecraft.screen.ScreenHandlerFactory
+import net.minecraft.text.Text
+import net.minecraft.util.Rarity
 import net.minecraft.util.collection.DefaultedList
 import kotlin.jvm.optionals.getOrNull
 import kotlin.math.min
@@ -22,6 +26,7 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 
 	val equipment = DefaultedList.ofSize(EQUIPMENT_SIZE, ItemStack.EMPTY)
 	val items = MutableList<ItemStack>(63){ ItemStack.EMPTY }
+	var selectedSlot = 0
 
 	override fun size(): Int {
 		return EQUIPMENT_SIZE + items.size
@@ -158,6 +163,34 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 		}
 	}
 
+	fun getHotbarSize() = 4
+
+	fun getHotbarSlotStack(slot: Int): ItemStack{
+		return when(slot){
+			0 -> getStack(10)
+			1 -> getStack(12)
+			2 -> getStack(14)
+			3 -> SPELL_BOOK
+			else -> ItemStack.EMPTY
+		}
+	}
+
+	fun getHeldStack() = getHotbarSlotStack(selectedSlot)
+
+	fun getOffhandSlotIcon(): ItemStack {
+		val hand = if(selectedSlot == 1) 12 else 10
+		val offhand = getStack(hand + 1)
+		if(!offhand.isEmpty) return offhand
+
+		val mainHand = getStack(hand).item
+		return if((mainHand is DNDWeaponItem) && mainHand.weaponType.twoHanded) getStack(hand)
+		else ItemStack.EMPTY
+	}
+
+	fun getOffhandSlotStack(): ItemStack {
+		return getStack(if(selectedSlot == 1) 13 else 11)
+	}
+
 	override fun markDirty() {
 
 	}
@@ -245,5 +278,9 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 
 	companion object {
 		val EQUIPMENT_SIZE = 20
+		val SPELL_BOOK = ItemStack(Items.ENCHANTED_BOOK).apply{
+			set(DataComponentTypes.ITEM_NAME, Text.translatable("item.mtt.spell_book"))
+			set(DataComponentTypes.RARITY, Rarity.RARE)
+		}
 	}
 }

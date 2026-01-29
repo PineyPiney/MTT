@@ -14,17 +14,23 @@ import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
+import net.minecraft.util.math.MathHelper
 import net.minecraft.world.World
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
+import kotlin.math.abs
 import kotlin.math.min
 
 abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world) {
 
 	var character: Character = TempCharacter
+
 	var hipHeight: Float = .75f
 	val limbAnimator = LimbAnimator()
-
+	var entityBodyYaw: Float = 0f
+	var lastBodyYaw: Float = 0f
+	var entityHeadYaw: Float = 0f
+	var lastHeadYaw: Float = 0f
 	val lastEquippedStacks = Array(20){ ItemStack.EMPTY }
 
 	var name: String
@@ -42,6 +48,7 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 
 	override fun tick() {
 		super.tick()
+		//turnHead()
 		if(world.isClient) {
 			//val distance = MathHelper.magnitude(x - lastX, y - lastY, z - lastZ).toFloat()
 			limbAnimator.updateLimbs(min(1f * 4f, 1f), 0.4f, .75f / hipHeight)
@@ -49,6 +56,14 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 		else {
 			sendEquipmentUpdates()
 		}
+	}
+
+	override fun baseTick() {
+		super.baseTick()
+		lastHeadYaw = entityHeadYaw
+		lastBodyYaw = entityBodyYaw
+		lastPitch = pitch
+		lastYaw = yaw
 	}
 
 	fun sendEquipmentUpdates(){
@@ -73,6 +88,21 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 		return changes
 	}
 
+	override fun getHeadYaw(): Float = entityHeadYaw
+	override fun getBodyYaw(): Float = entityBodyYaw
+	override fun setHeadYaw(headYaw: Float) { this.entityHeadYaw = headYaw }
+	override fun setBodyYaw(bodyYaw: Float) { this.entityBodyYaw = bodyYaw }
+
+	protected open fun turnHead(bodyRotation: Float) {
+		val f = MathHelper.wrapDegrees(bodyRotation - this.entityBodyYaw)
+		this.entityBodyYaw += f * 0.3f
+		val g = MathHelper.wrapDegrees(this.yaw - this.entityBodyYaw)
+		val h = 50f
+		if (abs(g) > h) {
+			this.entityBodyYaw += (g - MathHelper.sign(g.toDouble()) * h)
+		}
+	}
+
 	override fun damage(world: ServerWorld, source: DamageSource, amount: Float): Boolean {
 		return false
 	}
@@ -82,7 +112,7 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 	}
 
 	override fun isCollidable(): Boolean {
-		return true
+		return false
 	}
 
 	override fun readCustomDataFromNbt(nbt: NbtCompound) {

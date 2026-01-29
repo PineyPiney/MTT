@@ -50,10 +50,19 @@ class DNDItemGroups {
 			}
 			.build()
 
+		val ACCESSORIES_GROUP = FabricItemGroup.builder()
+			.icon { ItemStack(Items.TORCH) }
+			.displayName(Text.translatable("itemGroup.mtt.accessories"))
+			.entries { ctx, entries ->
+				entries.add(DNDItems.TORCH)
+			}
+			.build()
+
 		fun registerItemGroups(){
 			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "melee_weapons_group"), MELEE_WEAPON_GROUP)
 			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "ranged_weapons_group"), RANGED_WEAPON_GROUP)
 			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "armour_group"), ARMOUR_GROUP)
+			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "accessories_group"), ACCESSORIES_GROUP)
 		}
 	}
 }

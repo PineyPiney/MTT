@@ -34,7 +34,7 @@ class MTTTooltips {
 
 				val gold = DNDItem.getValue(stack)
 				val weight = DNDItem.getWeight(stack)
-				list.add(Text.literal("$gold gp").withColor(Formatting.GOLD.colorValue!!))
+				list.add(Text.literal(gold.toString()).withColor(Formatting.GOLD.colorValue!!))
 				list.add(Text.literal("$weight lb."))
 			}
 		}

@@ -1,5 +1,6 @@
 package com.pineypiney.mtt.dnd.characters
 
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
@@ -23,7 +24,8 @@ import java.util.*
 import kotlin.math.min
 
 abstract class Character(val uuid: UUID) : NamedScreenHandlerFactory {
-	abstract val name: String
+	abstract var name: String
+	abstract val race: Race
 	abstract val type: CreatureType
 	abstract val size: Size
 	abstract val speed: Int

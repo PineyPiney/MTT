@@ -48,11 +48,4 @@ class WeaponType(override val id: String, val damageType: DamageType, val numDic
 		val LONGBOW = ranged("longbow", 8, true, 30f, 120f, heavy = true, twoHanded = true)
 		val NET = ranged("net", 0, true, 1f, 3f)
 	}
-
-
-
-
-
-
-
 }

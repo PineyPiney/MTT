@@ -1,0 +1,15 @@
+{
+	"id": "goblin",
+	"tags": [ "goblinoid" ],
+	"size": "small",
+	"model": "goblin",
+	"dark_vision": 60,
+	"trait": [
+		{
+			"id": "fury_of_the_small"
+		},
+		{
+			"id": "nimble_escape"
+		}
+	]
+}

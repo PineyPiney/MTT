@@ -10,6 +10,7 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.network.packet.CustomPayload;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Debug;
@@ -42,6 +43,12 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientE
 			CustomPayload payload = new OpenDNDScreenC2SPayload(0);
 			ClientPlayNetworking.send(payload);
 		}
+	}
+	@Redirect(method = "handleInputEvents", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;setSelectedSlot(I)V"))
+	private void setDNDInventorySlot(PlayerInventory instance, int slot){
+		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(instance.player);
+		if(character == null) instance.setSelectedSlot(slot);
+		else if(slot < character.getInventory().getHotbarSize()) character.getInventory().setSelectedSlot(slot);
 	}
 
 	@Unique

@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.item.dnd.equipment
 
 import com.pineypiney.mtt.component.MTTComponents
+import com.pineypiney.mtt.dnd.CoinValue
 import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import net.minecraft.component.DataComponentTypes
@@ -14,7 +15,7 @@ abstract class DNDWeaponItem(settings: Settings): DNDEquipmentItem(settings) {
 	companion object {
 		fun getStack(item: DNDWeaponItem, value: Int, level: Int): ItemStack{
 			val stack = ItemStack(item, 1)
-			stack.set(MTTComponents.VALUE_OVERRIDE_TYPE, value)
+			stack.set(MTTComponents.VALUE_OVERRIDE_TYPE, CoinValue.gold(value))
 			stack.set(MTTComponents.RARITY_OVERRIDE_TYPE, level)
 			stack.set(MTTComponents.HIT_BONUS_TYPE, level)
 			stack.set(MTTComponents.DAMAGE_BONUS_TYPE, level)

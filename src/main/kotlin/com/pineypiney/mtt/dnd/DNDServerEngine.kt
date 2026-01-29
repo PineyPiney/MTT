@@ -2,14 +2,15 @@ package com.pineypiney.mtt.dnd
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.characters.Character
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.entity.DNDPlayerEntity
 import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import com.pineypiney.mtt.network.payloads.s2c.CharacterS2CPayload
 import com.pineypiney.mtt.network.payloads.s2c.DNDEngineUpdateS2CPayload
-import com.pineypiney.mtt.network.payloads.s2c.SpeciesS2CPayload
+import com.pineypiney.mtt.network.payloads.s2c.RaceS2CPayload
 import com.pineypiney.mtt.serialisation.MTTCodecs
+import com.pineypiney.mtt.util.toInts
 import io.netty.buffer.Unpooled
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -19,6 +20,7 @@ import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.util.Identifier
 import net.minecraft.util.WorldSavePath
 import java.io.File
 import java.util.*
@@ -31,7 +33,7 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 		get() = super.running
 		set(value) {
 			super.running = value
-			addStringPayload("running", (if(value) 1.toChar() else 0.toChar()).toString())
+			addIntPayload("running", listOf(if(value) 1 else 0))
 		}
 	var showCharacters = true
 
@@ -39,43 +41,45 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 		get() = super.DM
 		set(value) {
 			super.DM = value
-			addStringPayload("dm", value.toString())
+			addIntPayload("dm", value?.toInts() ?: emptyList())
 		}
 
 	override val playerEntities: List<DNDPlayerEntity> get() = server.worlds.flatMap { it.getEntitiesByType(MTTEntities.PLAYER){ true } }
 
 	init {
-		val allSpeciesFiles = server.resourceManager.findResources("species"){ id ->
+		val allRaceFiles = server.resourceManager.findResources("races"){ id: Identifier ->
 			id.path.endsWith(".json")
 		}
-		println("Found Species: ${allSpeciesFiles.keys.joinToString{it.path}}")
+		println("Found Race: ${allRaceFiles.keys.joinToString{it.path}}")
 
-		for((id, resource) in allSpeciesFiles){
+		for((id, resource) in allRaceFiles){
 			try {
 				val json = Json.parseToJsonElement(resource.reader.readText()).jsonObject
-				val species = Species.parse(json)
-				Species.set.add(species)
+				val race = Race.parse(json)
+				Race.set.add(race)
 			}
 			catch (e: Exception){
-				MTT.logger.warn("Couldn't parse species json $id: ${e.message}")
+				MTT.logger.warn("Couldn't parse race json $id: ${e.message}")
 			}
 		}
-		MTT.logger.info("Successfully loaded ${Species.set.size} DND species: [${Species.set.joinToString{it.id}}]")
+		MTT.logger.info("Successfully loaded ${Race.set.size} DND race: [${Race.set.joinToString{it.id}}]")
 	}
 
 	fun onPlayerConnect(player: ServerPlayerEntity){
-		Species.set.forEach{ species ->
-			val payload = SpeciesS2CPayload(species)
+		Race.set.forEach{ race ->
+			val payload = RaceS2CPayload(race)
 			ServerPlayNetworking.send(player, payload)
 		}
 
-		ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("running", (if(running) 1.toChar() else 0.toChar()).toString()))
-		ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("dm", DM?.toString() ?: ""))
+		ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("running", listOf(if(running) 1 else 0), ""))
+		val dm = DM
+		if(dm != null) ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("dm", dm))
+		else ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("dm"))
 		for(character in characters){
 			ServerPlayNetworking.send(player, CharacterS2CPayload(character))
 		}
 		for((playerUUID, characterUUID) in playerCharacters) {
-			ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("player", "$playerUUID/$characterUUID"))
+			ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("player", playerUUID, characterUUID))
 		}
 	}
 
@@ -92,12 +96,12 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 
 	override fun associatePlayer(player: UUID, character: UUID) {
 		super.associatePlayer(player, character)
-		sendPayload(DNDEngineUpdateS2CPayload("player", "$player/$character"))
+		sendPayload(DNDEngineUpdateS2CPayload("player", player, character))
 	}
 
 	override fun dissociatePlayer(player: UUID) {
 		super.dissociatePlayer(player)
-		sendPayload(DNDEngineUpdateS2CPayload("player", "$player"))
+		sendPayload(DNDEngineUpdateS2CPayload("player", player))
 	}
 
 	fun tickServer(server: MinecraftServer){
@@ -107,27 +111,59 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 			sendPayload(payload)
 		}
 
+		if(running) {
+			for ((playerUUID, characterUUID) in playerCharacters) {
+				val player = server.playerManager.getPlayer(playerUUID) ?: continue
+				val character = getCharacter(characterUUID) ?: continue
+				character.pos = player.pos
+				playerEntities.firstOrNull { it.character == character }?.setPosition(player.pos)
+			}
+		}
+
 		for(player in playerEntities){
 			player.screenHandler.sendContentUpdates()
 		}
 	}
 
+	/**
+	 * Remove all characters with name [name] and their representing entities
+	 *
+	 * @return If any characters were successfully removed
+	 */
 	fun removeCharacter(name: String): Boolean{
-		for(character in characters){
-			if(character.name == name){
-				characters.remove(character)
-			}
-		}
+		if(!characters.removeAll{ it.name == name }) return false
+
 		for (world in server.worlds) {
 			world.getEntitiesByType(MTTEntities.PLAYER){ true }.forEach {
 				if(it.name == name) it.remove(Entity.RemovalReason.DISCARDED)
 			}
 		}
-		return false
+		return true
+	}
+
+	/**
+	 * Remove the first character with UUID [uuid] and it's representing entity
+	 *
+	 * @return If a character was successfully removed
+	 */
+	fun removeCharacter(uuid: UUID): Boolean{
+		val character = getCharacter(uuid) ?: return false
+		characters.remove(character)
+
+		for (world in server.worlds) {
+			world.getEntitiesByType(MTTEntities.PLAYER){ true }.forEach {
+				if(it.character == character) it.remove(Entity.RemovalReason.DISCARDED)
+			}
+		}
+		return true
 	}
 
 	fun addStringPayload(id: String, data: String){
-		updates.add(DNDEngineUpdateS2CPayload(id, data))
+		updates.add(DNDEngineUpdateS2CPayload(id, emptyList(), data))
+	}
+
+	fun addIntPayload(id: String, ints: List<Int>){
+		updates.add(DNDEngineUpdateS2CPayload(id, ints, ""))
 	}
 
 	fun sendPayload(payload: CustomPayload){
@@ -160,6 +196,7 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 		val buf = RegistryByteBuf(Unpooled.buffer(), server.registryManager)
 		val bools = MTTCodecs.createBoolByte(running, showCharacters)
 		buf.writeBytes(byteArrayOf(bools))
+
 		MTTPacketCodecs.encodeCollection(buf, characters, MTTPacketCodecs.CHARACTER_CODEC)
 		MTTPacketCodecs.encodeMap(buf, playerCharacters, MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.UUID_CODEC)
 		charactersFile.writeBytes(buf.nioBuffer().array())

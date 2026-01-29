@@ -7,6 +7,5 @@ import net.minecraft.client.render.entity.state.BipedEntityRenderState
 import java.util.*
 
 open class DNDBipedEntityRenderState : BipedEntityRenderState() {
-	var name: String = ""
 	var character: Character = SheetCharacter(CharacterSheet(), UUID.randomUUID())
 }

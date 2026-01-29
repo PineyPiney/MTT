@@ -2,6 +2,7 @@ package com.pineypiney.mtt.component
 
 import com.mojang.serialization.Codec
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dnd.CoinValue
 import net.minecraft.component.ComponentType
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
@@ -11,7 +12,7 @@ class MTTComponents {
 
 	companion object {
 
-		val VALUE_OVERRIDE_TYPE = register("value_override", Codec.INT)
+		val VALUE_OVERRIDE_TYPE = register("value_override", Codec.LONG.xmap(::CoinValue, CoinValue::coppers))
 		val WEIGHT_OVERRIDE_TYPE = register("weight_override", Codec.FLOAT)
 		val RARITY_OVERRIDE_TYPE = register("rarity_override", Codec.INT)
 

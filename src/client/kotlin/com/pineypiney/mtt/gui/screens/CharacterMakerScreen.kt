@@ -5,7 +5,7 @@ import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.DNDClientEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.gui.widget.*
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.network.payloads.c2s.ClickButtonC2SPayload
@@ -42,24 +42,24 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		backgroundHeight = 252
 	}
 
-	var doneButton = ButtonWidget.builder(Text.translatable("gui.done"), {
+	var doneButton = ButtonWidget.builder(Text.translatable("gui.done")) {
 		val payload = ClickButtonC2SPayload("sheet_maker", "done")
 		ClientPlayNetworking.send(payload)
-	}).dimensions(x + 64, y + 222, 128, 24).build()
+	}.dimensions(x + 64, y + 222, 128, 24).build()
 
 	override fun init() {
 		super.init()
 
 		tabWidgets = arrayOf(
-			SpeciesTabWidget(
+			RaceTabWidget(
 				sheet,
 				client!!,
 				x + 8,
 				y + 32,
 				240,
 				212,
-				Text.literal("Species Widget Text"),
-				Species.set
+				Text.literal("Race Widget Text"),
+				Race.set
 			),
 			ClassTabWidget(
 				sheet,
@@ -69,7 +69,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 				240,
 				212,
 				Text.literal("Class Widget Text"),
-				DNDClass.Companion.classes
+				DNDClass.classes
 			),
 			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Abilities Widget Text")),
 			BackgroundTabWidget(
@@ -80,7 +80,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 				240,
 				212,
 				Text.literal("Background Widget Text"),
-				Background.Companion.set
+				Background.set
 			)
 		)
 		addDrawableChild(tabWidgets[0])
@@ -119,7 +119,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 	}
 
 	override fun drawForeground(context: DrawContext, mouseX: Int, mouseY: Int) {
-		drawCenteredText(context, "mtt.character_maker_screen.species", 32, 16)
+		drawCenteredText(context, "mtt.character_maker_screen.race", 32, 16)
 		drawCenteredText(context, "mtt.character_maker_screen.class", 96, 16)
 		drawCenteredText(context, "mtt.character_maker_screen.abilities", 160, 16)
 		drawCenteredText(context, "mtt.character_maker_screen.background", 224, 16)
@@ -161,6 +161,6 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 	}
 
 	companion object {
-		val BACKGROUND = Identifier.of(MTT.Companion.MOD_ID, "textures/gui/character_maker/background.png")
+		val BACKGROUND = Identifier.of(MTT.MOD_ID, "textures/gui/character_maker/background.png")
 	}
 }

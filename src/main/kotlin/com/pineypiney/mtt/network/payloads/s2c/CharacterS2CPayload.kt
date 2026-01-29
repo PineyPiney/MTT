@@ -9,12 +9,12 @@ import net.minecraft.util.Identifier
 
 class CharacterS2CPayload(val character: Character) : CustomPayload {
 
-	override fun getId(): CustomPayload.Id<out CustomPayload?>? {
+	override fun getId(): CustomPayload.Id<out CustomPayload> {
 		return ID
 	}
 
 	companion object {
-		val CHARACTER_PAYLOAD_ID = Identifier.of(MTT.Companion.MOD_ID, "sheet")
+		val CHARACTER_PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "sheet")
 		val ID = CustomPayload.Id<CharacterS2CPayload>(CHARACTER_PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(
 			MTTPacketCodecs.CHARACTER_CODEC, CharacterS2CPayload::character,

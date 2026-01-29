@@ -1,6 +1,8 @@
 package com.pineypiney.mtt.render.entity
 
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dnd.DNDClientEngine
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.item.dnd.equipment.VisibleAccessoryItem
 import com.pineypiney.mtt.render.MTTRenderers
@@ -8,6 +10,7 @@ import com.pineypiney.mtt.render.entity.model.BipedModelData
 import com.pineypiney.mtt.render.entity.model.DNDBipedEntityModel
 import com.pineypiney.mtt.render.entity.model.HelmetModel
 import com.pineypiney.mtt.render.entity.state.DNDBipedEntityRenderState
+import net.minecraft.client.MinecraftClient
 import net.minecraft.client.model.ModelPart
 import net.minecraft.client.render.OverlayTexture
 import net.minecraft.client.render.VertexConsumer
@@ -15,36 +18,54 @@ import net.minecraft.client.render.VertexConsumerProvider
 import net.minecraft.client.render.entity.EntityRenderer
 import net.minecraft.client.render.entity.EntityRendererFactory
 import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.entity.EntityPose
 import net.minecraft.util.Identifier
+import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.RotationAxis
 import java.io.File
-import kotlin.math.cos
 
 abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState, M: DNDBipedEntityModel<S>>(ctx: EntityRendererFactory.Context, modelMaker: (ModelPart) -> M): EntityRenderer<E, S>(ctx) {
 
 	val bipedModels = MTTRenderers.BIPED_MODELS.mapValues { (id, pair) -> pair.first to modelMaker(ctx.getPart(pair.second)) }
-	val equipmentModels = MTTRenderers.EQUIPMENT_MODELS.map { type -> type.mapValues { (name, layer) -> ctx.getPart(layer) } }
+	val equipmentModels = MTTRenderers.EQUIPMENT_MODELS.mapNotNull { type -> type.mapValues { (name, layer) -> try { ctx.getPart(layer) } catch (e: IllegalArgumentException){
+		MTT.logger.warn("Could not find model for layer ${layer.name}")
+		return@mapNotNull null
+	} } }
 
 	val allTextures = fetchAllTextures()
 
-	override fun updateRenderState(entity: E, state: S, tickProgress: Float) {
-		super.updateRenderState(entity, state, tickProgress)
-		state.name = entity.name
-		state.limbSwingAnimationProgress = entity.limbAnimator.getAnimationProgress(tickProgress)
-		state.limbSwingAmplitude = entity.limbAnimator.getAmplitude(tickProgress)
-		state.character = entity.character
+	override fun updateRenderState(entity: E, state: S, f: Float) {
+		super.updateRenderState(entity, state, f)
 
-		state.relativeHeadYaw = cos(state.limbSwingAnimationProgress * 0.666f) * .2f
+		state.invisibleToPlayer = if(MinecraftClient.getInstance().options.perspective.isFirstPerson) {
+			DNDClientEngine.getInstance().running && DNDClientEngine.getClientCharacterUUID() == entity.character.uuid
+		}
+		else false
+
+		val g = MathHelper.lerpAngleDegrees(f, entity.lastHeadYaw, entity.headYaw)
+		state.bodyYaw = clampBodyYaw(entity, g, f)
+		state.relativeHeadYaw = MathHelper.wrapDegrees(g - state.bodyYaw)
+		state.pitch = entity.getLerpedPitch(f)
+		state.customName = entity.customName
+
+		state.limbSwingAnimationProgress = entity.limbAnimator.getAnimationProgress(f)
+		state.limbSwingAmplitude = entity.limbAnimator.getAmplitude(f)
+		state.character = entity.character
 	}
 
 	override fun render(state: S, matrices: MatrixStack, vertexConsumers: VertexConsumerProvider, light: Int) {
 
-		val (data, model: M) = bipedModels[state.character.model] ?: bipedModels["default"] ?: return
+		if(state.invisibleToPlayer) return
+
+		var modelPath = state.character.race.id + '/' + state.character.model
+		if(!bipedModels.contains(modelPath)) modelPath = bipedModels.keys.firstOrNull { it.startsWith(state.character.race.id + '/') } ?: return
+		val (data, model: M) = bipedModels[modelPath]!!
 
 		matrices.push()
+		setupTransforms(state, matrices)
 		matrices.scale(-1f, -1f, 1f)
 		model.setAngles(state)
-		val spec = if(state.character.model == "short") "dwarf" else "human"
-		val texture = Identifier.of(MTT.MOD_ID, "textures/entity/$spec/default.png")
+		val texture = Identifier.of(MTT.MOD_ID, "textures/entity/$modelPath/default.png")
 		val vertexConsumer: VertexConsumer? = vertexConsumers.getBuffer(model.getLayer(texture))
 		model.render(matrices, vertexConsumer, light, OverlayTexture.DEFAULT_UV)
 		renderHelmet(state, data, matrices, vertexConsumers, light)
@@ -52,17 +73,34 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		super.render(state, matrices, vertexConsumers, light)
 	}
 
+	protected open fun setupTransforms(state: S, matrices: MatrixStack) {
+		matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0f - state.bodyYaw))
+
+		if (state.deathTime > 0.0f) {
+			var f = (state.deathTime - 1.0f) / 20.0f * 1.6f
+			f = MathHelper.sqrt(f)
+			if (f > 1.0f) {
+				f = 1.0f
+			}
+
+			matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(f * 90f))
+		}
+		else if (state.isInPose(EntityPose.SLEEPING)) {
+			matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(state.bodyYaw))
+			matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90f))
+			matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(270.0f))
+		}
+	}
+
 	fun fetchAllTextures(): Map<String, Set<String>> {
 		val textures = mutableMapOf<String, MutableSet<String>>()
-		val resourcePacks = File("resourcepacks").listFiles()
-		if(resourcePacks == null) return textures
+		val resourcePacks = File("resourcepacks").listFiles() ?: return textures
 		for(pack in resourcePacks){
-			val speciesDirs = File(pack, "assets/mtt/textures/entity").listFiles()
-			if(speciesDirs == null) continue
-			for(species in speciesDirs){
-				if(!species.isDirectory) continue
-				val list = textures.getOrElse(species.name){ mutableSetOf<String>().apply { textures[species.name] = this } }
-				for(file in species.listFiles()){
+			val raceDirs = File(pack, "assets/mtt/textures/entity").listFiles() ?: continue
+			for(race in raceDirs){
+				if(!race.isDirectory) continue
+				val list = textures.getOrElse(race.name){ mutableSetOf<String>().apply { textures[race.name] = this } }
+				for(file in race.listFiles()){
 					if(file.extension == "png"){
 						list.add(file.nameWithoutExtension)
 					}
@@ -85,9 +123,22 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		val consumer = vertexConsumers.getBuffer(model.getLayer(texture))
 
 		matrices.push()
-		matrices.translate(0f, .5f - (data.headTop * .0625f), 0f)
+		val scale = data.headHeight * .125f
+		matrices.scale(scale, scale, scale)
+		matrices.translate(0f, .5f - ((data.headTop * .0625f) / scale), 0f)
 		model.setAngles(state)
 		model.render(matrices, consumer, light, OverlayTexture.DEFAULT_UV)
 		matrices.pop()
+	}
+
+
+	private fun clampBodyYaw(entity: E, degrees: Float, tickProgress: Float): Float {
+		return MathHelper.lerpAngleDegrees(tickProgress, entity.lastBodyYaw, entity.bodyYaw)
+	}
+
+	fun getModel(character: Character): Pair<M, Identifier>? {
+		var modelPath = character.race.id + '/' + character.model
+		if(!bipedModels.contains(modelPath)) modelPath = bipedModels.keys.firstOrNull { it.startsWith(character.race.id + '/') } ?: return null
+		return bipedModels[modelPath]!!.second to Identifier.of(MTT.MOD_ID, "textures/entity/$modelPath/default.png")
 	}
 }

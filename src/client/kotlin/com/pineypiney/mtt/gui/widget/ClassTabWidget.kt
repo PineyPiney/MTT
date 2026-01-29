@@ -26,12 +26,10 @@ class ClassTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, y: 
 
 	override fun setupSelectedPage(selected: DNDClass) {
 		val x = x + 20
-		var i = 0
 		val w = width - 40
-		for(trait in selected.coreTraits){
-			val entry = TraitEntry.newOf(x, y + 25 + 15 * i, w, this, Text.translatable(trait.getLabelKey()), i, trait.getParts())
+		for((i, trait) in selected.coreTraits.withIndex()){
+			val entry = TraitEntry.newOf(x, y + 25 + 15 * i, w, this, trait.getLabel(), i, trait.getParts())
 			selectedPage.add(entry)
-			i++
 		}
 	}
 

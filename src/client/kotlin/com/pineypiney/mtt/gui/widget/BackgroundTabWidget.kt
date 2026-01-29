@@ -29,7 +29,7 @@ class BackgroundTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int
 		val w = width - 40
 		var i = 0
 		for(trait in selected.compileTraits()){
-			selectedPage.add(TraitEntry.newOf(x, y + 25 + 15 * i, w, this, Text.translatable(trait.getLabelKey()), i++, trait.getParts()))
+			selectedPage.add(TraitEntry.newOf(x, y + 25 + 15 * i, w, this, trait.getLabel(), i++, trait.getParts()))
 		}
 	}
 

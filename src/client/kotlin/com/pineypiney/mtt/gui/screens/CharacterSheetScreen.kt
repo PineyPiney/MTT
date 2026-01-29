@@ -48,7 +48,7 @@ class CharacterSheetScreen(val character: SheetCharacter) : Screen(Text.translat
 		context.drawText(client?.textRenderer, nameText, x/2 + 4, y/2 + 4, 4210752, false)
 		context.matrices.pop()
 
-		val text = Text.translatable("mtt.species.${character.sheet.species.id}").append("  ")
+		val text = Text.translatable("mtt.race.${character.sheet.race.id}").append("  ")
 		for((i, clazz) in character.sheet.classes.entries.withIndex()){
 			text.append(Text.translatable("mtt.class.${clazz.key.id}"))
 			text.append(" ${clazz.value}")

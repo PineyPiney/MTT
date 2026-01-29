@@ -3,7 +3,7 @@ package com.pineypiney.mtt.dnd.traits
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.DNDServerEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.race.Race
 import net.minecraft.nbt.NbtCompound
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -14,16 +14,16 @@ sealed interface Source {
 
 	fun writeNbt(nbt: NbtCompound)
 
-	class SpeciesSource(val species: Species): Source {
+	class RaceSource(val race: Race): Source {
 		override val overridePower: Int = 0
 		override fun writeNbt(nbt: NbtCompound) {
-			nbt.putString("species", species.id)
+			nbt.putString("race", race.id)
 		}
 		override fun equals(other: Any?): Boolean {
-			return other is SpeciesSource && species == other.species
+			return other is RaceSource && race == other.race
 		}
 		override fun hashCode(): Int {
-			return species.hashCode()
+			return race.hashCode()
 		}
 	}
 	class ClassSource(val clazz: DNDClass) : Source {
@@ -88,9 +88,9 @@ sealed interface Source {
 	companion object {
 
 		fun readNbt(nbt: NbtCompound, engine: DNDServerEngine): Source?{
-			nbt.getString("species").getOrNull()?.let {
-				val species = Species.findById(it)
-				return SpeciesSource(species)
+			nbt.getString("race").getOrNull()?.let {
+				val race = Race.findById(it)
+				return RaceSource(race)
 			}
 			nbt.getString("class").getOrNull()?.let { id ->
 				val clazz = DNDClass.classes.firstOrNull { it.id == id }

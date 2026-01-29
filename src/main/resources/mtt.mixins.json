@@ -3,9 +3,12 @@
 	"package": "com.pineypiney.mtt.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"EntityMixin",
 		"MinecraftServerMixin",
+		"PlayerEntityMixin",
 		"PlayerManagerMixin",
 		"ServerPlayerEntityMixin",
+		"ServerPlayNetworkHandlerMixin",
 		"ServerWorldMixin"
 	],
 	"injectors": {

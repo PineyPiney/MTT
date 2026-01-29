@@ -2,6 +2,7 @@ package com.pineypiney.mtt.dnd.characters
 
 import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
@@ -25,7 +26,10 @@ import java.util.*
 import kotlin.math.max
 
 class SheetCharacter(val sheet: CharacterSheet, uuid: UUID) : Character(uuid) {
-	override val name: String get() = sheet.name
+	override var name: String
+		get() = sheet.name
+		set(value) { sheet.name = value }
+	override val race: Race get() = sheet.race
 	override val type: CreatureType get() = sheet.type
 	override val size: Size get() = sheet.size
 	override val speed: Int get() = sheet.speed
@@ -71,6 +75,10 @@ class SheetCharacter(val sheet: CharacterSheet, uuid: UUID) : Character(uuid) {
 		nbt.putString("world", world.value.toString())
 		nbt.put("inventory", inventory.writeNbt(buf.registryManager))
 		buf.writeNbt(nbt)
+	}
+
+	override fun toString(): String {
+		return "Sheet Character[$name, $uuid]"
 	}
 
 	companion object {

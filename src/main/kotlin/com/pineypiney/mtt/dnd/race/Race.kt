@@ -1,12 +1,12 @@
-package com.pineypiney.mtt.dnd.species
+package com.pineypiney.mtt.dnd.race
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.traits.*
 import kotlinx.serialization.json.*
 
-open class Species(val id: String, val type: CreatureType, val speed: Int, val size: SizeTrait, val model: ModelTrait, val traits: List<Trait<*>>, val namedTraits: List<NamedTrait<*>>, val subspecies: List<SubSpecies>) {
+open class Race(val id: String, val type: CreatureType, val speed: Int, val size: SizeTrait, val model: ModelTrait, val traits: List<Trait<*>>, val namedTraits: List<NamedTrait<*>>, val subRace: List<SubRace>) {
 
-	fun getAllTraits(subspecies: SubSpecies? = null): Set<Trait<*>>{
+	fun getAllTraits(subRace: SubRace? = null): Set<Trait<*>>{
 		val set = mutableSetOf(CreatureTypeTrait(type), SpeedTrait(speed), size, model)
 		set.addAll(traits)
 		for(namedTrait in namedTraits) set.addAll(namedTrait.traits)
@@ -21,18 +21,18 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 
 		val components = mutableListOf<Trait<*>>()
 		val namedTraits = mutableListOf<NamedTrait<*>>()
-		val subspecies = mutableListOf<SubSpecies>()
+		val subRaces = mutableListOf<SubRace>()
 
 		fun type(value: CreatureType) = this.apply { type = value }
 		fun speed(value: Int) = this.apply{ speed = value }
 		fun size(value: SizeTrait) = this.apply{ size = value }
 		fun model(value: ModelTrait) = this.apply{ model = value }
 
-		fun build() = Species(id, type, speed, size, model, components, namedTraits, subspecies)
+		fun build() = Race(id, type, speed, size, model, components, namedTraits, subRaces)
 	}
 
 	override fun toString(): String {
-		return "${this@Species.id} Species"
+		return "${this@Race.id} Race"
 	}
 
 	companion object {
@@ -40,13 +40,13 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 		val NONE = Builder("None").build()
 
 		@JvmField
-		val set = mutableSetOf<Species>()
+		val set = mutableSetOf<Race>()
 		fun findById(id: String) = set.firstOrNull { it.id == id } ?: NONE
 
 		@Throws(Exception::class)
-		fun parse(json: JsonObject): Species{
-			val speciesID = (json["id"] as? JsonPrimitive)?.content ?: throw Exception()
-			val builder = Builder(speciesID)
+		fun parse(json: JsonObject): Race{
+			val raceID = (json["id"] as? JsonPrimitive)?.content ?: throw Exception()
+			val builder = Builder(raceID)
 
 			for ((id, element) in json) {
 				when(id){
@@ -55,20 +55,21 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 					"speed"-> builder.speed(element.jsonPrimitive.int)
 					"size" -> builder.size(SizeTrait(TraitCodec.readJsonList(element) { Size.fromString(it.content) }.toSet()))
 					"model" -> builder.model(ModelTrait(TraitCodec.readJsonList(element, JsonPrimitive::content).toSet()))
+					"tags" -> {}
 
-					"sub_species" -> {
-						val speciesArray = (element as? JsonArray)
-						if(speciesArray == null){
-							MTT.logger.warn("SubSpecies json should be an array")
+					"sub_race" -> {
+						val subRaceArray = (element as? JsonArray)
+						if(subRaceArray == null){
+							MTT.logger.warn("SubRace json should be an array")
 							continue
 						}
-						for(entry in speciesArray){
+						for(entry in subRaceArray){
 							when(entry){
-								is JsonPrimitive -> {}//builder.components.add(SubspeciesIDComponent(SetTraits(entry.content){ set, _ -> }))
+								is JsonPrimitive -> {}//builder.components.add(SubRaceIDComponent(SetTraits(entry.content){ set, _ -> }))
 								is JsonObject -> {
-									val subSpeciesID = entry["id"]?.jsonPrimitive?.content
-									if(subSpeciesID == null){
-										MTT.logger.warn("SubSpecies does not contain 'name' field")
+									val subRaceID = entry["id"]?.jsonPrimitive?.content
+									if(subRaceID == null){
+										MTT.logger.warn("SubRace does not contain 'name' field")
 										continue
 									}
 
@@ -79,7 +80,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 										parseTrait(name, trait, subComps, subTraits)
 									}
 
-									builder.subspecies.add(SubSpecies(subSpeciesID, subComps, subTraits))
+									builder.subRaces.add(SubRace(subRaceID, subComps, subTraits))
 								}
 								else -> {}
 							}
@@ -87,7 +88,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 					}
 					else -> {
 						val error = parseTrait(id, element, builder.components, builder.namedTraits)
-						if(error.isNotEmpty()) MTT.logger.warn("Error parsing species json $id: $error")
+						if(error.isNotEmpty()) MTT.logger.warn("Error parsing race json $id: $error")
 					}
 				}
 			}
@@ -105,7 +106,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 					}
 				}
 				else -> {
-					val codec = NewTraits.getCodec(id) ?: return "There is no trait component with id $id"
+					val codec = Traits.getCodec(id) ?: return "There is no trait component with id $id"
 					codec.readFromJson(element, traits)
 				}
 			}
@@ -121,7 +122,7 @@ open class Species(val id: String, val type: CreatureType, val speed: Int, val s
 
 			val set = mutableSetOf<Trait<*>>()
 			for((type, json) in effect){
-				val codec = NewTraits.getCodec(type) ?: continue
+				val codec = Traits.getCodec(type) ?: continue
 				codec.readFromJson(json, set)
 			}
 			namedTraits.add(NamedTrait(traitID, set))

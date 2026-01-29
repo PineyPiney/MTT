@@ -6,7 +6,9 @@ import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.util.Localisation
 import net.minecraft.text.Text
 
-object NewTraits {
+
+
+object Traits {
 
 	val set = mutableSetOf<TraitCodec<*>>()
 
@@ -31,6 +33,11 @@ object NewTraits {
 	}
 }
 
+/**
+ * Used by Race Traits that have initial given values as well as choice values,
+ * For example, in 2024 5e default races start of with common as a given language,
+ * and 2 choices from the standard languages
+ */
 data class GivenAndOptions<T>(val given: Set<T>, val numChoices: Int, val options: Set<T>){
 	companion object{
 		fun <T> empty() = GivenAndOptions<T>(emptySet(), 0, emptySet())
@@ -51,10 +58,11 @@ data class GivenAndOptions<T>(val given: Set<T>, val numChoices: Int, val option
 	}
 }
 
+
 class CreatureTypeTrait(val type: CreatureType): Trait<CreatureTypeTrait>("trait") {
 	override fun getCodec(): TraitCodec<CreatureTypeTrait> = TraitCodec.CREATURE_TYPE_CODEC
 	override fun getParts(): Set<TraitPart> {
-		return setOf(LiteralPart(getDeclarationKey(), getTranslationKey(type.name.lowercase())){ sheet, src -> sheet.addTypeSource(type, src) }, LiteralPart(getDescriptionKey()))
+		return setOf(LiteralPart(getDeclarationKey(), getTranslation(type.name.lowercase())){ sheet, src -> sheet.addTypeSource(type, src) }, LiteralPart(getDescriptionKey()))
 	}
 }
 
@@ -68,8 +76,8 @@ class SpeedTrait(val speed: Int): Trait<SpeedTrait>("trait") {
 class SizeTrait(val options: Set<Size>): Trait<SizeTrait>("trait") {
 	override fun getCodec(): TraitCodec<SizeTrait> = TraitCodec.SIZE_CODEC
 	override fun getParts(): Set<TraitPart> {
-		val declaration = if(options.size == 1) LiteralPart(getDeclarationKey(), getTranslationKey(options.first().name)){ sheet, src -> sheet.addSizeSource(options.first(), src)}
-		else OneChoicePart(options, Text.translatable(getLabelKey()), Size::fromString, Size::name, { getTranslationKey(it.name.lowercase()) }, "mtt.trait.size.declaration", CharacterSheet::addSizeSource)
+		val declaration = if(options.size == 1) LiteralPart(getDeclarationKey(), getTranslation(options.first().name)){ sheet, src -> sheet.addSizeSource(options.first(), src)}
+		else OneChoicePart(options, getLabel(), Size::fromString, Size::name, { getTranslationKey(it.name.lowercase()) }, "mtt.trait.size.declaration", CharacterSheet::addSizeSource)
 		return setOf(declaration, LiteralPart(getDescriptionKey()))
 	}
 }
@@ -77,8 +85,8 @@ class SizeTrait(val options: Set<Size>): Trait<SizeTrait>("trait") {
 class ModelTrait(val options: Set<String>): Trait<ModelTrait>("trait") {
 	override fun getCodec(): TraitCodec<ModelTrait> = TraitCodec.MODEL_CODEC
 	override fun getParts(): Set<TraitPart> {
-		val declaration = if(options.size == 1) LiteralPart(getDeclarationKey(), options.first()){ sheet, _ -> sheet.model = options.first()}
-		else OneChoicePart(options, Text.translatable(getLabelKey()), {it}, {it}, { "mtt.model.$it" }, "mtt.trait.model.declaration", { sheet, m, src -> sheet.model = m })
+		val declaration = if(options.size == 1) LiteralPart(getDeclarationKey(), getTranslation(options.first())){ sheet, _ -> sheet.model = options.first()}
+		else OneChoicePart(options, getLabel(), {it}, {it}, { "mtt.model.$it" }, "mtt.trait.model.declaration", { sheet, m, src -> sheet.model = m })
 		return setOf(declaration, LiteralPart(getDescriptionKey()))
 	}
 }
@@ -94,10 +102,10 @@ class LanguageTrait(val data: GivenAndOptions<String>): Trait<LanguageTrait>("tr
 			LiteralPart(decKey, arg){ sheet, src -> sheet.addLanguages(list, src) }
 		}
 		else if(data.given.isEmpty() && data.numChoices == 1){
-			OneChoicePart(data.options, Text.translatable(getLabelKey()), {it}, {it}, translationKey, decKey, CharacterSheet::addLanguage)
+			OneChoicePart(data.options, getLabel(), {it}, {it}, translationKey, decKey, CharacterSheet::addLanguage)
 		}
 		else {
-			GivenAndOptionsPart(data, Text.translatable(getLabelKey()), {it}, {it}, translationKey, decKey, CharacterSheet::addLanguages)
+			GivenAndOptionsPart(data, getLabel(), {it}, {it}, translationKey, decKey, CharacterSheet::addLanguages)
 		}
 
 		return setOf(declaration)
@@ -176,7 +184,7 @@ class SpellcastingAbilityTrait(val options: Set<Ability>): Trait<SpellcastingAbi
 
 	override fun getParts(): Set<TraitPart> {
 		return if(options.size == 1) setOf(LiteralPart(getDeclarationKey(), Text.translatable("mtt.ability.${options.first().id}")))
-		else setOf(OneChoicePart(options, Text.translatable(getLabelKey()), Ability::valueOf, Ability::name, { ability -> "mtt.ability.${ability.id}"}, getDeclarationKey(), { sheet, value, src -> }))
+		else setOf(OneChoicePart(options, getLabel(), Ability::valueOf, Ability::name, { ability -> "mtt.ability.${ability.id}"}, getDeclarationKey(), { sheet, value, src -> }))
 	}
 
 }
@@ -203,7 +211,7 @@ class FeatTrait(val feats: Set<Feat>): Trait<FeatTrait>(){
 
 	override fun getParts(): Set<TraitPart> {
 		return if(feats.size == 1) setOf(LiteralPart(getDeclarationKey(), Text.translatable("mtt.feat.${feats.first().id}")), LiteralPart(getDescriptionKey()))
-		else setOf(OneChoicePart(feats, Text.translatable(getLabelKey()), Feat::findById, Feat::id, { "mtt.feat.${it.id}" }, getDeclarationKey(), { sheet, value, src -> }), LiteralPart(getDescriptionKey()))
+		else setOf(OneChoicePart(feats, getLabel(), Feat::findById, Feat::id, { "mtt.feat.${it.id}" }, getDeclarationKey(), { sheet, value, src -> }), LiteralPart(getDescriptionKey()))
 	}
 
 }

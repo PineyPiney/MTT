@@ -15,4 +15,11 @@ fun <T: Any> Optional<T>.nullable(): T? {
 	return this.getOrNull()
 }
 
+fun UUID.toInts(): List<Int> {
+	return listOf(
+		(mostSignificantBits shr 32).toInt(), mostSignificantBits.toInt(),
+		(leastSignificantBits shr 32).toInt(), leastSignificantBits.toInt()
+	)
+}
+
 fun World.getEngine(): DNDEngine = (this as DNDEngineHolder<*>).`mtt$getDNDEngine`()

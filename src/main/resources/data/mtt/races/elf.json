@@ -59,7 +59,7 @@
 			"charisma"
 		]
 	},
-	"sub_species": [
+	"sub_races": [
 		{
 			"id": "drow",
 			"dark_vision": 120,

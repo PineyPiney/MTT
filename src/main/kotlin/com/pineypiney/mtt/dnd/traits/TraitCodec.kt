@@ -3,8 +3,8 @@ package com.pineypiney.mtt.dnd.traits
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.traits.feats.Feat
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.decodeList
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs.Companion.encodeCollection
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.decodeList
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.encodeCollection
 import io.netty.buffer.ByteBuf
 import kotlinx.serialization.json.*
 import net.minecraft.network.codec.PacketCodec
@@ -101,7 +101,7 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 		}
 
 		val CREATURE_TYPE_CODEC = object : TraitCodec<CreatureTypeTrait>{
-			override val ID: String = "type"
+			override val ID: String = "creature_type"
 
 			override fun decode(buf: ByteBuf): CreatureTypeTrait {
 				return CreatureTypeTrait(CreatureType.valueOf(PacketCodecs.STRING.decode(buf)))

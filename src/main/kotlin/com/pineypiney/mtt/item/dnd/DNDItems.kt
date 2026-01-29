@@ -3,6 +3,7 @@ package com.pineypiney.mtt.item.dnd
 import com.mojang.datafixers.util.Function3
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.component.MTTComponents
+import com.pineypiney.mtt.dnd.CoinValue
 import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
@@ -25,7 +26,7 @@ class DNDItems {
 		val SHORT_SWORD = registerWeapon("short_sword", WeaponType.SHORT_SWORD, 10, 2f, ::DNDMeleeItem)
 		val LONG_SWORD = registerWeapon("long_sword", WeaponType.LONG_SWORD, 15, 3f, ::DNDMeleeItem)
 		val GREAT_SWORD = registerWeapon("great_sword", WeaponType.GREAT_SWORD, 50, 6f, ::DNDMeleeItem)
-		val GREAT_CLUB = registerWeapon("great_club", WeaponType.GREAT_CLUB, 1, 10f, ::DNDMeleeItem)
+		val GREAT_CLUB = registerWeapon("great_club", WeaponType.GREAT_CLUB, 20L, 10f, ::DNDMeleeItem)
 
 		val SHORTBOW = registerWeapon("shortbow", WeaponType.SHORTBOW, 25, 2f, ::DNDRangedItem)
 		val LONGBOW = registerWeapon("longbow", WeaponType.LONGBOW, 50, 2f, ::DNDRangedItem)
@@ -38,7 +39,9 @@ class DNDItems {
 		val SPLINT = registerArmour("splint", 200, 60f, "armour", "splint", 17, ArmourType.HEAVY, true, Item.Settings())
 
 		val STEEL_HELMET = registerVisibleAccessory("steel_helmet", 25, 3f, "horned_helmet", "steel_helmet", DNDEquipmentType.HELMET, Item.Settings().component(MTTComponents.ARMOUR_CLASS_BONUS_TYPE, 1))
-		val SHIELD = register("shield"){ s -> DNDShieldItem(s, 10, 6f, 2) }
+		val SHIELD = register("shield"){ s -> DNDShieldItem(s, CoinValue.gold(10), 6f, 2) }
+
+		val TORCH = registerAccessory("torch", CoinValue(1L), 1f, DNDEquipmentType.TORCH, Item.Settings())
 
 		@Suppress("UNCHECKED_CAST")
 		fun <E: DNDItem> register(mishapartyy: String, settings: Item.Settings = Item.Settings(), factory: (Item.Settings) -> E): E{
@@ -59,25 +62,30 @@ class DNDItems {
 
 		private fun registerArmour(path: String, value: Int, weight: Float, model: String, texture: String, armourClass: Int, armourType: ArmourType, stealthDisadvantage: Boolean, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): DNDArmourItem {
 			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s ->
-				DNDArmourItem(s, value, weight, model, texture, armourClass, armourType, stealthDisadvantage, rarity)
+				DNDArmourItem(s, CoinValue.gold(value), weight, model, texture, armourClass, armourType, stealthDisadvantage, rarity)
 			}, settings.maxCount(1)) as DNDArmourItem
 		}
 
 		private fun registerVisibleAccessory(path: String, value: Int, weight: Float, model: String, texture: String, type: DNDEquipmentType, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): VisibleAccessoryItem {
 			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s ->
-				VisibleAccessoryItem(s, value, weight, type, model, texture, rarity)
+				VisibleAccessoryItem(s, CoinValue.gold(value), weight, type, model, texture, rarity)
 			}, settings.maxCount(1)) as VisibleAccessoryItem
 		}
 
-		private fun registerAccessory(path: String, value: Int, weight: Float, type: DNDEquipmentType, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): DNDAccessoryItem {
+		private fun registerAccessory(path: String, value: CoinValue, weight: Float, type: DNDEquipmentType, settings: Item.Settings, rarity: Rarity = Rarity.COMMON): DNDAccessoryItem {
 			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s ->
 				DNDAccessoryItem(s, value, weight, type, rarity)
 			}, settings.maxCount(1)) as DNDAccessoryItem
 		}
 
 		@Suppress("UNCHECKED_CAST")
-		private fun <E: DNDWeaponItem> registerWeapon(path: String, type: WeaponType, value: Int, weight: Float, factory: (Item.Settings, WeaponType, Int, Float, Rarity) -> E, settings: Item.Settings = Item.Settings(), rarity: Rarity = Rarity.COMMON): E{
-			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s -> factory(s, type, value, weight, rarity) }, settings.maxCount(1)) as E
+		private fun <E: DNDWeaponItem> registerWeapon(path: String, type: WeaponType, coppers: Long, weight: Float, factory: (Item.Settings, WeaponType, CoinValue, Float, Rarity) -> E, settings: Item.Settings = Item.Settings(), rarity: Rarity = Rarity.COMMON): E{
+			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s -> factory(s, type, CoinValue(coppers), weight, rarity) }, settings.maxCount(1)) as E
+		}
+
+		@Suppress("UNCHECKED_CAST")
+		private fun <E: DNDWeaponItem> registerWeapon(path: String, type: WeaponType, gold: Int, weight: Float, factory: (Item.Settings, WeaponType, CoinValue, Float, Rarity) -> E, settings: Item.Settings = Item.Settings(), rarity: Rarity = Rarity.COMMON): E{
+			return Items.register(RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, path)), { s -> factory(s, type, CoinValue.gold(gold), weight, rarity) }, settings.maxCount(1)) as E
 		}
 	}
 }

@@ -3,7 +3,7 @@ package com.pineypiney.mtt
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.Wizard
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Source
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.gui.screens.CharacterSheetScreen
@@ -36,7 +36,7 @@ object MTTKeybinds {
 			while(sheetTestScreenBinding.wasPressed()){
 				val sheet = CharacterSheet()
 				sheet.name = "Test Character"
-				sheet.species = Species.findById("human")
+				sheet.race = Race.findById("human")
 				sheet.maxHealth = 10
 				sheet.health = 10
 				sheet.classes[Wizard] = 2
@@ -45,7 +45,7 @@ object MTTKeybinds {
 				sheet.abilities.constitution = 15
 				sheet.abilities.intelligence = 9
 				sheet.abilities.wisdom = 10
-				sheet.addProficiencies(setOf(Proficiency.ATHLETICS), Source.SpeciesSource(sheet.species))
+				sheet.addProficiencies(setOf(Proficiency.ATHLETICS), Source.RaceSource(sheet.race))
 				client.setScreen(CharacterSheetScreen(SheetCharacter(sheet, UUID.randomUUID())))
 			}
 		}

@@ -19,7 +19,12 @@
 	"item.mtt.splint": "Splint",
 
 	"item.mtt.iron_helmet": "Iron Helmet",
+	"item.mtt.steel_helmet": "Steel Helmet",
 	"item.mtt.shield": "Shield",
+
+	"item.mtt.torch": "Torch",
+
+	"item.mtt.spell_book": "Spell Book",
 
 	"item.mtt.property.thrown": "Thrown",
 
@@ -37,32 +42,35 @@
 	"itemGroup.mtt.melee_weapons": "Melee Weapons",
 	"itemGroup.mtt.ranged_weapons": "Ranged Weapons",
 	"itemGroup.mtt.armour": "Armour",
+	"itemGroup.mtt.accessories": "Accessories",
 
 	"mtt.screen.dnd_inventory": "DND Inventory",
 	"mtt.screen.character_maker": "Character Maker",
 	"mtt.screen.character_sheet": "Character Sheet",
 
-	"mtt.character_maker_screen.species": "Species",
+	"mtt.character_maker_screen.race": "Race",
 	"mtt.character_maker_screen.class": "Class",
 	"mtt.character_maker_screen.abilities": "Abilities",
 	"mtt.character_maker_screen.background": "Background",
 
 	"mtt.character_maker_screen.points_left": "Points Remaining",
 
-	"mtt.species.human": "Human",
-	"mtt.species.dwarf": "Dwarf",
-	"mtt.species.elf": "Elf",
-	"mtt.species.elf.sub_species": "Elven Lineage",
-	"mtt.species.drow": "Drow",
-	"mtt.species.high_elf": "High Elf",
-	"mtt.species.wood_elf": "Wood Elf",
-	"mtt.species.halfling": "Halfling",
-	"mtt.species.orc": "Orc",
-	"mtt.species.tiefling": "Tiefling",
-	"mtt.species.tiefling.sub_species": "Fiendish Legacy",
-	"mtt.species.abyssal_tiefling": "Abyssal Tiefling",
-	"mtt.species.chthonic_tiefling": "Chthonic Tiefling",
-	"mtt.species.infernal_tiefling": "Infernal Tiefling",
+	"mtt.race.human": "Human",
+	"mtt.race.dwarf": "Dwarf",
+	"mtt.race.elf": "Elf",
+	"mtt.race.elf.sub_races": "Elven Lineage",
+	"mtt.race.drow": "Drow",
+	"mtt.race.high_elf": "High Elf",
+	"mtt.race.wood_elf": "Wood Elf",
+	"mtt.race.halfling": "Halfling",
+	"mtt.race.orc": "Orc",
+	"mtt.race.tiefling": "Tiefling",
+	"mtt.race.tiefling.sub_races": "Fiendish Legacy",
+	"mtt.race.abyssal_tiefling": "Abyssal Tiefling",
+	"mtt.race.chthonic_tiefling": "Chthonic Tiefling",
+	"mtt.race.infernal_tiefling": "Infernal Tiefling",
+
+	"mtt.race.goblin": "Goblin",
 
 	"mtt.class.barbarian": "Barbarian",
 	"mtt.class.bard": "Bard",

@@ -25,9 +25,7 @@ public class ClientPlayerEntityMixin extends AbstractClientPlayerEntity {
 		super(world, profile);
 	}
 
-	//@Inject(method = "tickMovementInput", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;applyMovementSpeedFactors(Lnet/minecraft/util/math/Vec2f;)Lnet/minecraft/util/math/Vec2f;"))
-
-	@ModifyVariable(method = "tickMovementInput", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/client/network/ClientPlayerEntity;applyMovementSpeedFactors(Lnet/minecraft/util/math/Vec2f;)Lnet/minecraft/util/math/Vec2f;"), ordinal = 0)
+	@ModifyVariable(method = "tickMovementInput()V", at = @At("STORE"), ordinal = 0)
 	private Vec2f freezeDndPlayers(Vec2f vec){
 		DNDEngine engine = ((DNDEngineHolder<?>) client).mtt$getDNDEngine();
 		if(engine == null){

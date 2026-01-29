@@ -3,7 +3,7 @@ package com.pineypiney.mtt.screen
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.classes.DNDClass
-import com.pineypiney.mtt.dnd.species.Species
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.AbilityPointBuyPart
 import com.pineypiney.mtt.dnd.traits.Source
 import com.pineypiney.mtt.dnd.traits.TraitPart
@@ -18,7 +18,7 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 
 	val sheet = CharacterSheet()
 
-	val speciesParts = mutableListOf<MutableList<TraitPart>>()
+	val raceParts = mutableListOf<MutableList<TraitPart>>()
 	val classTraits = mutableListOf<MutableList<TraitPart>>()
 	val backgroundTraits = mutableListOf<MutableList<TraitPart>>()
 	val abilityPart = AbilityPointBuyPart()
@@ -29,7 +29,7 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 			return
 		}
 		val trait = when(src){
-			"species" -> speciesParts.getOrNull(index) ?: return
+			"race" -> raceParts.getOrNull(index) ?: return
 			"class" -> classTraits.getOrNull(index) ?: return
 			"background" -> backgroundTraits.getOrNull(index) ?: return
 			else -> return
@@ -38,10 +38,10 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 		part.updateValues(values)
 	}
 
-	fun setSpecies(species: Species){
-		sheet.species = species
-		speciesParts.clear()
-		speciesParts.addAll(species.getAllTraits().map { it.getParts().toMutableList() })
+	fun setRace(race: Race){
+		sheet.race = race
+		raceParts.clear()
+		raceParts.addAll(race.getAllTraits().map { it.getParts().toMutableList() })
 	}
 
 	fun setClass(clazz: DNDClass){
@@ -58,8 +58,8 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 	}
 
 	fun applyTraits(){
-		speciesParts.forEach { trait ->
-			trait.forEach { part -> part.apply(sheet, Source.SpeciesSource(sheet.species)) }
+		raceParts.forEach { trait ->
+			trait.forEach { part -> part.apply(sheet, Source.RaceSource(sheet.race)) }
 		}
 		classTraits.forEach { trait ->
 			trait.forEach { part -> part.apply(sheet, Source.ClassSource(sheet.classes.keys.first())) }
@@ -68,6 +68,9 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 			trait.forEach { part -> part.apply(sheet, Source.BackgroundSource(sheet.background)) }
 		}
 		abilityPart.apply(sheet)
+
+		sheet.maxHealth = sheet.classes.keys.first().healthDie
+		sheet.health = sheet.maxHealth
 	}
 
 	override fun quickMove(player: PlayerEntity, slot: Int): ItemStack {
