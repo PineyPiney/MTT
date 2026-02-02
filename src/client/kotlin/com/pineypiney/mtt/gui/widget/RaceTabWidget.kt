@@ -3,8 +3,12 @@ package com.pineypiney.mtt.gui.widget
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.race.Subrace
 import com.pineypiney.mtt.dnd.traits.LiteralPart
+import com.pineypiney.mtt.dnd.traits.OneChoicePart
 import com.pineypiney.mtt.dnd.traits.Source
+import com.pineypiney.mtt.network.payloads.c2s.ClickButtonC2SPayload
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.gui.DrawContext
@@ -12,12 +16,21 @@ import net.minecraft.client.render.RenderLayer
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 
-class RaceTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, yOrigin: Int, width: Int, panelHeight: Int, message: Text, races: Set<Race>) : CharacterCreatorOptionsTabWidget<Race>(
+class RaceTabWidget(
+	sheet: CharacterSheet,
+	client: MinecraftClient,
+	x: Int,
+	y: Int,
+	width: Int,
+	height: Int,
+	message: Text,
+	races: Set<Race>
+) : CharacterCreatorOptionsTabWidget<Race>(
 	sheet, client,
 	x,
-	yOrigin,
+	y,
 	width,
-	panelHeight,
+	height,
 	message
 ) {
 
@@ -33,7 +46,7 @@ class RaceTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, yOri
 	}
 
 	override fun setupSelectedPage(selected: Race){
-		val y = y + 25
+		val y = y + headerHeight
 		selectedPage.add(TraitEntry.newOf(x + 20, y, width - 40, this, Text.translatable("mtt.trait.creature_type"), 0, listOf(
 			LiteralPart("mtt.trait.creature_type.declaration", Text.translatable("mtt.creature_type.${selected.type.name.lowercase()}"))
 		)))
@@ -42,7 +55,24 @@ class RaceTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, yOri
 			LiteralPart("mtt.trait.speed.declaration", "${selected.speed} ft"),
 		)))
 		selectedPage.add(TraitEntry.newOf(x + 20, y + 45, width - 40, this, Text.translatable("mtt.trait.model"), 3, selected.model.getParts()))
+
 		var i = 4
+		if (selected.subraces.isNotEmpty()) {
+			val declaration = SubracePart(selected, this)
+			val parts = setOf(declaration, LiteralPart("mtt.trait.subraces.description"))
+			selectedPage.add(
+				TraitEntry.newOf(
+					x + 20,
+					y + 60,
+					width - 40,
+					this,
+					Text.translatable("mtt.trait.subraces"),
+					i++,
+					parts
+				)
+			)
+		}
+
 		selected.traits.forEach { trait ->
 			selectedPage.add(TraitEntry.newOf(x + 20, y + 15 * i, width - 40, this, trait.getLabel(), i++, trait.getParts()))
 		}
@@ -67,6 +97,72 @@ class RaceTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int, yOri
 			setPosition(x, y)
 			context.drawTexture(RenderLayer::getGuiTextured, Identifier.of(MTT.MOD_ID, "textures/gui/character_maker/race_icons/${value.id}.png"), (x / scale).toInt(), (y / scale).toInt(), 0f, 0f, 8, 8, 8, 8)
 			context.drawText(textRenderer, Text.translatable("mtt.race.${value.id}"), (x / scale).toInt() + 10, (y / scale).toInt() + 1, 4210752, false)
+		}
+	}
+
+	class SubracePart(private val race: Race, val widget: RaceTabWidget) : OneChoicePart<Subrace>(
+		race.subraces,
+		Text.translatable("mtt.trait.subraces"),
+		{ str -> race.getSubrace(str)!! },
+		Subrace::name,
+		{ "mtt.race.${it.name}" },
+		"mtt.trait.subraces.declaration",
+		{ sheet, subrace, _ -> sheet.subrace = subrace }) {
+
+		private var lastSubraceName = ""
+
+		override fun onSelect(value: Any?) {
+			super.onSelect(value)
+			val subrace = value as? Subrace
+			val subraceID = subrace?.name ?: ""
+
+			// Update Server
+			val payload = ClickButtonC2SPayload("subrace", subraceID)
+			ClientPlayNetworking.send(payload)
+
+			if (lastSubraceName != subraceID) {
+				// Remove previous subrace's traits
+				widget.removeConditionalTraits("subrace_$lastSubraceName")
+
+				// Add new subrace's traits
+				if (subrace != null) {
+					val entries = mutableSetOf<TraitEntry>()
+					val x = widget.x + 20
+					val y = widget.y + widget.headerHeight + widget.contentsHeightWithPadding
+					val w = widget.width - 40
+					var i = 0
+					for (trait in subrace.traits) {
+						entries.add(
+							TraitEntry.newOf(
+								x,
+								y + 15 * i,
+								w,
+								widget,
+								"subrace",
+								trait.getLabel(),
+								i++,
+								trait.getParts()
+							)
+						)
+					}
+					for (namedTrait in subrace.namedTraits) {
+						entries.add(
+							TraitEntry.newOf(
+								x,
+								y + 15 * i,
+								w,
+								widget,
+								"subrace",
+								Text.translatable("mtt.feature.${namedTrait.name}"),
+								i++,
+								namedTrait.traits.flatMap { it.getParts() }.toSet()
+							)
+						)
+					}
+					widget.addConditionalTraits("subrace_${subrace.name}", entries)
+				}
+				lastSubraceName = subraceID
+			}
 		}
 	}
 }

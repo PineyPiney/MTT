@@ -4,6 +4,7 @@ import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.race.Subrace
 import com.pineypiney.mtt.dnd.traits.AbilityPointBuyPart
 import com.pineypiney.mtt.dnd.traits.Source
 import com.pineypiney.mtt.dnd.traits.TraitPart
@@ -19,6 +20,7 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 	val sheet = CharacterSheet()
 
 	val raceParts = mutableListOf<MutableList<TraitPart>>()
+	val subraceParts = mutableListOf<MutableList<TraitPart>>()
 	val classTraits = mutableListOf<MutableList<TraitPart>>()
 	val backgroundTraits = mutableListOf<MutableList<TraitPart>>()
 	val abilityPart = AbilityPointBuyPart()
@@ -30,6 +32,7 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 		}
 		val trait = when(src){
 			"race" -> raceParts.getOrNull(index) ?: return
+			"subrace" -> subraceParts.getOrNull(index) ?: return
 			"class" -> classTraits.getOrNull(index) ?: return
 			"background" -> backgroundTraits.getOrNull(index) ?: return
 			else -> return
@@ -42,6 +45,12 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 		sheet.race = race
 		raceParts.clear()
 		raceParts.addAll(race.getAllTraits().map { it.getParts().toMutableList() })
+	}
+
+	fun setSubRace(subrace: Subrace?) {
+		sheet.subrace = subrace
+		subraceParts.clear()
+		if (subrace != null) subraceParts.addAll(subrace.getAllTraits().map { it.getParts().toMutableList() })
 	}
 
 	fun setClass(clazz: DNDClass){
@@ -60,6 +69,12 @@ class CharacterMakerScreenHandler(syncID: Int) : ScreenHandler(MTTScreenHandlers
 	fun applyTraits(){
 		raceParts.forEach { trait ->
 			trait.forEach { part -> part.apply(sheet, Source.RaceSource(sheet.race)) }
+		}
+		val subrace = sheet.subrace
+		if (subrace != null) {
+			subraceParts.forEach { trait ->
+				trait.forEach { part -> part.apply(sheet, Source.SubraceSource(sheet.race, subrace)) }
+			}
 		}
 		classTraits.forEach { trait ->
 			trait.forEach { part -> part.apply(sheet, Source.ClassSource(sheet.classes.keys.first())) }

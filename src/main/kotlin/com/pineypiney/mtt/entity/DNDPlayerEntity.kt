@@ -18,7 +18,7 @@ class DNDPlayerEntity(type: EntityType<*>, world: World): DNDClassEntity(type, w
 		dataTracker.set(CHARACTER_UUID, character.uuid)
 	}
 
-	val screenHandler = DNDScreenHandler(1, character.inventory)
+	val screenHandler = DNDScreenHandler(1, character?.inventory ?: DNDInventory())
 
 	var controllingPlayer: UUID?
 		get() = this.dataTracker[CONTROLLING_PLAYER].getOrNull()

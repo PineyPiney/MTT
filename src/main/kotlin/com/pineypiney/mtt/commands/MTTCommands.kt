@@ -1,7 +1,6 @@
 package com.pineypiney.mtt.commands
 
 import com.mojang.brigadier.arguments.BoolArgumentType
-import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.pineypiney.mtt.commands.suggestions.DNDSuggestions
@@ -40,18 +39,6 @@ object MTTCommands {
 			reply(ctx, "Roll Result: $rollResult")
 			0
 		})
-
-	private val TEST_COMMAND = literal("mtt_test")
-		.then(literal("default").then(argument("testInt",IntegerArgumentType.integer()).executes { ctx ->
-			val int = ctx.getArgument("testInt", Integer::class.java).toInt()
-			ctx.source.sendFeedback({Text.literal("Test Int: ${int * int}")}, false)
-			0
-		}))
-		.then(literal("custom").then(argument("testType", TestArgumentType()).executes { ctx ->
-			val int = ctx.getArgument("testType", Int::class.java)
-			ctx.source.sendFeedback({Text.literal("Test Int: ${int * int}")}, false)
-			0
-		}))
 
 	@Suppress("UNCHECKED_CAST")
 	fun getEngine(ctx: CommandContext<ServerCommandSource>): DNDServerEngine {
@@ -170,14 +157,14 @@ object MTTCommands {
 					val engine = getEngine(ctx)
 					val character = DNDSuggestions.getCharacter(ctx, "character") ?: return@executes 0
 					character.name = StringArgumentType.getString(ctx, "name")
-					engine.getCharacterEntity(character.uuid)?.name = character.name
+					engine.getPlayerCharacterEntity(character.uuid)?.name = character.name
 					engine.updates.add(DNDEngineUpdateS2CPayload("rename", character.uuid.toInts(), character.name))
 					1
 				}))
 				// Delete the character
 				.then(literal("delete").executes { ctx ->
 					val character = DNDSuggestions.getCharacter(ctx, "character") ?: return@executes 0
-					if(getEngine(ctx).removeCharacter(character.name)) {
+					if (getEngine(ctx).removeCharacter(character.uuid)) {
 						reply(ctx, "Removed DND character ${character.name}")
 					}
 					else reply(ctx, "There is no DND Character with the name ${character.name} to delete")
@@ -207,7 +194,7 @@ object MTTCommands {
 			sheet.classes[Barbarian] = 1
 			sheet.maxHealth = Barbarian.healthDie
 			sheet.health = sheet.maxHealth
-			val character = SheetCharacter(sheet, UUID.randomUUID())
+			val character = SheetCharacter(sheet, UUID.randomUUID(), engine)
 			engine.addCharacter(character)
 			engine.associatePlayer(player.uuid, character.uuid)
 			1
@@ -218,7 +205,6 @@ object MTTCommands {
 		CommandRegistrationCallback.EVENT.register { dispatcher, access, _ ->
 			val roll = dispatcher.register(DICE_COMMAND)
 			dispatcher.register(literal("r").redirect(roll))
-			dispatcher.register(TEST_COMMAND)
 			dispatcher.register(DND_COMMANDS(access))
 		}
 	}

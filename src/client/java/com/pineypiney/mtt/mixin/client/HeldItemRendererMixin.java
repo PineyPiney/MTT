@@ -30,11 +30,11 @@ public abstract class HeldItemRendererMixin {
 	@Inject(method = "renderArmHoldingItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/EntityRenderDispatcher;getRenderer(Lnet/minecraft/entity/Entity;)Lnet/minecraft/client/render/entity/EntityRenderer;"), cancellable = true)
 	private void renderCharacterArm(MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, float equipProgress, float swingProgress, Arm arm, CallbackInfo ci){
 		var player = client.player;
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(player);
-		if(player == null || character == null) return;
+		var characterEntity = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(player);
+		if (player == null || characterEntity == null || characterEntity.getCharacter() == null) return;
 
-		var renderer = (DNDPlayerEntityRenderer) this.entityRenderDispatcher.getRenderer(character);
-		renderer.renderArm(matrices, vertexConsumers, light, arm, character.getCharacter());
+		var renderer = (DNDPlayerEntityRenderer) this.entityRenderDispatcher.getRenderer(characterEntity);
+		renderer.renderArm(matrices, vertexConsumers, light, arm, characterEntity.getCharacter());
 		ci.cancel();
 	}
 

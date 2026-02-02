@@ -3,15 +3,12 @@ package com.pineypiney.mtt.gui.screens
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.CharacterSheet
-import com.pineypiney.mtt.dnd.DNDClientEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.gui.widget.*
-import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.network.payloads.c2s.ClickButtonC2SPayload
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
-import net.minecraft.client.MinecraftClient
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.client.gui.widget.ButtonWidget
@@ -23,7 +20,6 @@ import net.minecraft.util.Identifier
 class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory: PlayerInventory, title: Text) : HandledScreen<CharacterMakerScreenHandler>(handler, playerInventory, title) {
 
 	var isReady = false
-	val engine = (MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as DNDClientEngine
 	val sheet = CharacterSheet()
 
 	var tabOpen = 0
@@ -51,34 +47,25 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		super.init()
 
 		tabWidgets = arrayOf(
-			RaceTabWidget(
-				sheet,
-				client!!,
-				x + 8,
-				y + 32,
-				240,
-				212,
-				Text.literal("Race Widget Text"),
-				Race.set
-			),
+			RaceTabWidget(sheet, client!!, x + 8, y + 32, 240, 188, Text.literal("Race Widget Text"), Race.set),
 			ClassTabWidget(
 				sheet,
 				client!!,
 				x + 8,
 				y + 32,
 				240,
-				212,
+				188,
 				Text.literal("Class Widget Text"),
 				DNDClass.classes
 			),
-			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 212, Text.literal("Abilities Widget Text")),
+			AbilitiesTabWidget(sheet, client!!, x + 8, y + 32, 240, 188, Text.literal("Abilities Widget Text")),
 			BackgroundTabWidget(
 				sheet,
 				client!!,
 				x + 8,
 				y + 32,
 				240,
-				212,
+				188,
 				Text.literal("Background Widget Text"),
 				Background.set
 			)

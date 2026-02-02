@@ -2,6 +2,7 @@ package com.pineypiney.mtt.dnd.characters
 
 import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
@@ -10,22 +11,16 @@ import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.DNDPlayerEntity
 import com.pineypiney.mtt.entity.MTTEntities
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs
+import com.pineypiney.mtt.network.payloads.s2c.CharacterSheetS2CPayload
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtDouble
-import net.minecraft.nbt.NbtList
-import net.minecraft.network.RegistryByteBuf
-import net.minecraft.network.codec.PacketCodecs
-import net.minecraft.registry.RegistryKey
-import net.minecraft.registry.RegistryKeys
-import net.minecraft.util.Identifier
-import net.minecraft.util.math.Vec3d
+import net.minecraft.network.packet.CustomPayload
+import net.minecraft.registry.DynamicRegistryManager
 import net.minecraft.world.World
 import java.util.*
 import kotlin.math.max
 
-class SheetCharacter(val sheet: CharacterSheet, uuid: UUID) : Character(uuid) {
+class SheetCharacter(val sheet: CharacterSheet, uuid: UUID, engine: DNDEngine) : Character(uuid, engine) {
 	override var name: String
 		get() = sheet.name
 		set(value) { sheet.name = value }
@@ -47,6 +42,12 @@ class SheetCharacter(val sheet: CharacterSheet, uuid: UUID) : Character(uuid) {
 		return DNDPlayerEntity(MTTEntities.PLAYER, world, this)
 	}
 
+	override fun createPayload(regManager: DynamicRegistryManager): CustomPayload {
+		val nbt = NbtCompound()
+		writeNbt(nbt, regManager)
+		return CharacterSheetS2CPayload(uuid, sheet, nbt)
+	}
+
 	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int{
 		var i = if(weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
 		if(sheet.isProficientIn(weaponType)) i += sheet.calculateProficiencyBonus()
@@ -60,43 +61,7 @@ class SheetCharacter(val sheet: CharacterSheet, uuid: UUID) : Character(uuid) {
 		return i
 	}
 
-	override fun save(buf: RegistryByteBuf) {
-		PacketCodecs.STRING.encode(buf, "sheet")
-		MTTPacketCodecs.CHARACTER_SHEET_CODEC.encode(buf, sheet)
-		MTTPacketCodecs.UUID_CODEC.encode(buf, uuid)
-		val nbt = NbtCompound()
-
-		val posNbt = NbtList()
-		posNbt.add(NbtDouble.of(pos.x))
-		posNbt.add(NbtDouble.of(pos.y))
-		posNbt.add(NbtDouble.of(pos.z))
-		nbt.put("pos", posNbt)
-
-		nbt.putString("world", world.value.toString())
-		nbt.put("inventory", inventory.writeNbt(buf.registryManager))
-		buf.writeNbt(nbt)
-	}
-
 	override fun toString(): String {
 		return "Sheet Character[$name, $uuid]"
-	}
-
-	companion object {
-		fun load(buf: RegistryByteBuf): SheetCharacter{
-			val character = SheetCharacter(MTTPacketCodecs.CHARACTER_SHEET_CODEC.decode(buf), MTTPacketCodecs.UUID_CODEC.decode(buf))
-			val nbt = buf.readNbt() ?: return character
-
-			val posArray = nbt.getListOrEmpty("pos")
-			character.pos = Vec3d(
-				posArray.getDouble(0, 0.0),
-				posArray.getDouble(1, 0.0),
-				posArray.getDouble(2, 0.0)
-			)
-
-			val worldID = Identifier.of(nbt.getString("world").get())
-			character.world = RegistryKey.of(RegistryKeys.WORLD, worldID)
-			character.inventory.readNbt(nbt.getListOrEmpty("inventory"), buf.registryManager)
-			return character
-		}
 	}
 }

@@ -2,6 +2,7 @@ package com.pineypiney.mtt.dnd
 
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.race.Subrace
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
@@ -19,7 +20,8 @@ import kotlin.jvm.optionals.getOrNull
 
 class CharacterSheet {
 	var name = "Unnamed Character"
-	var race: Race = Race.NONE
+	var race: Race = Race.findById("human")
+	var subrace: Subrace? = null
 	var background: Background = Background.ACOLYTE
 	var level = 1
 	private val typeProperty = Property(CreatureType.HUMANOID){ src, value -> src.overridePower }
@@ -93,18 +95,18 @@ class CharacterSheet {
 	fun calculateProficiencyBonus() = MathHelper.ceilDiv(classes.values.sum(), 4) + 1
 
 	fun <T, C> encodePropertyMap(buf: ByteBuf, property: Property<T>, codec: PacketCodec<ByteBuf, C>, get: (T) -> C){
-		PacketCodecs.INTEGER.encode(buf, property.sources.size)
+		MTTPacketCodecs.bytInt.encode(buf, property.sources.size)
 		for((src, value) in property.sources){
-			MTTPacketCodecs.SOURCE_CODEC.encode(buf, src)
+			MTTPacketCodecs.SOURCE.encode(buf, src)
 			codec.encode(buf, get(value))
 		}
 	}
 
 	fun <T, C> decodePropertyMap(buf: ByteBuf, property: Property<T>, codec: PacketCodec<ByteBuf, C>, get: (C) -> T){
-		val size = PacketCodecs.INTEGER.decode(buf)
+		val size = MTTPacketCodecs.bytInt.decode(buf)
 		property.sources.clear()
-		for(i in 0..<size){
-			val src = MTTPacketCodecs.SOURCE_CODEC.decode(buf)
+		repeat(size) {
+			val src = MTTPacketCodecs.SOURCE.decode(buf)
 			val value = get(codec.decode(buf))
 			property.sources[src] = value
 		}

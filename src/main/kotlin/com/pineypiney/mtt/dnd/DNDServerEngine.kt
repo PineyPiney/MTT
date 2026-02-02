@@ -2,11 +2,11 @@ package com.pineypiney.mtt.dnd
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.characters.CharacterTypeRegistry
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.entity.DNDPlayerEntity
 import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
-import com.pineypiney.mtt.network.payloads.s2c.CharacterS2CPayload
 import com.pineypiney.mtt.network.payloads.s2c.DNDEngineUpdateS2CPayload
 import com.pineypiney.mtt.network.payloads.s2c.RaceS2CPayload
 import com.pineypiney.mtt.serialisation.MTTCodecs
@@ -16,6 +16,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.Entity
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.MinecraftServer
@@ -50,7 +51,7 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 		val allRaceFiles = server.resourceManager.findResources("races"){ id: Identifier ->
 			id.path.endsWith(".json")
 		}
-		println("Found Race: ${allRaceFiles.keys.joinToString{it.path}}")
+		println("Found Races: ${allRaceFiles.keys.joinToString { it.path }}")
 
 		for((id, resource) in allRaceFiles){
 			try {
@@ -62,7 +63,7 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 				MTT.logger.warn("Couldn't parse race json $id: ${e.message}")
 			}
 		}
-		MTT.logger.info("Successfully loaded ${Race.set.size} DND race: [${Race.set.joinToString{it.id}}]")
+		MTT.logger.info("Successfully loaded ${Race.set.size} DND races: [${Race.set.joinToString { it.id }}]")
 	}
 
 	fun onPlayerConnect(player: ServerPlayerEntity){
@@ -76,7 +77,7 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 		if(dm != null) ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("dm", dm))
 		else ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("dm"))
 		for(character in characters){
-			ServerPlayNetworking.send(player, CharacterS2CPayload(character))
+			ServerPlayNetworking.send(player, character.createPayload(server.registryManager))
 		}
 		for((playerUUID, characterUUID) in playerCharacters) {
 			ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("player", playerUUID, characterUUID))
@@ -85,13 +86,18 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 
 	override fun addCharacter(character: Character) {
 		super.addCharacter(character)
-		sendPayload(CharacterS2CPayload(character))
+		sendPayload(character.createPayload(server.registryManager))
 		if(showCharacters) createCharacterEntity(character)
 	}
 
 	fun createCharacterEntity(character: Character){
 		val world = server.getWorld(character.world) ?: return
 		world.spawnEntity(character.createEntity(world))
+	}
+
+	override fun getControllingPlayer(character: UUID): PlayerEntity? {
+		val playerUUID = playerCharacters.entries.firstOrNull { it.value == character }?.key ?: return null
+		return server.playerManager.getPlayer(playerUUID)
 	}
 
 	override fun associatePlayer(player: UUID, character: UUID) {
@@ -197,7 +203,9 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 		val bools = MTTCodecs.createBoolByte(running, showCharacters)
 		buf.writeBytes(byteArrayOf(bools))
 
-		MTTPacketCodecs.encodeCollection(buf, characters, MTTPacketCodecs.CHARACTER_CODEC)
+		MTTPacketCodecs.int.encode(buf, characters.size)
+		for (character in characters) CharacterTypeRegistry.save(character, buf)
+
 		MTTPacketCodecs.encodeMap(buf, playerCharacters, MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.UUID_CODEC)
 		charactersFile.writeBytes(buf.nioBuffer().array())
 
@@ -223,7 +231,12 @@ class DNDServerEngine(private val server: MinecraftServer): DNDEngine() {
 
 			characters.clear()
 			playerCharacters.clear()
-			MTTPacketCodecs.decodeCollection(buf, MTTPacketCodecs.CHARACTER_CODEC, characters)
+
+			val numCharacters = MTTPacketCodecs.int.decode(buf)
+			repeat(numCharacters) {
+				val char = CharacterTypeRegistry.load(buf, this)
+				if (char != null) characters.add(char)
+			}
 			MTTPacketCodecs.decodeMap(buf, MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.UUID_CODEC, playerCharacters)
 		}
 

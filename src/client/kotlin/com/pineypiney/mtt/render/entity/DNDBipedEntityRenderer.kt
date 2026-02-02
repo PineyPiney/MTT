@@ -26,8 +26,23 @@ import java.io.File
 
 abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState, M: DNDBipedEntityModel<S>>(ctx: EntityRendererFactory.Context, modelMaker: (ModelPart) -> M): EntityRenderer<E, S>(ctx) {
 
-	val bipedModels = MTTRenderers.BIPED_MODELS.mapValues { (id, pair) -> pair.first to modelMaker(ctx.getPart(pair.second)) }
-	val equipmentModels = MTTRenderers.EQUIPMENT_MODELS.mapNotNull { type -> type.mapValues { (name, layer) -> try { ctx.getPart(layer) } catch (e: IllegalArgumentException){
+	private val bipedModels = try {
+		MTTRenderers.BIPED_MODELS.mapValues { (id, pair) ->
+			try {
+				pair.first to modelMaker(ctx.getPart(pair.second))
+			} catch (e: IllegalArgumentException) {
+				MTT.logger.warn("Failed to create model $id")
+				throw e
+			}
+		}
+	} catch (e: IllegalArgumentException) {
+		emptyMap()
+	}
+	private val equipmentModels = MTTRenderers.EQUIPMENT_MODELS.mapNotNull { type ->
+		type.mapValues { (name, layer) ->
+			try {
+				ctx.getPart(layer)
+			} catch (_: IllegalArgumentException) {
 		MTT.logger.warn("Could not find model for layer ${layer.name}")
 		return@mapNotNull null
 	} } }
@@ -36,9 +51,10 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 
 	override fun updateRenderState(entity: E, state: S, f: Float) {
 		super.updateRenderState(entity, state, f)
+		state.character = entity.character ?: return
 
 		state.invisibleToPlayer = if(MinecraftClient.getInstance().options.perspective.isFirstPerson) {
-			DNDClientEngine.getInstance().running && DNDClientEngine.getClientCharacterUUID() == entity.character.uuid
+			DNDClientEngine.getInstance().running && DNDClientEngine.getClientCharacterUUID() == state.character.uuid
 		}
 		else false
 
@@ -50,12 +66,11 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 
 		state.limbSwingAnimationProgress = entity.limbAnimator.getAnimationProgress(f)
 		state.limbSwingAmplitude = entity.limbAnimator.getAmplitude(f)
-		state.character = entity.character
 	}
 
 	override fun render(state: S, matrices: MatrixStack, vertexConsumers: VertexConsumerProvider, light: Int) {
 
-		if(state.invisibleToPlayer) return
+		if (!state.ready() || state.invisibleToPlayer) return
 
 		var modelPath = state.character.race.id + '/' + state.character.model
 		if(!bipedModels.contains(modelPath)) modelPath = bipedModels.keys.firstOrNull { it.startsWith(state.character.race.id + '/') } ?: return
@@ -92,7 +107,7 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		}
 	}
 
-	fun fetchAllTextures(): Map<String, Set<String>> {
+	private fun fetchAllTextures(): Map<String, Set<String>> {
 		val textures = mutableMapOf<String, MutableSet<String>>()
 		val resourcePacks = File("resourcepacks").listFiles() ?: return textures
 		for(pack in resourcePacks){
@@ -110,7 +125,13 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		return textures
 	}
 
-	fun renderHelmet(state: S, data: BipedModelData, matrices: MatrixStack, vertexConsumers: VertexConsumerProvider, light: Int){
+	private fun renderHelmet(
+		state: S,
+		data: BipedModelData,
+		matrices: MatrixStack,
+		vertexConsumers: VertexConsumerProvider,
+		light: Int
+	) {
 		val inventory = state.character.inventory
 
 		// Try to render the aesthetic helmet, otherwise the functional helmet, otherwise none

@@ -7,7 +7,7 @@ import net.minecraft.text.Text
 /**
  * Traits that different DND Races can have.
  * They are given classes to make them as dynamic as possible,
- * so that they can be defined in json files
+ * so that they can be defined in JSON files
  */
 
 abstract class Trait<T: Trait<T>>(val root: String = "feature") {

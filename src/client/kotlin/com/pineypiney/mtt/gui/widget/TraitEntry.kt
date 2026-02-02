@@ -21,14 +21,22 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.min
 
-class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTabWidget<*>, private val label: Text, private val index: Int, private val segments: List<Segment>): ClickableWidget(x, y, width, 13, Text.literal("Trait Entry ${label.string}")){
+/**
+ * Represents a trait type in the character maker screen
+ * @param tab The parent tab
+ * @param segments The segments in the trait box, this can be literal text, a choice for the player to make, etc
+ */
+class TraitEntry(
+	x: Int,
+	y: Int,
+	width: Int,
+	val tab: CharacterCreatorOptionsTabWidget<*>,
+	val src: String,
+	private val label: Text,
+	private val index: Int,
+	private val segments: List<Segment>
+) : ClickableWidget(x, y, width, 13, Text.literal("Trait Entry ${label.string}")) {
 
-	val src = when(tab){
-		is RaceTabWidget -> "race"
-		is ClassTabWidget -> "class"
-		is BackgroundTabWidget -> "background"
-		else -> "null"
-	}
 	// The absolute value is the opening time and the input of the easing function,
 	// if positive it is opening and if negative it is closing
 	private var openness = 0f
@@ -36,8 +44,6 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 	private var hoveredSegment = -1
 
 	val isReady get() = segments.all { it.isReady }
-
-	//val isReady = segments.
 
 	init {
 		segments.forEach { it.init(this) }
@@ -191,6 +197,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 			val height = entry.tab.client.currentScreen?.height ?: return false
 			entry.tab.optionSelectWidget = OptionsSelectWidget(entry.tab.client.textRenderer, part.label, listOfNotNull(part.decision), 1, part.choices.toList(), { Text.translatable(part.translationKey(it)) }, entry.x + (entry.width / 2) - 75, height / 2, 150, 100, Text.literal("OptionSelect")){
 				part.decision = it.firstOrNull()
+				part.onSelect(part.decision)
 				generateTraitLines(entry.tab.client.textRenderer, entry.width - 10)
 				entry.height = 13 + entry.getBoxHeight()
 				entry.tab.reposition(entry.index)
@@ -244,6 +251,7 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 			entry.tab.optionSelectWidget = OptionsSelectWidget(entry.tab.client.textRenderer, part.label, part.decisions, part.data.numChoices, part.data.options.toList(), { Text.translatable(part.translationKey(it)) }, entry.x + (entry.width / 2) - 75, height / 2, 150, 100, Text.literal("OptionSelect")){
 				part.decisions.clear()
 				part.decisions.addAll(it)
+				part.onSelect(part.decisions)
 				
 				generateTraitLines(entry.tab.client.textRenderer, entry.width - 10)
 				entry.height = 13 + entry.getBoxHeight()
@@ -327,8 +335,37 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 	}
 
 	companion object {
-		fun newOf(x: Int, y: Int, width: Int, tab: CharacterCreatorOptionsTabWidget<*>, label: Text, index: Int, parts: Collection<TraitPart>): TraitEntry{
-			val segments: List<Segment> = parts.mapIndexed { partIndex, part ->
+
+		fun newOf(
+			x: Int,
+			y: Int,
+			width: Int,
+			tab: CharacterCreatorOptionsTabWidget<*>,
+			label: Text,
+			index: Int,
+			parts: Collection<TraitPart>
+		): TraitEntry {
+			val src = when (tab) {
+				is RaceTabWidget -> "race"
+				is ClassTabWidget -> "class"
+				is BackgroundTabWidget -> "background"
+				else -> "null"
+			}
+			return newOf(x, y, width, tab, src, label, index, parts)
+		}
+
+		fun newOf(
+			x: Int,
+			y: Int,
+			width: Int,
+			tab: CharacterCreatorOptionsTabWidget<*>,
+			src: String,
+			label: Text,
+			index: Int,
+			parts: Collection<TraitPart>
+		): TraitEntry {
+
+			val segments: List<Segment> = parts.mapIndexedNotNull { partIndex, part ->
 				when (part) {
 					is LiteralPart -> LiteralTextSegment(tab.client.textRenderer.textHandler.wrapLines(part.text, width - 10, Style.EMPTY)
 						.map { line -> Text.literal(line.string) })
@@ -336,9 +373,10 @@ class TraitEntry(x: Int, y: Int, width: Int, val tab: CharacterCreatorOptionsTab
 					is OneChoicePart<*> -> OneChoiceSegment(part, partIndex)
 					is GivenAndOptionsPart<*> -> GiveNOptsSegment(part, partIndex)
 					is TallyPart<*> -> TallySegment(part, partIndex)
+					else -> null
 				}
 			}
-			return TraitEntry(x, y, width, tab, label, index, segments)
+			return TraitEntry(x, y, width, tab, src, label, index, segments)
 		}
 	}
 }

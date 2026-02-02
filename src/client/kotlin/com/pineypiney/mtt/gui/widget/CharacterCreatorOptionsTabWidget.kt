@@ -21,7 +21,7 @@ import kotlin.math.max
 
 abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client: MinecraftClient, x: Int, yOrigin: Int, width: Int, panelHeight: Int, text: Text) : CharacterCreatorTabWidget(sheet, client, x, yOrigin, width, panelHeight, text){
 
-	override val headerHeight: Int get() = if(selected == null) 0 else 25
+	override val headerHeight: Int get() = if (selected == null) 30 else 25
 	override val isReady: Boolean get() = selected != null && selectedPage.all { it.isReady }
 	abstract val valueSelectChildren: List<Entry<T>>
 
@@ -35,16 +35,19 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 			if(field != value) {
 				field = value
 				selectedPage.clear()
+				conditionalTraits.clear()
 				if(value != null) {
 					setupSelectedPage(value)
 				}
 				else {
 					isBackButtonHovered = false
 					selectedPage.clear()
+					conditionalTraits.clear()
 				}
 			}
 		}
 	val selectedPage: MutableList<TraitEntry> = mutableListOf()
+	val conditionalTraits = mutableMapOf<String, Pair<Int, Int>>()
 
 	override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
 		// If there is a pop up options widget then nothing else should be interactable
@@ -55,6 +58,7 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 			optionSelectWidget = null
 			selected = null
 			selectedPage.clear()
+			conditionalTraits.clear()
 			return true
 		}
 		return super.mouseClicked(mouseX, mouseY, button)
@@ -66,17 +70,10 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 
 	fun renderSelectedTitle(context: DrawContext, title: String, mouseX: Int, mouseY: Int){
 		if(selected != null){
-			val titleText = Text.translatable(title)
-			val titleWidth = client.textRenderer.getWidth(titleText)
-			val s = 2.5f
-			val titleX = (x + (width - titleWidth * s) * .5f)
-			val titleY = y + 5
-			context.matrices.push()
-			context.matrices.scale(s, s, s)
-			context.drawText(client.textRenderer, titleText, (titleX/s).toInt(), (titleY/s).toInt(), 4210752, false)
+			renderTitle(context, title)
 
-			// New scale = 2.5 * 0.6 = 1.5
-			context.matrices.scale(.6f, .6f, .6f)
+			context.matrices.push()
+			context.matrices.scale(1.5f, 1.5f, 1.5f)
 			val backButtonX = ((x + 20) * 0.6666667f).toInt()
 			val backButtonY = ((y + 4) * 0.6666667f).toInt()
 			isBackButtonHovered = mouseX >= backButtonX * 1.5f && mouseY > backButtonY * 1.5f && mouseX < backButtonX * 1.5f + 18 && mouseY < backButtonY * 1.5f + 18
@@ -96,7 +93,7 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 			context.matrices.scale(s, s, s)
 			val entryX = x + 50
 			for (i in 0..<valueSelectChildren.size) {
-				val entryY = (y + 30 + i * 30)
+				val entryY = (y + headerHeight + i * 30) - scrollY.toInt()
 				valueSelectChildren[i].render(context, client.textRenderer, entryX, entryY, s)
 			}
 			context.matrices.pop()
@@ -152,6 +149,22 @@ abstract class CharacterCreatorOptionsTabWidget<T>(sheet: CharacterSheet, client
 	}
 
 	abstract fun setupSelectedPage(selected: T)
+
+	fun addConditionalTraits(conditionID: String, traits: Collection<TraitEntry>) {
+		val i = selectedPage.size
+		conditionalTraits[conditionID] = i to traits.size
+		selectedPage.addAll(traits)
+	}
+
+	fun removeConditionalTraits(conditionID: String) {
+		val (i, s) = conditionalTraits.remove(conditionID) ?: return
+		repeat(s) { selectedPage.removeAt(i) }
+		for ((id, p) in conditionalTraits) {
+			if (p.first > i) {
+				conditionalTraits[id] = p.first - s to p.second
+			}
+		}
+	}
 
 	override fun reposition(start: Int) {
 		optionSelectWidget?.let {

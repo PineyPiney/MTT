@@ -26,6 +26,12 @@ class DNDClientEngine(val client: MinecraftClient) : DNDEngine() {
 		}
 	}
 
+	override fun getControllingPlayer(character: UUID): PlayerEntity? {
+		val playerUUID = playerCharacters.entries.firstOrNull { it.value == character }?.key ?: return null
+		return if (client.player?.uuid == playerUUID) client.player
+		else client.server?.playerManager?.getPlayer(playerUUID)
+	}
+
 	companion object {
 		fun getInstance() = (MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as DNDClientEngine
 		fun getClientCharacter(): SheetCharacter?{
@@ -47,7 +53,7 @@ class DNDClientEngine(val client: MinecraftClient) : DNDEngine() {
 			val engine = getInstance()
 			if(!engine.running) return null
 			val characterUUID = engine.getPlayerCharacterUUID(player?.uuid ?: return null) ?: return null
-			return engine.getCharacterEntity(characterUUID)
+			return engine.getPlayerCharacterEntity(characterUUID)
 		}
 	}
 }

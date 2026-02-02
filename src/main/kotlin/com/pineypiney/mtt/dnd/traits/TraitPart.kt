@@ -4,10 +4,11 @@ import com.pineypiney.mtt.dnd.CharacterSheet
 import com.pineypiney.mtt.util.Localisation
 import net.minecraft.text.Text
 
-sealed class TraitPart {
+abstract class TraitPart {
 	abstract fun isReady(): Boolean
 	abstract fun updateValues(values: List<String>)
 	abstract fun apply(sheet: CharacterSheet, src: Source)
+	open fun onSelect(value: Any?) {}
 }
 
 class LiteralPart(val text: Text, val func: (sheet: CharacterSheet, src: Source) -> Unit): TraitPart(){
@@ -21,7 +22,16 @@ class LiteralPart(val text: Text, val func: (sheet: CharacterSheet, src: Source)
 	}
 }
 
-class OneChoicePart<T>(val choices: Set<T>, val label: Text, val parse: (String) -> T, val unparse: (T) -> String, val translationKey: (T) -> String, val declarationKey: String, val func: (sheet: CharacterSheet, value: T, src: Source) -> Unit, val args: Array<Any> = emptyArray()): TraitPart(){
+open class OneChoicePart<T>(
+	val choices: Set<T>,
+	val label: Text,
+	val parse: (String) -> T,
+	val unparse: (T) -> String,
+	val translationKey: (T) -> String,
+	val declarationKey: String,
+	val func: (sheet: CharacterSheet, value: T, src: Source) -> Unit,
+	val args: Array<Any> = emptyArray()
+) : TraitPart() {
 
 	//constructor(choices: Set<T>, translationKey: (T) -> String, declarationKey: String, vararg args: Any): this(choices, translationKey, declarationKey, args.toList().toTypedArray())
 	var decision: T? = null
@@ -87,7 +97,7 @@ class TallyPart<T>(val options: Set<T>, val points: Int, val parse: (String) -> 
 	}
 }
 
-class AbilityPointBuyPart(){
+class AbilityPointBuyPart {
 
 	val totalPoints = 27
 	var pointsLeft = 27

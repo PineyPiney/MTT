@@ -141,8 +141,6 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 				encodeCollection(buf, value.options, PacketCodecs.STRING, Size::name)
 			}
 
-			fun getFromJson(json: JsonElement): SizeTrait = SizeTrait(readJsonList(json){ Size.fromString(it.content) }.toSet())
-
 			override fun readFromJson(json: JsonElement, traits: MutableCollection<Trait<*>>) {
 				traits.add(SizeTrait(readJsonList(json){ Size.fromString(it.content) }.toSet()))
 			}
@@ -157,8 +155,6 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 			override fun encode(buf: ByteBuf, value: ModelTrait) {
 				encodeCollection(buf, value.options, PacketCodecs.STRING)
 			}
-
-			fun getFromJson(json: JsonElement): ModelTrait = ModelTrait(readJsonList(json, JsonPrimitive::content).toSet())
 
 			override fun readFromJson(json: JsonElement, traits: MutableCollection<Trait<*>>) {
 				traits.add(ModelTrait(readJsonList(json, JsonPrimitive::content).toSet()))

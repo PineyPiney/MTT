@@ -16,14 +16,21 @@ class TestEntityRenderer(ctx: EntityRendererFactory.Context) : LivingEntityRende
 		return Identifier.of(MTT.MOD_ID, "textures/entity/human/default/default.png")
 	}
 
-	override fun createRenderState(): DNDPlayerEntityRenderState? {
+	override fun createRenderState(): DNDPlayerEntityRenderState {
 		return DNDPlayerEntityRenderState()
 	}
 
 	companion object {
 		fun getModel(ctx: EntityRendererFactory.Context): ModelPart{
-			val layer = MTTRenderers.BIPED_MODELS["human/default"]?.second ?: MTTRenderers.BIPED_MODELS.values.first().second
-			return ctx.getPart(layer)
+
+			try {
+				val layer = MTTRenderers.BIPED_MODELS["human/default"]?.second
+					?: MTTRenderers.BIPED_MODELS.values.first().second
+				return ctx.getPart(layer)
+			} catch (e: IllegalArgumentException) {
+				MTT.logger.error("Failed to create mode part")
+				throw e
+			}
 		}
 	}
 }

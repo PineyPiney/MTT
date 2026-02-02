@@ -7,7 +7,6 @@ import com.pineypiney.mtt.util.Localisation
 import net.minecraft.text.Text
 
 
-
 object Traits {
 
 	val set = mutableSetOf<TraitCodec<*>>()
@@ -86,7 +85,14 @@ class ModelTrait(val options: Set<String>): Trait<ModelTrait>("trait") {
 	override fun getCodec(): TraitCodec<ModelTrait> = TraitCodec.MODEL_CODEC
 	override fun getParts(): Set<TraitPart> {
 		val declaration = if(options.size == 1) LiteralPart(getDeclarationKey(), getTranslation(options.first())){ sheet, _ -> sheet.model = options.first()}
-		else OneChoicePart(options, getLabel(), {it}, {it}, { "mtt.model.$it" }, "mtt.trait.model.declaration", { sheet, m, src -> sheet.model = m })
+		else OneChoicePart(
+			options,
+			getLabel(),
+			{ it },
+			{ it },
+			{ "mtt.model.$it" },
+			"mtt.trait.model.declaration",
+			{ sheet, m, _ -> sheet.model = m })
 		return setOf(declaration, LiteralPart(getDescriptionKey()))
 	}
 }
@@ -184,7 +190,16 @@ class SpellcastingAbilityTrait(val options: Set<Ability>): Trait<SpellcastingAbi
 
 	override fun getParts(): Set<TraitPart> {
 		return if(options.size == 1) setOf(LiteralPart(getDeclarationKey(), Text.translatable("mtt.ability.${options.first().id}")))
-		else setOf(OneChoicePart(options, getLabel(), Ability::valueOf, Ability::name, { ability -> "mtt.ability.${ability.id}"}, getDeclarationKey(), { sheet, value, src -> }))
+		else setOf(
+			OneChoicePart(
+				options,
+				getLabel(),
+				Ability::valueOf,
+				Ability::name,
+				{ ability -> "mtt.ability.${ability.id}" },
+				getDeclarationKey(),
+				{ _, _, _ -> })
+		)
 	}
 
 }
@@ -192,8 +207,19 @@ class SpellcastingAbilityTrait(val options: Set<Ability>): Trait<SpellcastingAbi
 class SpellTrait(val unlockLevel: Int, val spells: Set<String>): Trait<SpellTrait>(){
 	override fun getCodec(): TraitCodec<SpellTrait>  = TraitCodec.SPELL_CODEC
 
+	override fun getLabelKey(): String {
+		return if (spells.size != 1) super.getLabelKey()
+		else "mtt.spell.${spells.first()}"
+	}
+
 	override fun getParts(): Set<TraitPart> {
-		return setOf(LiteralPart(getDeclarationKey(), Localisation.translateList(spells.toList(), false, ::getTranslationKey)))
+		return setOf(
+			LiteralPart(
+				getDeclarationKey(),
+				Localisation.translateList(spells.toList(), false, ::getTranslationKey),
+				unlockLevel
+			)
+		)
 	}
 
 }
@@ -213,7 +239,6 @@ class FeatTrait(val feats: Set<Feat>): Trait<FeatTrait>(){
 		return if(feats.size == 1) setOf(LiteralPart(getDeclarationKey(), Text.translatable("mtt.feat.${feats.first().id}")), LiteralPart(getDescriptionKey()))
 		else setOf(OneChoicePart(feats, getLabel(), Feat::findById, Feat::id, { "mtt.feat.${it.id}" }, getDeclarationKey(), { sheet, value, src -> }), LiteralPart(getDescriptionKey()))
 	}
-
 }
 
 class CustomTrait(val id: String): Trait<CustomTrait>() {

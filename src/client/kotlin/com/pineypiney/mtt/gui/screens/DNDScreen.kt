@@ -20,7 +20,6 @@ import net.minecraft.util.Util
 import net.minecraft.util.math.MathHelper
 import org.joml.Quaternionf
 import org.joml.Vector3f
-import java.util.function.Consumer
 import kotlin.math.atan
 import kotlin.math.sin
 
@@ -149,9 +148,18 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 
 			entityRenderDispatcher.setRenderShadows(false)
 			val t = (Util.getMeasuringTimeMs() % 100000) * 3e-3
-			context.draw(Consumer { vertexConsumers: VertexConsumerProvider ->
-				entityRenderDispatcher.render(entity, 0.0, 30.0 * sin(t), 0.0, 1.0f, context.matrices, vertexConsumers, 15728880)
-			})
+			context.draw { vertexConsumers: VertexConsumerProvider ->
+				entityRenderDispatcher.render(
+					entity,
+					0.0,
+					.03 * sin(t),
+					0.0,
+					1.0f,
+					context.matrices,
+					vertexConsumers,
+					15728880
+				)
+			}
 			context.draw()
 			entityRenderDispatcher.setRenderShadows(true)
 			context.matrices.pop()

@@ -3,6 +3,7 @@ package com.pineypiney.mtt.dnd
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.entity.DNDPlayerEntity
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.packet.CustomPayload
 import java.util.*
 
@@ -23,16 +24,20 @@ abstract class DNDEngine {
 	}
 	fun getCharacter(name: String): Character? = characters.firstOrNull { it.name == name }
 	fun getCharacter(uuid: UUID): Character? = characters.firstOrNull { it.uuid == uuid }
+
 	fun getPlayerCharacterUUID(player: UUID): UUID? = playerCharacters[player]
 	fun getPlayerCharacter(player: UUID): SheetCharacter? {
 		val characterUUID = playerCharacters[player] ?: return null
 		return getCharacter(characterUUID) as? SheetCharacter
 	}
 	fun getPlayerEntity(player: UUID): DNDPlayerEntity? {
-		val character = getPlayerCharacter(player) ?: return null
-		return playerEntities.firstOrNull { it.character.uuid == character.uuid }
+		val characterUUID = getPlayerCharacterUUID(player) ?: return null
+		return playerEntities.firstOrNull { it.character?.uuid == characterUUID }
 	}
-	fun getCharacterEntity(character: UUID) = playerEntities.firstOrNull { it.character.uuid == character }
+
+	fun getPlayerCharacterEntity(character: UUID) = playerEntities.firstOrNull { it.character?.uuid == character }
+
+	abstract fun getControllingPlayer(character: UUID): PlayerEntity?
 
 	open fun associatePlayer(player: UUID, character: UUID){
 		playerCharacters[player] = character

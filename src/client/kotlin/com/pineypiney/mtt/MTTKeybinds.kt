@@ -46,7 +46,9 @@ object MTTKeybinds {
 				sheet.abilities.intelligence = 9
 				sheet.abilities.wisdom = 10
 				sheet.addProficiencies(setOf(Proficiency.ATHLETICS), Source.RaceSource(sheet.race))
-				client.setScreen(CharacterSheetScreen(SheetCharacter(sheet, UUID.randomUUID())))
+
+				val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`()
+				client.setScreen(CharacterSheetScreen(SheetCharacter(sheet, UUID.randomUUID(), engine)))
 			}
 		}
 	}

@@ -4,6 +4,7 @@ import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.DNDServerEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.race.Subrace
 import net.minecraft.nbt.NbtCompound
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -24,6 +25,21 @@ sealed interface Source {
 		}
 		override fun hashCode(): Int {
 			return race.hashCode()
+		}
+	}
+	class SubraceSource(val race: Race, val subrace: Subrace) : Source {
+		override val overridePower: Int = 0
+		override fun writeNbt(nbt: NbtCompound) {
+			nbt.putString("race", race.id)
+			nbt.putString("subrace", subrace.name)
+		}
+
+		override fun equals(other: Any?): Boolean {
+			return other is SubraceSource && subrace == other.subrace
+		}
+
+		override fun hashCode(): Int {
+			return subrace.hashCode()
 		}
 	}
 	class ClassSource(val clazz: DNDClass) : Source {

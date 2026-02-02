@@ -3,15 +3,39 @@ package com.pineypiney.mtt.dnd.race
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.traits.*
 import kotlinx.serialization.json.*
+import net.minecraft.text.MutableText
+import net.minecraft.text.Text
 
-open class Race(val id: String, val type: CreatureType, val speed: Int, val size: SizeTrait, val model: ModelTrait, val traits: List<Trait<*>>, val namedTraits: List<NamedTrait<*>>, val subRace: List<SubRace>) {
+open class Race(
+	val id: String,
+	val type: CreatureType,
+	val speed: Int,
+	val size: SizeTrait,
+	val model: ModelTrait,
+	val traits: List<Trait<*>>,
+	val namedTraits: List<NamedTrait<*>>,
+	val subraces: Set<Subrace>
+) {
 
-	fun getAllTraits(subRace: SubRace? = null): Set<Trait<*>>{
+	fun getAllTraits(subrace: Subrace? = null): Set<Trait<*>> {
 		val set = mutableSetOf(CreatureTypeTrait(type), SpeedTrait(speed), size, model)
 		set.addAll(traits)
 		for(namedTrait in namedTraits) set.addAll(namedTrait.traits)
+		if (subrace != null) {
+			set.addAll(subrace.traits)
+			for (namedTrait in subrace.namedTraits) set.addAll(namedTrait.traits)
+		}
 		return set
 	}
+
+	fun getText(subrace: Subrace? = null): MutableText {
+		return if (subrace == null) Text.translatable("mtt.race.$id")
+		else Text.translatable("mtt.race.$id")
+			.append("/")
+			.append(Text.translatable("mtt.race.${subrace.name}"))
+	}
+
+	fun getSubrace(subraceID: String) = subraces.firstOrNull { it.name == subraceID }
 
 	class Builder(val id: String){
 		var type = CreatureType.HUMANOID
@@ -21,14 +45,14 @@ open class Race(val id: String, val type: CreatureType, val speed: Int, val size
 
 		val components = mutableListOf<Trait<*>>()
 		val namedTraits = mutableListOf<NamedTrait<*>>()
-		val subRaces = mutableListOf<SubRace>()
+		val subraces = mutableSetOf<Subrace>()
 
 		fun type(value: CreatureType) = this.apply { type = value }
 		fun speed(value: Int) = this.apply{ speed = value }
 		fun size(value: SizeTrait) = this.apply{ size = value }
 		fun model(value: ModelTrait) = this.apply{ model = value }
 
-		fun build() = Race(id, type, speed, size, model, components, namedTraits, subRaces)
+		fun build() = Race(id, type, speed, size, model, components, namedTraits, subraces)
 	}
 
 	override fun toString(): String {
@@ -37,11 +61,10 @@ open class Race(val id: String, val type: CreatureType, val speed: Int, val size
 
 	companion object {
 
-		val NONE = Builder("None").build()
-
 		@JvmField
 		val set = mutableSetOf<Race>()
-		fun findById(id: String) = set.firstOrNull { it.id == id } ?: NONE
+		fun findById(id: String) =
+			set.firstOrNull { it.id == id } ?: throw IllegalArgumentException("No Race with id $id")
 
 		@Throws(Exception::class)
 		fun parse(json: JsonObject): Race{
@@ -57,19 +80,19 @@ open class Race(val id: String, val type: CreatureType, val speed: Int, val size
 					"model" -> builder.model(ModelTrait(TraitCodec.readJsonList(element, JsonPrimitive::content).toSet()))
 					"tags" -> {}
 
-					"sub_race" -> {
-						val subRaceArray = (element as? JsonArray)
-						if(subRaceArray == null){
-							MTT.logger.warn("SubRace json should be an array")
+					"sub_races" -> {
+						val subraceArray = (element as? JsonArray)
+						if (subraceArray == null) {
+							MTT.logger.warn("Subrace json should be an array")
 							continue
 						}
-						for(entry in subRaceArray){
+						for (entry in subraceArray) {
 							when(entry){
-								is JsonPrimitive -> {}//builder.components.add(SubRaceIDComponent(SetTraits(entry.content){ set, _ -> }))
+								is JsonPrimitive -> {}
 								is JsonObject -> {
-									val subRaceID = entry["id"]?.jsonPrimitive?.content
-									if(subRaceID == null){
-										MTT.logger.warn("SubRace does not contain 'name' field")
+									val subraceID = entry["id"]?.jsonPrimitive?.content
+									if (subraceID == null) {
+										MTT.logger.warn("Subrace does not contain 'name' field")
 										continue
 									}
 
@@ -80,7 +103,7 @@ open class Race(val id: String, val type: CreatureType, val speed: Int, val size
 										parseTrait(name, trait, subComps, subTraits)
 									}
 
-									builder.subRaces.add(SubRace(subRaceID, subComps, subTraits))
+									builder.subraces.add(Subrace(subraceID, subComps, subTraits))
 								}
 								else -> {}
 							}
@@ -88,7 +111,7 @@ open class Race(val id: String, val type: CreatureType, val speed: Int, val size
 					}
 					else -> {
 						val error = parseTrait(id, element, builder.components, builder.namedTraits)
-						if(error.isNotEmpty()) MTT.logger.warn("Error parsing race json $id: $error")
+						if (error.isNotEmpty()) MTT.logger.warn("Error parsing race $raceID json $id: $error")
 					}
 				}
 			}

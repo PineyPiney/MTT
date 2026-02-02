@@ -171,6 +171,7 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 			1 -> getStack(12)
 			2 -> getStack(14)
 			3 -> SPELL_BOOK
+
 			else -> ItemStack.EMPTY
 		}
 	}
@@ -272,7 +273,7 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 		markDirty()
 	}
 
-	override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity?): ScreenHandler? {
+	override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity?): ScreenHandler {
 		return DNDScreenHandler(syncId, playerInventory, this)
 	}
 

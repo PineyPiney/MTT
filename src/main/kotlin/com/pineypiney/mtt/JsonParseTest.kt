@@ -8,6 +8,7 @@ fun main() {
 	parseRace()
 }
 
+@Suppress("UNUSED_VARIABLE")
 fun parseRace(){
 	val json = Json.parseToJsonElement(human).jsonObject
 	val race = Race.parse(json)

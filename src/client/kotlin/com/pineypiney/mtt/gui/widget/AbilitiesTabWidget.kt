@@ -29,21 +29,13 @@ class AbilitiesTabWidget(sheet: CharacterSheet, client: MinecraftClient, x: Int,
 		return 15.0
 	}
 
-	override fun children(): List<Element?>? {
+	override fun children(): List<Element> {
 		return listOf(abilitySelectWidget)
 	}
 
 	override fun renderWidget(context: DrawContext, mouseX: Int, mouseY: Int, deltaTicks: Float) {
 		context.enableScissor(x, y, right, bottom)
-		val titleText = Text.translatable("mtt.character_maker_screen.abilities")
-		val titleWidth = client.textRenderer.getWidth(titleText)
-		val s = 2.5f
-		val titleX = (x + (width - titleWidth * s) * .5f)
-		val titleY = y + 5
-		context.matrices.push()
-		context.matrices.scale(s, s, s)
-		context.drawText(client.textRenderer, titleText, (titleX/s).toInt(), (titleY/s).toInt(), 4210752, false)
-		context.matrices.pop()
+		renderTitle(context, "mtt.character_maker_screen.abilities")
 
 		abilitySelectWidget.render(context, mouseX, mouseY, deltaTicks)
 

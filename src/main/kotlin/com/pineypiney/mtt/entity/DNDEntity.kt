@@ -1,7 +1,6 @@
 package com.pineypiney.mtt.entity
 
 import com.pineypiney.mtt.dnd.characters.Character
-import com.pineypiney.mtt.dnd.characters.TempCharacter
 import com.pineypiney.mtt.network.payloads.s2c.EntityDNDEquipmentUpdateS2CPayload
 import com.pineypiney.mtt.util.getEngine
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -23,7 +22,7 @@ import kotlin.math.min
 
 abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world) {
 
-	var character: Character = TempCharacter
+	var character: Character? = null
 
 	var hipHeight: Float = .75f
 	val limbAnimator = LimbAnimator()
@@ -77,9 +76,10 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 	}
 
 	fun getEquipmentChanges(): Map<Int, ItemStack>{
+		val inventory = character?.inventory ?: return emptyMap()
 		val changes = mutableMapOf<Int, ItemStack>()
 		for(i in 0..19){
-			val equipped = character.inventory.equipment[i].copy()
+			val equipped = inventory.equipment[i].copy()
 			if(!ItemStack.areItemsEqual(equipped, lastEquippedStacks[i])){
 				changes[i] = equipped
 				lastEquippedStacks[i] = equipped
@@ -115,6 +115,10 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 		return false
 	}
 
+	fun canBeHit(attacker: Character): Boolean {
+		return attacker.engine.running && attacker != character
+	}
+
 	override fun readCustomDataFromNbt(nbt: NbtCompound) {
 		val (most, least) = nbt.getLongArray("characterUUID").getOrNull() ?: return
 		val uuid = UUID(most, least)
@@ -126,7 +130,8 @@ abstract class DNDEntity(type: EntityType<*>, world: World) : Entity(type, world
 	}
 
 	override fun writeCustomDataToNbt(nbt: NbtCompound) {
-		nbt.putLongArray("characterUUID", longArrayOf(character.uuid.mostSignificantBits, character.uuid.leastSignificantBits))
+		val uuid = character?.uuid ?: return
+		nbt.putLongArray("characterUUID", longArrayOf(uuid.mostSignificantBits, uuid.leastSignificantBits))
 	}
 
 	companion object {
