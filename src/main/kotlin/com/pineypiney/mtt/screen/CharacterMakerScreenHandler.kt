@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.screen
 
 import com.pineypiney.mtt.dnd.Background
-import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace

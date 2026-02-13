@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.network.payloads.s2c
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.codec.PacketCodec

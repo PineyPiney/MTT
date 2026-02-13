@@ -3,7 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
 	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
-	id "org.jetbrains.kotlin.jvm" version "2.1.20"
+    id "org.jetbrains.kotlin.jvm" version "2.2.0"
 }
 
 version = project.mod_version
@@ -30,7 +30,7 @@ loom {
 			sourceSet sourceSets.client
 		}
 	}
-	accessWidenerPath = file("src/main/resources/mtt.accesswidener")
+    accessWidenerPath = file("src/main/resources/mtt.classtweaker")
 
 	runs {
 		client {
@@ -46,7 +46,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
 	modImplementation "net.fabricmc:fabric-language-kotlin:${project.fabric_kotlin_version}"
 }
 

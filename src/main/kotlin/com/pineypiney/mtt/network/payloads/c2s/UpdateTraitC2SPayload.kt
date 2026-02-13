@@ -11,7 +11,7 @@ class UpdateTraitC2SPayload(val source: String, val traitIndex: Int, val partInd
 	override fun getId(): CustomPayload.Id<out CustomPayload> = ID
 
 	companion object {
-		val UPDATE_TRAIT_PAYLOAD_ID = Identifier.of(MTT.Companion.MOD_ID, "update_trait")
+		val UPDATE_TRAIT_PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "update_trait")
 		val ID = CustomPayload.Id<UpdateTraitC2SPayload>(UPDATE_TRAIT_PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(
 			PacketCodecs.STRING, UpdateTraitC2SPayload::source,

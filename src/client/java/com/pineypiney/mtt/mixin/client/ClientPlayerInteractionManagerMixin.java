@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.DNDClientEngine;
 import com.pineypiney.mtt.network.payloads.c2s.UpdateSelectedDNDSlotC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.network.ClientPlayerInteractionManager;

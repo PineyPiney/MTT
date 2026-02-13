@@ -2,11 +2,21 @@ package com.pineypiney.mtt.dnd
 
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
-import com.pineypiney.mtt.entity.DNDPlayerEntity
+import com.pineypiney.mtt.dnd.combat.CombatManager
+import com.pineypiney.mtt.entity.DNDEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.packet.CustomPayload
 import java.util.*
 
+/**
+ * Note: When dealing with entity and character UUIDs, there are 3 main names used.
+ *
+ * Player means the UUID of a [PlayerEntity]
+ *
+ * Character means the UUID of a [Character]
+ *
+ * Entity means the UUID of a [com.pineypiney.mtt.entity.DNDEntity]
+ */
 abstract class DNDEngine {
 
 	open var running: Boolean = false
@@ -17,7 +27,9 @@ abstract class DNDEngine {
 	// Maps players UUIDs to characters UUIDs
 	protected val playerCharacters = mutableMapOf<UUID, UUID>()
 
-	abstract val playerEntities: List<DNDPlayerEntity>
+	val combats = mutableSetOf<CombatManager>()
+
+	abstract val playerEntities: List<DNDEntity>
 
 	open fun addCharacter(character: Character){
 		characters.add(character)
@@ -25,21 +37,24 @@ abstract class DNDEngine {
 	fun getCharacter(name: String): Character? = characters.firstOrNull { it.name == name }
 	fun getCharacter(uuid: UUID): Character? = characters.firstOrNull { it.uuid == uuid }
 
-	fun getPlayerCharacterUUID(player: UUID): UUID? = playerCharacters[player]
-	fun getPlayerCharacter(player: UUID): SheetCharacter? {
+	fun getCharacterUUIDFromPlayer(player: UUID): UUID? = playerCharacters[player]
+	fun getCharacterFromPlayer(player: UUID): SheetCharacter? {
 		val characterUUID = playerCharacters[player] ?: return null
 		return getCharacter(characterUUID) as? SheetCharacter
 	}
-	fun getPlayerEntity(player: UUID): DNDPlayerEntity? {
-		val characterUUID = getPlayerCharacterUUID(player) ?: return null
+
+	fun getEntityFromPlayer(player: UUID): DNDEntity? {
+		val characterUUID = getCharacterUUIDFromPlayer(player) ?: return null
 		return playerEntities.firstOrNull { it.character?.uuid == characterUUID }
 	}
 
-	fun getPlayerCharacterEntity(character: UUID) = playerEntities.firstOrNull { it.character?.uuid == character }
+	fun getEntityOfCharacter(character: UUID) = playerEntities.firstOrNull { it.character?.uuid == character }
 
 	abstract fun getControllingPlayer(character: UUID): PlayerEntity?
 
 	open fun associatePlayer(player: UUID, character: UUID){
+		val previous = playerCharacters.entries.firstOrNull { it.value == character }
+		if (previous != null) playerCharacters.remove(previous.key)
 		playerCharacters[player] = character
 	}
 	fun getControlling(character: Character): UUID?{
@@ -50,9 +65,9 @@ abstract class DNDEngine {
 	}
 
 	fun getAllCharacters() = characters
-	fun getAllPlayerCharacters() = playerCharacters.mapNotNull { getPlayerCharacter(it.key) }
+	fun getAllPlayerCharacters() = playerCharacters.mapNotNull { getCharacterFromPlayer(it.key) }
 
-	fun isInCombat(character: Character) = false
+	fun isInCombat(character: Character) = combats.any { it.combatants.contains(character) }
 
 	fun tick(){
 

@@ -23,7 +23,7 @@
 		],
 		"client": [
 			{
-				"value": "com.pineypiney.mtt.MTTClient",
+				"value": "com.pineypiney.mtt.client.MTTClient",
 				"adapter": "kotlin"
 			}
 		]
@@ -35,7 +35,7 @@
 			"environment": "client"
 		}
 	],
-	"accessWidener": "mtt.accesswidener",
+	"accessWidener": "mtt.classtweaker",
 	"depends": {
 		"fabricloader": ">=0.16.14",
 		"minecraft": "~1.21.5",

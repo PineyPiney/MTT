@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.dnd.traits
 
-import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.util.Localisation
 import net.minecraft.text.Text
 
@@ -11,7 +11,7 @@ abstract class TraitPart {
 	open fun onSelect(value: Any?) {}
 }
 
-class LiteralPart(val text: Text, val func: (sheet: CharacterSheet, src: Source) -> Unit): TraitPart(){
+class LiteralPart(val text: Text, private val func: (sheet: CharacterSheet, src: Source) -> Unit) : TraitPart() {
 
 	constructor(key: String, vararg args: Any, func: (CharacterSheet, Source) -> Unit = { _, _ -> }): this(Text.translatable(key, *args), func)
 
@@ -29,11 +29,10 @@ open class OneChoicePart<T>(
 	val unparse: (T) -> String,
 	val translationKey: (T) -> String,
 	val declarationKey: String,
-	val func: (sheet: CharacterSheet, value: T, src: Source) -> Unit,
+	private val func: (sheet: CharacterSheet, value: T, src: Source) -> Unit,
 	val args: Array<Any> = emptyArray()
 ) : TraitPart() {
 
-	//constructor(choices: Set<T>, translationKey: (T) -> String, declarationKey: String, vararg args: Any): this(choices, translationKey, declarationKey, args.toList().toTypedArray())
 	var decision: T? = null
 	override fun isReady(): Boolean = decision != null
 	override fun updateValues(values: List<String>) {
@@ -50,9 +49,17 @@ open class OneChoicePart<T>(
 }
 
 
-class GivenAndOptionsPart<T>(val data: GivenAndOptions<T>, val label: Text, val parse: (String) -> T, val unparse: (T) -> String, val translationKey: (T) -> String, val declarationKey: String, val func: (sheet: CharacterSheet, values: List<T>, src: Source) -> Unit, val args: Array<Any> = emptyArray()): TraitPart() {
+class GivenAndOptionsPart<T>(
+	val data: GivenAndOptions<T>,
+	val label: Text,
+	val parse: (String) -> T,
+	val unparse: (T) -> String,
+	val translationKey: (T) -> String,
+	val declarationKey: String,
+	private val func: (sheet: CharacterSheet, values: List<T>, src: Source) -> Unit,
+	val args: Array<Any> = emptyArray()
+) : TraitPart() {
 
-	//constructor(data: GivenAndOptions<T>, translationKey: (T) -> String, declarationKey: String, vararg args: Any): this(data, translationKey, declarationKey, args.toList().toTypedArray())
 	val decisions = mutableListOf<T>()
 	override fun isReady(): Boolean = decisions.size == data.numChoices
 	override fun updateValues(values: List<String>) {
@@ -72,7 +79,14 @@ class GivenAndOptionsPart<T>(val data: GivenAndOptions<T>, val label: Text, val 
 	}
 }
 
-class TallyPart<T>(val options: Set<T>, val points: Int, val parse: (String) -> T, val unparse: (T) -> String, val translationKey: (T) -> String, val func: (sheet: CharacterSheet, option: T, value: Int, src: Source) -> Unit): TraitPart(){
+class TallyPart<T>(
+	val options: Set<T>,
+	val points: Int,
+	val parse: (String) -> T,
+	val unparse: (T) -> String,
+	val translationKey: (T) -> String,
+	private val func: (sheet: CharacterSheet, option: T, value: Int, src: Source) -> Unit
+) : TraitPart() {
 	val tallies = options.map { 0 }.toMutableList()
 	val pointsLeft get() = points - tallies.sum()
 	override fun isReady(): Boolean {
@@ -113,12 +127,7 @@ class AbilityPointBuyPart {
 	}
 
 	fun apply(sheet: CharacterSheet) {
-		sheet.abilities.strength = points[0]
-		sheet.abilities.dexterity = points[1]
-		sheet.abilities.constitution = points[2]
-		sheet.abilities.intelligence = points[3]
-		sheet.abilities.wisdom = points[4]
-		sheet.abilities.charisma = points[5]
+		sheet.abilities.setValues(points)
 	}
 
 	fun increment(ability: Int): Boolean{
@@ -141,7 +150,7 @@ class AbilityPointBuyPart {
 		return false
 	}
 
-	fun updatePoints(){
+	private fun updatePoints() {
 		var spentPoints = 0
 		for(i in points){
 			spentPoints += if(i > 13) (2 * i - 21)

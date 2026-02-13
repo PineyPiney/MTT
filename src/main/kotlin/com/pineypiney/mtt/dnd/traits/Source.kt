@@ -1,10 +1,10 @@
 package com.pineypiney.mtt.dnd.traits
 
 import com.pineypiney.mtt.dnd.Background
-import com.pineypiney.mtt.dnd.DNDServerEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
+import com.pineypiney.mtt.dnd.server.DNDServerEngine
 import net.minecraft.nbt.NbtCompound
 import java.util.*
 import kotlin.jvm.optionals.getOrNull

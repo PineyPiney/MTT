@@ -2,7 +2,14 @@
 	"id": "goblin",
 	"tags": [ "goblinoid" ],
 	"size": "small",
-	"model": "goblin",
+	"models": [
+		{
+			"id": "default",
+			"width": 0.4,
+			"height": 1.125,
+			"eyeY": 0.93
+		}
+	],
 	"dark_vision": 60,
 	"trait": [
 		{

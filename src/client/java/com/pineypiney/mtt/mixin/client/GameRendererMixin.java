@@ -1,34 +1,74 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.dnd.DNDClientEngine;
-import com.pineypiney.mtt.entity.DNDEntity;
+import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerLikeState;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.projectile.ProjectileUtil;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
-import org.jetbrains.annotations.Nullable;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.RotationAxis;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
-
-import java.util.function.Predicate;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class)
 public class GameRendererMixin {
 
-	@Redirect(method = "findCrosshairTarget", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/projectile/ProjectileUtil;raycast(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;D)Lnet/minecraft/util/hit/EntityHitResult;"))
-	private @Nullable EntityHitResult raycastDNDEntities(Entity entity, Vec3d min, Vec3d max, Box box, Predicate<Entity> predicate, double maxDistance) {
-		var engine = DNDClientEngine.Companion.getInstance();
-		if (engine.getRunning() && entity instanceof PlayerEntity player) {
-			var character = engine.getPlayerCharacter(player.getUuid());
-			if (character != null) {
-				return ProjectileUtil.raycast(entity, min, max, box, e -> e instanceof DNDEntity dndEntity && dndEntity.canBeHit(character), maxDistance);
-			}
+	@Shadow
+	@Final
+	private MinecraftClient client;
+
+	@Shadow
+	private float lastFovMultiplier;
+
+	@Shadow
+	private float fovMultiplier;
+
+	@Inject(method = "updateFovMultiplier", at = @At("HEAD"), cancellable = true)
+	private void updateDNDEntityFovMultiplier(CallbackInfo ci) {
+		if (client.getCameraEntity() instanceof ClientDNDEntity entity) {
+			ci.cancel();
+			GameOptions gameOptions = this.client.options;
+			boolean bl = gameOptions.getPerspective().isFirstPerson();
+			float f = gameOptions.getFovEffectScale().getValue().floatValue();
+			float g = entity.getFovMultiplier(bl, f);
+
+			this.lastFovMultiplier = this.fovMultiplier;
+			this.fovMultiplier = this.fovMultiplier + (g - this.fovMultiplier) * 0.5F;
+			this.fovMultiplier = MathHelper.clamp(this.fovMultiplier, 0.1F, 1.5F);
 		}
-		return ProjectileUtil.raycast(entity, min, max, box, predicate, maxDistance);
+	}
+
+//	@Inject(method = "getFov", at = @At("TAIL"), cancellable = true)
+//	private void updateDNDEntityFovMultiplier(Camera camera, float tickProgress, boolean changingFov, CallbackInfoReturnable<Float> cir) {
+//		if(client.getCameraEntity() instanceof ClientDNDEntity entity) {
+//			cir.cancel();
+//			GameOptions gameOptions = this.client.options;
+//			boolean bl = gameOptions.getPerspective().isFirstPerson();
+//			float f = gameOptions.getFovEffectScale().getValue().floatValue();
+//			float g = entity.getFovMultiplier(bl, f);
+//
+//			this.lastFovMultiplier = this.fovMultiplier;
+//			this.fovMultiplier = this.fovMultiplier + (g - this.fovMultiplier) * 0.5F;
+//			this.fovMultiplier = MathHelper.clamp(this.fovMultiplier, 0.1F, 1.5F);
+//		}
+//	}
+
+	@Inject(method = "bobView", at = @At("HEAD"), cancellable = true)
+	private void getDNDEntityState(MatrixStack matrices, float tickProgress, CallbackInfo ci) {
+		if (client.getCameraEntity() instanceof ClientDNDEntity entity) {
+			ci.cancel();
+			ClientPlayerLikeState clientPlayerLikeState = entity.getState();
+			float f = clientPlayerLikeState.getReverseLerpedDistanceMoved(tickProgress);
+			float g = clientPlayerLikeState.lerpMovement(tickProgress);
+			matrices.translate(MathHelper.sin(f * (float) Math.PI) * g * 0.5F, -Math.abs(MathHelper.cos(f * (float) Math.PI) * g), 0.0F);
+			matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(MathHelper.sin(f * (float) Math.PI) * g * 3.0F));
+			matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(Math.abs(MathHelper.cos(f * (float) Math.PI - 0.2F) * g) * 5.0F));
+		}
 	}
 
 	/*

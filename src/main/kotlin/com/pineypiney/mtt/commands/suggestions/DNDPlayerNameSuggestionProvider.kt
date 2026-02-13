@@ -23,6 +23,7 @@ class DNDPlayerNameSuggestionProvider(val onlyPlayerCharacters: Boolean): Sugges
 
 		// Add all player names to the builder.
 		for (character in characters) {
+			if (!character.name.lowercase().startsWith(builder.remainingLowerCase)) continue
 			val charactersWithName = names[character.name]
 			if(charactersWithName == null) { names[character.name] = mutableSetOf(character) }
 			else charactersWithName.add(character)
@@ -41,7 +42,7 @@ class DNDPlayerNameSuggestionProvider(val onlyPlayerCharacters: Boolean): Sugges
 					}
 					else {
 
-						val distance = (player.pos.subtract(character.pos)).length()
+						val distance = (player.entityPos.subtract(character.pos)).length()
 						val distStr = "%.3f".format(distance)
 						val tooltip = LiteralMessage("$name who is $distStr blocks away")
 						builder.suggest(suggestion, tooltip)

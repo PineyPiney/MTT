@@ -9,17 +9,16 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.Inventories
 import net.minecraft.inventory.Inventory
+import net.minecraft.inventory.StackWithSlot
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
-import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtList
-import net.minecraft.registry.DynamicRegistryManager
 import net.minecraft.screen.ScreenHandler
 import net.minecraft.screen.ScreenHandlerFactory
+import net.minecraft.storage.ReadView
+import net.minecraft.storage.WriteView
 import net.minecraft.text.Text
 import net.minecraft.util.Rarity
 import net.minecraft.util.collection.DefaultedList
-import kotlin.jvm.optionals.getOrNull
 import kotlin.math.min
 
 class DNDInventory : Inventory, ScreenHandlerFactory {
@@ -206,52 +205,23 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 	fun getArmour(): DNDArmourItem? = equipment[4].item as? DNDArmourItem
 	fun getOffhand(): DNDEquipmentItem? = equipment[11].item as? DNDEquipmentItem
 
-	fun writeNbt(manager: DynamicRegistryManager, nbt: NbtList = NbtList()): NbtList{
-		val equipment = NbtList()
-		for(i in 0..<EQUIPMENT_SIZE){
-			val item = this.equipment[i]
-			if(item.isEmpty) continue
-			val compound = NbtCompound()
-			compound.putByte("Slot", i.toByte())
-			equipment.add(item.toNbt(manager, compound))
-		}
-
-		val inventory = NbtList()
-		for(i in 0..<items.size){
-			val item = items[i]
-			if(item.isEmpty) continue
-			val compound = NbtCompound()
-			compound.putInt("Slot", i)
-			inventory.add(item.toNbt(manager, compound))
-		}
-
-		nbt.add(equipment)
-		nbt.add(inventory)
-		return nbt
-	}
-
-	fun readNbt(nbt: NbtList, manager: DynamicRegistryManager){
-		val equipmentData = nbt.getListOrEmpty(0)
+	fun readNbt(view: ReadView) {
+		val equipmentData = view.getTypedListView("Equipment", StackWithSlot.CODEC)
 		if(!equipmentData.isEmpty) {
 			equipment.clear()
-			for (i in 0..<equipmentData.size) {
-				val compound = equipmentData.getCompoundOrEmpty(i)
-				val slot = compound.getByte("Slot").getOrNull() ?: continue
-				val stack = ItemStack.fromNbt(manager, compound).orElse(ItemStack.EMPTY)
-				equipment[slot.toInt()] = stack
+			for (stackWithSlot in equipmentData) {
+				equipment[stackWithSlot.slot] = stackWithSlot.stack
 			}
 		}
 
-		val itemsData = nbt.getListOrEmpty(1)
+		val itemsData = view.getTypedListView("Inventory", StackWithSlot.CODEC)
 		if(!itemsData.isEmpty) {
-
 			items.clear() // Inventory should have at least 63 slots
-			for(j in 0..62) items.add(ItemStack.EMPTY)
+			repeat(63) { items.add(ItemStack.EMPTY) }
 
-			for (i in 0..<itemsData.size) {
-				val compound = itemsData.getCompoundOrEmpty(i)
-				val slot = compound.getInt("Slot").getOrNull() ?: continue
-				val stack = ItemStack.fromNbt(manager, compound).orElse(ItemStack.EMPTY)
+			for (stackWithSlot in itemsData) {
+				val slot = stackWithSlot.slot
+				val stack = stackWithSlot.stack
 
 				// If the inventory is big enough then set the this
 				if(items.size > slot) items[slot] = stack
@@ -262,6 +232,22 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 					items.add(stack)
 				}
 			}
+		}
+	}
+
+	fun writeNbt(view: WriteView) {
+		val equipment = view.getListAppender("Equipment", StackWithSlot.CODEC)
+		for (i in 0..<EQUIPMENT_SIZE) {
+			val item = this.equipment[i]
+			if (item.isEmpty) continue
+			equipment.add(StackWithSlot(i, item))
+		}
+
+		val inventory = view.getListAppender("Inventory", StackWithSlot.CODEC)
+		for (i in 0..<items.size) {
+			val item = items[i]
+			if (item.isEmpty) continue
+			inventory.add(StackWithSlot(i, item))
 		}
 	}
 

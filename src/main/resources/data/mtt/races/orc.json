@@ -3,7 +3,20 @@
 	"type": "humanoid",
 	"size": "medium",
 	"speed": 30,
-	"model": "default",
+	"models": [
+		{
+			"id": "default",
+			"width": 0.6,
+			"height": 2.0,
+			"eyeY": 1.7
+		},
+		{
+			"id": "short",
+			"width": 0.6,
+			"height": 1.5,
+			"eyeY": 1.2
+		}
+	],
 	"dark_vision": 120,
 	"language": [
 		"common",

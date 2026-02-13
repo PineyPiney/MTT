@@ -40,6 +40,15 @@ class Abilities {
 
 	operator fun get(ability: Ability) = getStat(ability)
 
+	fun setValues(values: IntArray) {
+		strength = values[0]
+		dexterity = values[1]
+		constitution = values[2]
+		intelligence = values[3]
+		wisdom = values[4]
+		charisma = values[5]
+	}
+
 	fun getStat(ability: Ability) = when(ability){
 		Ability.STRENGTH -> strength
 		Ability.DEXTERITY -> dexterity

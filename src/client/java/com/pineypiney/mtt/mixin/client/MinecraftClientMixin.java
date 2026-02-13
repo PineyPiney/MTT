@@ -1,10 +1,10 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.render.MTTRenderers;
 import com.pineypiney.mtt.dnd.characters.SheetCharacter;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import com.pineypiney.mtt.network.payloads.c2s.OpenDNDScreenC2SPayload;
-import com.pineypiney.mtt.render.MTTRenderers;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
@@ -64,6 +64,6 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientE
 	public SheetCharacter getDNDCharacter(){
 		ClientPlayerEntity player = this.player;
 		if(player == null) return null;
-		return dndEngine.getPlayerCharacter(player.getUuid());
+		return dndEngine.getCharacterFromPlayer(player.getUuid());
 	}
 }

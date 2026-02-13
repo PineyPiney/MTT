@@ -1,6 +1,8 @@
 package com.pineypiney.mtt.dnd.traits
 
-import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.CharacterModel
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.feats.Feat
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.util.Localisation
@@ -58,46 +60,54 @@ data class GivenAndOptions<T>(val given: Set<T>, val numChoices: Int, val option
 }
 
 
-class CreatureTypeTrait(val type: CreatureType): Trait<CreatureTypeTrait>("trait") {
+class CreatureTypeTrait(val type: CreatureType) : Trait<CreatureTypeTrait>() {
 	override fun getCodec(): TraitCodec<CreatureTypeTrait> = TraitCodec.CREATURE_TYPE_CODEC
 	override fun getParts(): Set<TraitPart> {
 		return setOf(LiteralPart(getDeclarationKey(), getTranslation(type.name.lowercase())){ sheet, src -> sheet.addTypeSource(type, src) }, LiteralPart(getDescriptionKey()))
 	}
 }
 
-class SpeedTrait(val speed: Int): Trait<SpeedTrait>("trait") {
+class SpeedTrait(val speed: Int) : Trait<SpeedTrait>() {
 	override fun getCodec(): TraitCodec<SpeedTrait> = TraitCodec.SPEED_TRAIT
 	override fun getParts(): Set<TraitPart> {
 		return setOf(LiteralPart(getDeclarationKey(), speed){ sheet, src -> sheet.addSpeedSource(speed, src)}, LiteralPart(getDescriptionKey()))
 	}
 }
 
-class SizeTrait(val options: Set<Size>): Trait<SizeTrait>("trait") {
+class SizeTrait(val options: Set<Size>) : Trait<SizeTrait>() {
 	override fun getCodec(): TraitCodec<SizeTrait> = TraitCodec.SIZE_CODEC
 	override fun getParts(): Set<TraitPart> {
 		val declaration = if(options.size == 1) LiteralPart(getDeclarationKey(), getTranslation(options.first().name)){ sheet, src -> sheet.addSizeSource(options.first(), src)}
-		else OneChoicePart(options, getLabel(), Size::fromString, Size::name, { getTranslationKey(it.name.lowercase()) }, "mtt.trait.size.declaration", CharacterSheet::addSizeSource)
+		else OneChoicePart(
+			options,
+			getLabel(),
+			Size::fromString,
+			Size::name,
+			{ getTranslationKey(it.name.lowercase()) },
+			"mtt.size.declaration",
+			CharacterSheet::addSizeSource
+		)
 		return setOf(declaration, LiteralPart(getDescriptionKey()))
 	}
 }
 
-class ModelTrait(val options: Set<String>): Trait<ModelTrait>("trait") {
+class ModelTrait(val race: Race, val options: Set<CharacterModel>) : Trait<ModelTrait>() {
 	override fun getCodec(): TraitCodec<ModelTrait> = TraitCodec.MODEL_CODEC
 	override fun getParts(): Set<TraitPart> {
 		val declaration = if(options.size == 1) LiteralPart(getDeclarationKey(), getTranslation(options.first())){ sheet, _ -> sheet.model = options.first()}
 		else OneChoicePart(
 			options,
 			getLabel(),
-			{ it },
-			{ it },
-			{ "mtt.model.$it" },
-			"mtt.trait.model.declaration",
+			race::getModel,
+			CharacterModel::id,
+			{ "mtt.model.${it.id}" },
+			"mtt.model.declaration",
 			{ sheet, m, _ -> sheet.model = m })
 		return setOf(declaration, LiteralPart(getDescriptionKey()))
 	}
 }
 
-class LanguageTrait(val data: GivenAndOptions<String>): Trait<LanguageTrait>("trait") {
+class LanguageTrait(val data: GivenAndOptions<String>) : Trait<LanguageTrait>() {
 	override fun getCodec(): TraitCodec<LanguageTrait> = TraitCodec.LANGUAGE_CODEC
 	override fun getParts(): Set<TraitPart> {
 		val translationKey = { it: String -> "mtt.language.$it" }
@@ -130,7 +140,7 @@ class AdvantageTrait(val type: String, val data: GivenAndOptions<String>): Trait
 	override fun getCodec(): TraitCodec<AdvantageTrait> = TraitCodec.ADVANTAGE_CODEC
 	override fun getParts(): Set<TraitPart> {
 		val translationKey = { it: String -> "mtt.$type.$it" }
-		val decKey = "mtt.feature.advantage.$type.declaration"
+		val decKey = "mtt.advantage.$type.declaration"
 		val declaration = data.createPart(getLabelKey(), translationKey, decKey, {it}, {it}, CharacterSheet::addAdvantage, CharacterSheet::addAdvantages)
 
 		return setOf(declaration, LiteralPart(getDescriptionKey()))
@@ -165,7 +175,7 @@ class ProficiencyTrait(val type: String, val data: GivenAndOptions<Proficiency>)
 	}
 
 	override fun getLabelKey(): String {
-		return "mtt.feature.proficiency.$type"
+		return "mtt.proficiency.$type"
 	}
 
 	override fun getTranslationKey(value: Any): String {
@@ -178,8 +188,8 @@ class HealthBonusTrait(val base: Int, val perLevel: Int): Trait<HealthBonusTrait
 
 	override fun getParts(): Set<TraitPart> {
 		val set = mutableSetOf<LiteralPart>()
-		if(base > 0) set.add(LiteralPart("mtt.feature.bonus_health.base.declaration", base))
-		if(perLevel > 0) set.add(LiteralPart("mtt.feature.bonus_health.per_level.declaration", perLevel))
+		if (base > 0) set.add(LiteralPart("mtt.health.bonus.base.declaration", base))
+		if (perLevel > 0) set.add(LiteralPart("mtt.health.bonus.per_level.declaration", perLevel))
 		return set
 	}
 
@@ -243,7 +253,7 @@ class FeatTrait(val feats: Set<Feat>): Trait<FeatTrait>(){
 
 class CustomTrait(val id: String): Trait<CustomTrait>() {
 	override fun getCodec(): TraitCodec<CustomTrait> = TraitCodec.CUSTOM_CODEC
-	override fun getID(): String = id
+	override fun getID(): String = "trait.$id"
 	override fun getParts(): Set<TraitPart> {
 		return setOf(LiteralPart(getDescriptionKey()))
 	}

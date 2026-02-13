@@ -4,11 +4,11 @@ import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.pineypiney.mtt.commands.suggestions.DNDSuggestions
-import com.pineypiney.mtt.dnd.CharacterSheet
-import com.pineypiney.mtt.dnd.DNDServerEngine
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.Barbarian
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.server.DNDServerEngine
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.network.payloads.s2c.DNDEngineUpdateS2CPayload
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
@@ -17,6 +17,8 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.minecraft.command.CommandRegistryAccess
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.ItemStackArgumentType
+import net.minecraft.command.permission.Permission
+import net.minecraft.command.permission.PermissionLevel
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.screen.NamedScreenHandlerFactory
@@ -69,7 +71,9 @@ object MTTCommands {
 		// DM COMMANDS
 		.then(literal("dm")
 			// Set the DM of the game
-			.then(argument("player", EntityArgumentType.player()).requires{ source -> source.hasPermissionLevel(4) }.executes { ctx ->
+			.then(argument("player", EntityArgumentType.player()).requires { source ->
+				source.permissions.hasPermission(Permission.Level(PermissionLevel.OWNERS))
+			}.executes { ctx ->
 				val player = EntityArgumentType.getPlayer(ctx, "player")
 				getEngine(ctx).DM = player.uuid
 				reply(ctx, "Set DM to ${player.name}")
@@ -157,7 +161,7 @@ object MTTCommands {
 					val engine = getEngine(ctx)
 					val character = DNDSuggestions.getCharacter(ctx, "character") ?: return@executes 0
 					character.name = StringArgumentType.getString(ctx, "name")
-					engine.getPlayerCharacterEntity(character.uuid)?.name = character.name
+					engine.getEntityOfCharacter(character.uuid)?.name = character.name
 					engine.updates.add(DNDEngineUpdateS2CPayload("rename", character.uuid.toInts(), character.name))
 					1
 				}))

@@ -1,6 +1,8 @@
 package com.pineypiney.mtt.dnd.traits
 
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dnd.characters.CharacterModel
+import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.feats.Feat
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs.decodeList
@@ -150,14 +152,15 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 			override val ID: String = "model"
 
 			override fun decode(buf: ByteBuf): ModelTrait {
-				return ModelTrait(decodeList(buf, PacketCodecs.STRING).toSet())
+				val race = Race.findById(PacketCodecs.STRING.decode(buf))
+				return ModelTrait(race, decodeList(buf, PacketCodecs.STRING, race::getModel).toSet())
 			}
 			override fun encode(buf: ByteBuf, value: ModelTrait) {
-				encodeCollection(buf, value.options, PacketCodecs.STRING)
+				encodeCollection(buf, value.options, PacketCodecs.STRING, CharacterModel::id)
 			}
 
 			override fun readFromJson(json: JsonElement, traits: MutableCollection<Trait<*>>) {
-				traits.add(ModelTrait(readJsonList(json, JsonPrimitive::content).toSet()))
+
 			}
 		}
 

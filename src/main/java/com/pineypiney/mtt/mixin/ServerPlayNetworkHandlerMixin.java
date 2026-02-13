@@ -22,23 +22,25 @@ public class ServerPlayNetworkHandlerMixin {
 
 	@Inject(method = "onPlayerMove", at = @At("TAIL"))
 	private void updateDNDCharacter(PlayerMoveC2SPacket packet, CallbackInfo ci){
-		var engine = ((DNDEngineHolder<?>) this.player.server).mtt$getDNDEngine();
+		if (player.getEntityWorld().getServer() == null) return;
+		var engine = ((DNDEngineHolder<?>) player.getEntityWorld().getServer()).mtt$getDNDEngine();
 		if(!engine.getRunning()) return;
-		var character = engine.getPlayerCharacter(player.getUuid());
+		var character = engine.getCharacterFromPlayer(player.getUuid());
 		if(character == null) return;
-		var entity = engine.getPlayerCharacterEntity(character.getUuid());
+		var entity = engine.getEntityOfCharacter(character.getUuid());
 		if(entity != null) {
 			//entity.updatePositionAndAngles(player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-			character.setPos(player.getPos());
+			character.setPos(player.getEntityPos());
 		}
 	}
 
 	@Inject(method = "onPlayerInteractEntity", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/entity/Entity;getBoundingBox()Lnet/minecraft/util/math/Box;"), cancellable = true)
 	private void onPlayerInteractDNDEntity(PlayerInteractEntityC2SPacket packet, CallbackInfo ci, @Local Entity entity, @Local Box box) {
-		var engine = ((DNDEngineHolder<?>) player.server).mtt$getDNDEngine();
+		if (player.getEntityWorld().getServer() == null) return;
+		var engine = ((DNDEngineHolder<?>) player.getEntityWorld().getServer()).mtt$getDNDEngine();
 		if (!engine.getRunning()) return;
 
-		var character = engine.getPlayerCharacter(player.getUuid());
+		var character = engine.getCharacterFromPlayer(player.getUuid());
 		if (character == null) return;
 
 		if (entity instanceof DNDEntity dndEntity) ci.cancel();

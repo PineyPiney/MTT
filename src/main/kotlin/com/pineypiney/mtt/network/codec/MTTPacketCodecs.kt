@@ -2,7 +2,8 @@ package com.pineypiney.mtt.network.codec
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.Background
-import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.CharacterModel
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.NamedTrait
 import com.pineypiney.mtt.dnd.race.Race
@@ -21,6 +22,7 @@ object MTTPacketCodecs {
 
 	val byt: PacketCodec<ByteBuf, Byte> get() = PacketCodecs.BYTE
 	val int: PacketCodec<ByteBuf, Int> get() = PacketCodecs.INTEGER
+	val flt: PacketCodec<ByteBuf, Float> get() = PacketCodecs.FLOAT
 	val str: PacketCodec<ByteBuf, String> get() = PacketCodecs.STRING
 
 	val bytInt: PacketCodec<ByteBuf, Int> =
@@ -225,6 +227,14 @@ object MTTPacketCodecs {
 			?: throw Exception("Cannot decode DNDClass: No class found with id $id")
 	}
 
+	val MODEL = PacketCodec.tuple(
+		str, CharacterModel::id,
+		flt, CharacterModel::width,
+		flt, CharacterModel::height,
+		flt, CharacterModel::eyeY,
+		::CharacterModel
+	)
+
 	val SOURCE = object : PacketCodec<ByteBuf, Source> {
 		override fun decode(buf: ByteBuf): Source {
 			val type = str.decode(buf)
@@ -307,7 +317,7 @@ object MTTPacketCodecs {
 		str.xmap(CreatureType::valueOf, CreatureType::name), Race::type,
 		int, Race::speed,
 		TraitCodec.SIZE_CODEC, Race::size,
-		TraitCodec.MODEL_CODEC, Race::model,
+		smallCollection(MODEL, ::Set), Race::models,
 		smallCollection(TRAIT, ::List), Race::traits,
 		smallCollection(NAMED_TRAIT, ::List), Race::namedTraits,
 		smallCollection(SUBRACE, ::Set), Race::subraces,
@@ -338,7 +348,7 @@ object MTTPacketCodecs {
 			decodeMap(buf, SOURCE, collection(Proficiency.CODEC, ::mutableSetOf), sheet.proficiencies)
 			decodeMap(buf, SOURCE, collection(FEATURE, ::mutableSetOf), sheet.features)
 
-			sheet.model = str.decode(buf)
+			sheet.model = sheet.race.getModel(str.decode(buf))
 
 			return sheet
 		}
@@ -364,7 +374,7 @@ object MTTPacketCodecs {
 			encodeMap(buf, value.proficiencies, SOURCE, collection(Proficiency.CODEC, ::mutableSetOf))
 			encodeMap(buf, value.features, SOURCE, collection(FEATURE, ::mutableSetOf))
 
-			str.encode(buf, value.model)
+			str.encode(buf, value.model.id)
 		}
 	}
 }

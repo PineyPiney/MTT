@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.dnd.classes
 
-import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.traits.Source
 import com.pineypiney.mtt.dnd.traits.Trait
 import com.pineypiney.mtt.dnd.traits.features.Feature

@@ -3,6 +3,14 @@
 	"type": "humanoid",
 	"size": "small",
 	"speed": 30,
+	"models": [
+		{
+			"id": "default",
+			"width": 0.6,
+			"height": 1.5,
+			"eyeY": 1.2
+		}
+	],
 
 	"language": [
 		"common",

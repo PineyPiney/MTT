@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.mixin.client;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.pineypiney.mtt.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.DNDClientEngine;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.input.Scroller;

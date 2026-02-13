@@ -1,10 +1,11 @@
 package com.pineypiney.mtt.dnd.characters
 
+import com.mojang.logging.LogUtils
 import com.pineypiney.mtt.dnd.DNDEngine
-import com.pineypiney.mtt.dnd.DNDServerEngine
 import com.pineypiney.mtt.dnd.Damage
 import com.pineypiney.mtt.dnd.DamageType
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.server.DNDServerEngine
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
@@ -28,7 +29,10 @@ import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.screen.NamedScreenHandlerFactory
 import net.minecraft.screen.ScreenHandler
+import net.minecraft.storage.NbtReadView
+import net.minecraft.storage.NbtWriteView
 import net.minecraft.text.Text
+import net.minecraft.util.ErrorReporter
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
@@ -42,7 +46,7 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 	abstract val type: CreatureType
 	abstract val size: Size
 	abstract val speed: Int
-	abstract val model: String
+	abstract val model: CharacterModel
 	abstract var health: Int
 	abstract val maxHealth: Int
 	abstract val abilities: Abilities
@@ -51,6 +55,8 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 
 	var world: RegistryKey<World> = World.OVERWORLD
 	var pos = Vec3d(0.0, 0.0, 0.0)
+	var yaw = 0f
+	var pitch = 0f
 
 	fun getTotalArmour(): Int{
 		val armour = inventory.getArmour()
@@ -128,8 +134,9 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 		val worldID = Identifier.of(nbt.getString("world").get())
 		world = RegistryKey.of(RegistryKeys.WORLD, worldID)
 
-		val inv = nbt.getListOrEmpty("inventory")
-		inventory.readNbt(inv, regManager)
+		val reporter = ErrorReporter.Logging(getErrorReporterContext(), LogUtils.getLogger())
+		val view = NbtReadView.create(reporter, regManager, nbt.getCompoundOrEmpty("inventory"))
+		inventory.readNbt(view)
 	}
 
 	fun writeNbt(nbt: NbtCompound, regManager: DynamicRegistryManager) {
@@ -139,8 +146,13 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 		posNbt.add(NbtDouble.of(pos.z))
 		nbt.put("pos", posNbt)
 
+
 		nbt.putString("world", world.value.toString())
-		nbt.put("inventory", inventory.writeNbt(regManager))
+
+		val reporter = ErrorReporter.Logging(getErrorReporterContext(), LogUtils.getLogger())
+		val view = NbtWriteView.create(reporter, regManager)
+		inventory.writeNbt(view)
+		nbt.put("inventory", view.nbt)
 	}
 
 	abstract fun createEntity(world: World): DNDEntity
@@ -152,5 +164,11 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 	}
 	override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity): ScreenHandler? {
 		return DNDScreenHandler(syncId, playerInventory, inventory)
+	}
+
+	fun getErrorReporterContext() = ErrorReportingContext(this)
+
+	data class ErrorReportingContext(val character: Character) : ErrorReporter.Context {
+		override fun getName(): String = character.name
 	}
 }

@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.DNDClientEngine;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;

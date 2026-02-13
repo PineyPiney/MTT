@@ -1,18 +1,18 @@
 package com.pineypiney.mtt.mixin;
 
 import com.mojang.datafixers.DataFixer;
-import com.pineypiney.mtt.dnd.DNDServerEngine;
+import com.pineypiney.mtt.dnd.server.DNDServerEngine;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import net.minecraft.network.QueryableServer;
 import net.minecraft.resource.ResourcePackManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.SaveLoader;
 import net.minecraft.server.ServerTask;
-import net.minecraft.server.WorldGenerationProgressListenerFactory;
 import net.minecraft.server.command.CommandOutput;
 import net.minecraft.server.world.ChunkErrorHandler;
 import net.minecraft.util.ApiServices;
 import net.minecraft.util.thread.ReentrantThreadExecutor;
+import net.minecraft.world.chunk.ChunkLoadProgress;
 import net.minecraft.world.level.storage.LevelStorage;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -37,7 +37,7 @@ public abstract class MinecraftServerMixin extends ReentrantThreadExecutor<Serve
 	}
 
 	@Inject(method = "<init>", at = @At("TAIL"))
-	private void init(Thread serverThread, LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, Proxy proxy, DataFixer dataFixer, ApiServices apiServices, WorldGenerationProgressListenerFactory worldGenerationProgressListenerFactory, CallbackInfo ci){
+	private void init(Thread serverThread, LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, Proxy proxy, DataFixer dataFixer, ApiServices apiServices, ChunkLoadProgress chunkLoadProgress, CallbackInfo ci) {
 		dndEngine = new DNDServerEngine((MinecraftServer)(Object)this);
 	}
 

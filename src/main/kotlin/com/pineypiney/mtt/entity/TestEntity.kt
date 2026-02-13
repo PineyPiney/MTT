@@ -8,8 +8,7 @@ import net.minecraft.world.World
 class TestEntity(type: EntityType<out LivingEntity>, world: World) : LivingEntity(type, world) {
 
 
-
-	override fun getMainArm(): Arm? {
+	override fun getMainArm(): Arm {
 		return Arm.RIGHT
 	}
 }

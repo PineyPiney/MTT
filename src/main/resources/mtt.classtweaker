@@ -1,0 +1,17 @@
+classTweaker v1 named
+accessible field net/minecraft/client/MinecraftClient fpsCounter I
+accessible field net/minecraft/client/MinecraftClient overlay Lnet/minecraft/client/gui/screen/Overlay;
+accessible field net/minecraft/client/gui/DrawContext client Lnet/minecraft/client/MinecraftClient;
+
+# For EntityTrackerMixin
+accessible class net/minecraft/server/world/ServerChunkLoadingManager$EntityTracker
+accessible field net/minecraft/server/world/ServerChunkLoadingManager$EntityTracker listeners Ljava/util/Set;
+
+# For ClientDNDEntity
+accessible field net/minecraft/client/network/ClientPlayerEntity ticksLeftToDoubleTapSprint I
+
+# For HeldItemRendererMixin
+accessible method net/minecraft/client/render/item/HeldItemRenderer getHandRenderType (Lnet/minecraft/client/network/ClientPlayerEntity;)Lnet/minecraft/client/render/item/HeldItemRenderer$HandRenderType;
+accessible class net/minecraft/client/render/item/HeldItemRenderer$HandRenderType
+accessible field net/minecraft/client/render/item/HeldItemRenderer$HandRenderType renderMainHand Z
+accessible field net/minecraft/client/render/item/HeldItemRenderer$HandRenderType renderOffHand Z

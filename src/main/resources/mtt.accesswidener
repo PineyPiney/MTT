@@ -1,5 +1,0 @@
-accessWidener v2 named
-accessible field net/minecraft/client/MinecraftClient fpsCounter I
-accessible field net/minecraft/client/MinecraftClient overlay Lnet/minecraft/client/gui/screen/Overlay;
-accessible field net/minecraft/client/gui/DrawContext client Lnet/minecraft/client/MinecraftClient;
-accessible field net/minecraft/client/gui/DrawContext vertexConsumers Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;

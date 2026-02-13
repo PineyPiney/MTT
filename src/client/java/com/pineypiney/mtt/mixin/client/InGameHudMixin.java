@@ -1,10 +1,10 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.DNDClientEngine;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -38,18 +38,18 @@ public abstract class InGameHudMixin {
 
 	@Inject(method = "renderHotbar", at = @At("HEAD"), cancellable = true)
 	private void renderDNDHotbar(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci){
-		var player = getCameraPlayer();
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(getCameraPlayer());
+		var player = client.player;
+		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(player);
 		if(player == null || character == null) return; // If this player doesn't have a character then render as normal
 
 
 		Arm offhandArm = player.getMainArm().getOpposite();
 		int i = context.getScaledWindowWidth() / 2;
-		context.getMatrices().push();
-		context.getMatrices().translate(0.0F, 0.0F, -90.0F);
-		context.drawGuiTexture(RenderLayer::getGuiTextured, HOTBAR_TEXTURE, i - 91, context.getScaledWindowHeight() - 22, 182, 22);
+		context.getMatrices().pushMatrix();
+		context.getMatrices().translate(0.0F, 0.0F);
+		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, HOTBAR_TEXTURE, i - 91, context.getScaledWindowHeight() - 22, 182, 22);
 		context.drawGuiTexture(
-				RenderLayer::getGuiTextured,
+				RenderPipelines.GUI_TEXTURED,
 				HOTBAR_SELECTION_TEXTURE,
 				i - 92 + character.getInventory().getSelectedSlot() * 20,
 				context.getScaledWindowHeight() - 23,
@@ -58,10 +58,12 @@ public abstract class InGameHudMixin {
 		);
 		var offhandStack = character.getInventory().getOffhandSlotIcon();
 		if (!offhandStack.isEmpty()) {
-			if (offhandArm == Arm.LEFT) context.drawGuiTexture(RenderLayer::getGuiTextured, HOTBAR_OFFHAND_LEFT_TEXTURE, i - 91 - 29, context.getScaledWindowHeight() - 23, 29, 24);
-			else context.drawGuiTexture(RenderLayer::getGuiTextured, HOTBAR_OFFHAND_RIGHT_TEXTURE, i + 91, context.getScaledWindowHeight() - 23, 29, 24);
+			if (offhandArm == Arm.LEFT)
+				context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, HOTBAR_OFFHAND_LEFT_TEXTURE, i - 91 - 29, context.getScaledWindowHeight() - 23, 29, 24);
+			else
+				context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, HOTBAR_OFFHAND_RIGHT_TEXTURE, i + 91, context.getScaledWindowHeight() - 23, 29, 24);
 		}
-		context.getMatrices().pop();
+		context.getMatrices().popMatrix();
 
 		var stackY = context.getScaledWindowHeight() - 19;
 		for(int j = 0; j < 4;){

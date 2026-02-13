@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.dnd.race
 
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dnd.characters.CharacterModel
 import com.pineypiney.mtt.dnd.traits.*
 import kotlinx.serialization.json.*
 import net.minecraft.text.MutableText
@@ -11,14 +12,14 @@ open class Race(
 	val type: CreatureType,
 	val speed: Int,
 	val size: SizeTrait,
-	val model: ModelTrait,
+	val models: Set<CharacterModel>,
 	val traits: List<Trait<*>>,
 	val namedTraits: List<NamedTrait<*>>,
 	val subraces: Set<Subrace>
 ) {
 
 	fun getAllTraits(subrace: Subrace? = null): Set<Trait<*>> {
-		val set = mutableSetOf(CreatureTypeTrait(type), SpeedTrait(speed), size, model)
+		val set = mutableSetOf(CreatureTypeTrait(type), SpeedTrait(speed), size, ModelTrait(this, models))
 		set.addAll(traits)
 		for(namedTrait in namedTraits) set.addAll(namedTrait.traits)
 		if (subrace != null) {
@@ -36,12 +37,13 @@ open class Race(
 	}
 
 	fun getSubrace(subraceID: String) = subraces.firstOrNull { it.name == subraceID }
+	fun getModel(modelID: String) = models.firstOrNull { it.id == modelID } ?: models.first()
 
 	class Builder(val id: String){
 		var type = CreatureType.HUMANOID
 		var speed = 30
 		var size: SizeTrait = SizeTrait(setOf(Size.MEDIUM))
-		var model: ModelTrait = ModelTrait(setOf("default"))
+		var models = mutableSetOf<CharacterModel>()
 
 		val components = mutableListOf<Trait<*>>()
 		val namedTraits = mutableListOf<NamedTrait<*>>()
@@ -50,9 +52,9 @@ open class Race(
 		fun type(value: CreatureType) = this.apply { type = value }
 		fun speed(value: Int) = this.apply{ speed = value }
 		fun size(value: SizeTrait) = this.apply{ size = value }
-		fun model(value: ModelTrait) = this.apply{ model = value }
+		fun model(value: CharacterModel) = this.apply { models.add(value) }
 
-		fun build() = Race(id, type, speed, size, model, components, namedTraits, subraces)
+		fun build() = Race(id, type, speed, size, models, components, namedTraits, subraces)
 	}
 
 	override fun toString(): String {
@@ -77,16 +79,17 @@ open class Race(
 					"type" -> builder.type(CreatureType.valueOf(element.jsonPrimitive.content.uppercase()))
 					"speed"-> builder.speed(element.jsonPrimitive.int)
 					"size" -> builder.size(SizeTrait(TraitCodec.readJsonList(element) { Size.fromString(it.content) }.toSet()))
-					"model" -> builder.model(ModelTrait(TraitCodec.readJsonList(element, JsonPrimitive::content).toSet()))
+					"models" -> {
+						parseModels(element, builder.models)
+					}
 					"tags" -> {}
 
 					"sub_races" -> {
-						val subraceArray = (element as? JsonArray)
-						if (subraceArray == null) {
+						if (element !is JsonArray) {
 							MTT.logger.warn("Subrace json should be an array")
 							continue
 						}
-						for (entry in subraceArray) {
+						for (entry in element) {
 							when(entry){
 								is JsonPrimitive -> {}
 								is JsonObject -> {
@@ -117,6 +120,26 @@ open class Race(
 			}
 
 			return builder.build()
+		}
+
+		fun parseModels(json: JsonElement, set: MutableSet<CharacterModel>): String? {
+			if (json !is JsonArray) return "Models json should be an array"
+			for (model in json) {
+				if (model !is JsonObject) return "Models should be json objects containing and id string, and width, height, and eyeY floats"
+				val id = ((model["id"] ?: return "All models should contain an id") as? JsonPrimitive
+					?: return "Model ids should be strings").content
+				val width = ((model["width"] ?: return "Models $id should contain a width") as? JsonPrimitive
+					?: return "Model $id width should be a float").floatOrNull
+					?: return "Could not parse width in model $id"
+				val height = ((model["height"] ?: return "Models $id should contain a height") as? JsonPrimitive
+					?: return "Model $id height should be a float").floatOrNull
+					?: return "Could not parse height in model $id"
+				val eyeY = ((model["eyeY"] ?: return "Models $id should contain an eyeY") as? JsonPrimitive
+					?: return "Model $id eyeY should be a float").floatOrNull
+					?: return "Could not parse eyeY in model $id"
+				set.add(CharacterModel(id, width, height, eyeY))
+			}
+			return null
 		}
 
 		fun parseTrait(id: String, element: JsonElement, traits: MutableList<Trait<*>>, namedTraits: MutableList<NamedTrait<*>>): String{

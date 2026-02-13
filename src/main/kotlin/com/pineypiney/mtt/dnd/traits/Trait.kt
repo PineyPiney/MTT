@@ -10,14 +10,14 @@ import net.minecraft.text.Text
  * so that they can be defined in JSON files
  */
 
-abstract class Trait<T: Trait<T>>(val root: String = "feature") {
+abstract class Trait<T : Trait<T>> {
 	abstract fun getCodec(): TraitCodec<T>
 	abstract fun getParts(): Set<TraitPart>
 
 	open fun getID() = getCodec().ID
-	open fun getLabelKey(): String = "mtt.$root.${getID()}"
-	open fun getDeclarationKey(): String = "mtt.$root.${getID()}.declaration"
-	open fun getDescriptionKey(): String = "mtt.$root.${getID()}.description"
+	open fun getLabelKey(): String = "mtt.${getID()}"
+	open fun getDeclarationKey(): String = "mtt.${getID()}.declaration"
+	open fun getDescriptionKey(): String = "mtt.${getID()}.description"
 	open fun getTranslationKey(value: Any): String = "mtt.${getID()}.$value"
 
 	open fun getLabel(): Text = Text.translatable(getLabelKey())

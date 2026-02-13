@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.dnd.traits.features
 
-import com.pineypiney.mtt.dnd.CharacterSheet
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.traits.Ability
 import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.PacketCodec
@@ -68,9 +68,7 @@ class Features {
 		}
 	}
 
-	object RelentlessEndurance : Feature("relentless_endurance"){
-
-	}
+	object RelentlessEndurance : Feature("relentless_endurance")
 
 	companion object {
 

@@ -16,7 +16,7 @@ class DNDEngineUpdateS2CPayload(val field: String, val data: List<Int>, val stri
 
 	override fun getId(): CustomPayload.Id<out CustomPayload> = ID
 
-	private fun getUUID(offset: Int): UUID {
+	fun getUUID(offset: Int): UUID {
 		return UUID(
 			data[0 + offset].toLong() shl 32 or (data[1 + offset].toLong() and 0xffffffff),
 			data[2 + offset].toLong() shl 32 or (data[3 + offset].toLong() and 0xffffffff)
