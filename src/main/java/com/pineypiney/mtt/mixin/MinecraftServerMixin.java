@@ -22,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.net.Proxy;
+import java.util.Collection;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
@@ -48,7 +50,12 @@ public abstract class MinecraftServerMixin extends ReentrantThreadExecutor<Serve
 
 	@Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profilers;get()Lnet/minecraft/util/profiler/Profiler;"))
 	private void tickDNDEngine(BooleanSupplier shouldKeepTicking, CallbackInfo ci){
-        dndEngine.tickServer((MinecraftServer)(Object) this);
+		dndEngine.tickServer();
+	}
+
+	@Inject(method = "reloadResources", at = @At("TAIL"))
+	private void reloadDNDResources(Collection<String> dataPacks, CallbackInfoReturnable<CompletableFuture<Void>> cir) {
+		dndEngine.loadData();
 	}
 
 	@Inject(method = "save", at = @At("TAIL"))

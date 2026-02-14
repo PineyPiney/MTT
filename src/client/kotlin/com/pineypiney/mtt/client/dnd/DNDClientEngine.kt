@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.client.dnd
 
 import com.pineypiney.mtt.client.dnd.network.ClientCharacterNetworkHandler
+import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity
 import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.entity.DNDEntity
@@ -51,6 +52,10 @@ class DNDClientEngine(val client: MinecraftClient) : DNDEngine() {
 
 	override fun dissociatePlayer(player: UUID) {
 		super.dissociatePlayer(player)
+		val oldEntity = client.cameraEntity
+		if (oldEntity is ClientDNDEntity) {
+			oldEntity.trackedPosition.pos = oldEntity.entityPos
+		}
 		client.cameraEntity = client.player
 	}
 

@@ -1,0 +1,40 @@
+{
+	"name": {
+		"generator": "goblin_names"
+	},
+	"race": "goblin",
+	"class": "wizard",
+	"abilities": [
+		8,
+		12,
+		10,
+		12,
+		8,
+		8
+	],
+	"equipment": {
+		"melee_main": "quarterstaff",
+		"armour": "leather_armour"
+	},
+	"inventory": [
+		{
+			"item": "healing_potion",
+			"amount": 2
+		},
+		{
+			"item": "gold_coin",
+			"amount": 3
+		}
+	],
+	"spells": [
+		{
+			"spell": "acid_splash"
+		},
+		{
+			"spell": "grease"
+		},
+		{
+			"spell": "ray_of_sickness"
+		}
+	]
+}

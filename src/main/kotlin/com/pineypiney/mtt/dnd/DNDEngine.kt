@@ -34,6 +34,9 @@ abstract class DNDEngine {
 	open fun addCharacter(character: Character){
 		characters.add(character)
 	}
+	open fun removeCharacter(character: Character) {
+		characters.remove(character)
+	}
 	fun getCharacter(name: String): Character? = characters.firstOrNull { it.name == name }
 	fun getCharacter(uuid: UUID): Character? = characters.firstOrNull { it.uuid == uuid }
 

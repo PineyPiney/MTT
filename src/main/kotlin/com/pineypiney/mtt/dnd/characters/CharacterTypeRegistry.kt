@@ -77,5 +77,13 @@ object CharacterTypeRegistry {
 			SheetCharacter::sheet,
 			::SheetCharacter
 		)
+
+		register(
+			Identifier.of(MTT.MOD_ID, "simple"),
+			SimpleCharacter::class,
+			SimpleCharacter.Params.PACKET_CODEC,
+			SimpleCharacter::details,
+			::SimpleCharacter
+		)
 	}
 }

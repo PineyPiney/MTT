@@ -23,6 +23,8 @@ class DNDItemGroups {
 				DNDWeaponItem.addTo(DNDItems.LONG_SWORD, entries, 1000, 3600, 14000)
 				DNDWeaponItem.addTo(DNDItems.GREAT_SWORD, entries, 1500, 5000, 18000)
 				DNDWeaponItem.addTo(DNDItems.GREAT_CLUB, entries, 400, 2000, 9000)
+
+				DNDWeaponItem.addTo(DNDItems.QUARTERSTAFF, entries, 400, 2000, 9000)
 			}
 			.build()
 		val RANGED_WEAPON_GROUP = FabricItemGroup.builder()
@@ -58,11 +60,21 @@ class DNDItemGroups {
 			}
 			.build()
 
+		val UTILS_GROUP = FabricItemGroup.builder()
+			.icon { ItemStack(DNDItems.PREFAB_SPAWN_EGG) }
+			.displayName(Text.translatable("itemGroup.mtt.utils"))
+			.entries { ctx, entries ->
+				entries.add(DNDItems.PREFAB_SPAWN_EGG)
+				entries.add(DNDItems.CHARACTER_KILL_STICK)
+			}
+			.build()
+
 		fun registerItemGroups(){
 			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "melee_weapons_group"), MELEE_WEAPON_GROUP)
 			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "ranged_weapons_group"), RANGED_WEAPON_GROUP)
 			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "armour_group"), ARMOUR_GROUP)
 			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "accessories_group"), ACCESSORIES_GROUP)
+			Registry.register(Registries.ITEM_GROUP, Identifier.of(MTT.MOD_ID, "utils_group"), UTILS_GROUP)
 		}
 	}
 }

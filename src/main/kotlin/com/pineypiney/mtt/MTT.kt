@@ -7,6 +7,7 @@ import com.pineypiney.mtt.item.dnd.DNDItemGroups
 import com.pineypiney.mtt.item.dnd.DNDItems
 import com.pineypiney.mtt.network.MTTNetwork
 import net.fabricmc.api.ModInitializer
+import net.minecraft.util.Identifier
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 
@@ -24,5 +25,9 @@ class MTT : ModInitializer {
 	companion object {
 		const val MOD_ID = "mtt"
 		val logger: Logger = LoggerFactory.getLogger("Minecraft Table Top")
+
+		fun identifier(path: String): Identifier {
+			return if (path.contains(':')) Identifier.of(path) else Identifier.of(MOD_ID, path)
+		}
 	}
 }

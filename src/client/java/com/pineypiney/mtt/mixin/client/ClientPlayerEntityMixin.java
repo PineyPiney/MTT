@@ -17,7 +17,6 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerLikeState;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.hit.EntityHitResult;
@@ -73,10 +72,10 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
 	@Redirect(method = "getCrosshairTarget(Lnet/minecraft/entity/Entity;DDF)Lnet/minecraft/util/hit/HitResult;", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/projectile/ProjectileUtil;raycast(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;D)Lnet/minecraft/util/hit/EntityHitResult;"))
 	private static EntityHitResult raycastDNDEntities(Entity entity, Vec3d min, Vec3d max, Box box, Predicate<Entity> predicate, double maxDistance) {
 		var engine = DNDClientEngine.Companion.getInstance();
-		if (engine.getRunning() && entity instanceof PlayerEntity player) {
-			var character = engine.getCharacterFromPlayer(player.getUuid());
+		if (engine.getRunning() && entity instanceof DNDEntity dndEntity) {
+			var character = dndEntity.getCharacter();
 			if (character != null) {
-				return ProjectileUtil.raycast(entity, min, max, box, e -> e instanceof DNDEntity dndEntity && dndEntity.canBeHit(character), maxDistance);
+				return ProjectileUtil.raycast(entity, min, max, box, e -> e instanceof DNDEntity other && other.canBeHit(character), maxDistance);
 			}
 		}
 		return ProjectileUtil.raycast(entity, min, max, box, predicate, maxDistance);

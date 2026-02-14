@@ -2,6 +2,7 @@ package com.pineypiney.mtt.dnd.characters
 
 import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.DNDEngine
+import com.pineypiney.mtt.dnd.network.ServerDNDEntity
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
@@ -36,7 +37,7 @@ class SheetCharacter(val sheet: CharacterSheet, uuid: UUID, engine: DNDEngine) :
 		set(value) { sheet.armourClass = value }
 
 	override fun createEntity(world: World): DNDEntity {
-		val entity = DNDEntity(world, this)
+		val entity = ServerDNDEntity(world, this)
 		return entity
 	}
 

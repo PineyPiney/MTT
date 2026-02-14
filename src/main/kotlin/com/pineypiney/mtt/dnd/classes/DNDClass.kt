@@ -23,5 +23,9 @@ abstract class DNDClass(val id: String, val healthDie: Int) {
 
 	companion object {
 		val classes = listOf(Barbarian, Fighter, Ranger, Wizard)
+
+		fun findById(id: String): DNDClass {
+			return classes.firstOrNull { it.id == id } ?: throw IllegalArgumentException("No Race with id $id")
+		}
 	}
 }

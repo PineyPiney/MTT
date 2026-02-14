@@ -3,6 +3,8 @@ package com.pineypiney.mtt.dnd.race
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.characters.CharacterModel
 import com.pineypiney.mtt.dnd.traits.*
+import com.pineypiney.mtt.util.objOrNull
+import com.pineypiney.mtt.util.stringOrNull
 import kotlinx.serialization.json.*
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
@@ -93,7 +95,7 @@ open class Race(
 							when(entry){
 								is JsonPrimitive -> {}
 								is JsonObject -> {
-									val subraceID = entry["id"]?.jsonPrimitive?.content
+									val subraceID = entry.stringOrNull("id")
 									if (subraceID == null) {
 										MTT.logger.warn("Subrace does not contain 'name' field")
 										continue
@@ -160,8 +162,8 @@ open class Race(
 		}
 
 		fun parseNamedTrait(element: JsonObject, traits: MutableList<Trait<*>>, namedTraits: MutableList<NamedTrait<*>>){
-			val traitID = element["id"]?.jsonPrimitive?.content ?: return
-			val effect = (element["effect"] as? JsonObject) ?: run {
+			val traitID = element.stringOrNull("id") ?: return
+			val effect = element.objOrNull("effect") ?: run {
 				traits.add(CustomTrait(traitID))
 				return
 			}

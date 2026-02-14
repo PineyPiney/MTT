@@ -23,6 +23,7 @@ object MTTNetwork {
 		PayloadTypeRegistry.playS2C().register(DNDEngineUpdateS2CPayload.ID, DNDEngineUpdateS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(RaceS2CPayload.ID, RaceS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(CharacterSheetS2CPayload.ID, CharacterSheetS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(CharacterParamsS2CPayload.ID, CharacterParamsS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(EntityDNDEquipmentUpdateS2CPayload.ID, EntityDNDEquipmentUpdateS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C()
 			.register(CharacterPositionLookS2CPayload.ID, CharacterPositionLookS2CPayload.CODEC)
@@ -34,6 +35,8 @@ object MTTNetwork {
 			.register(UpdateSelectedDNDSlotC2SPayload.ID, UpdateSelectedDNDSlotC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(CharacterMoveC2SPayload.ID, CharacterMoveC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(TeleportConfirmC2SPayload.ID, TeleportConfirmC2SPayload.CODEC)
+		PayloadTypeRegistry.playC2S()
+			.register(CharacterInteractCharacterC2SPayload.ID, CharacterInteractCharacterC2SPayload.CODEC)
 
 		ServerPlayNetworking.registerGlobalReceiver(OpenDNDScreenC2SPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
@@ -121,6 +124,13 @@ object MTTNetwork {
 		ServerPlayNetworking.registerGlobalReceiver(TeleportConfirmC2SPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
 			engine.characterManager[ctx.player().uuid]?.onTeleportConfirm(payload)
+		}
+
+		ServerPlayNetworking.registerGlobalReceiver(CharacterInteractCharacterC2SPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
+			val character = engine.getCharacterFromPlayer(ctx.player().uuid)
+			val target = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
+			character?.attack(target)
 		}
 	}
 }

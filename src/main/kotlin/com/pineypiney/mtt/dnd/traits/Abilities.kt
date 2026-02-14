@@ -49,6 +49,15 @@ class Abilities {
 		charisma = values[5]
 	}
 
+	fun setValues(other: Abilities) {
+		strength = other.strength
+		dexterity = other.dexterity
+		constitution = other.constitution
+		intelligence = other.intelligence
+		wisdom = other.wisdom
+		charisma = other.charisma
+	}
+
 	fun getStat(ability: Ability) = when(ability){
 		Ability.STRENGTH -> strength
 		Ability.DEXTERITY -> dexterity

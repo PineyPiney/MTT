@@ -1,0 +1,44 @@
+{
+	"lists": {
+		"first": [
+			"Eeb",
+			"Snuk",
+			"Dandump",
+			"Frump",
+			"Glurd",
+			"Morf",
+			"Erjuk"
+		],
+		"last": [
+			"Scorpul",
+			"Frink",
+			"Slowt",
+			"Wassul",
+			"Gowt"
+		]
+	},
+	"formats": [
+		{
+			"weight": 4,
+			"parts": [
+				{
+					"random": "first"
+				},
+				{
+					"literal": " "
+				},
+				{
+					"random": "last"
+				}
+			]
+		},
+		{
+			"weight": 1,
+			"parts": [
+				{
+					"random": "first"
+				}
+			]
+		}
+	]
+}

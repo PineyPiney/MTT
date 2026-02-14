@@ -2,6 +2,7 @@ package com.pineypiney.mtt.entity
 
 import com.google.common.annotations.VisibleForTesting
 import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.server.DNDServerEngine
 import com.pineypiney.mtt.network.payloads.s2c.EntityDNDEquipmentUpdateS2CPayload
 import com.pineypiney.mtt.screen.DNDScreenHandler
 import com.pineypiney.mtt.util.getEngine
@@ -21,6 +22,8 @@ import net.minecraft.server.world.ServerWorld
 import net.minecraft.storage.ReadView
 import net.minecraft.storage.WriteView
 import net.minecraft.text.Text
+import net.minecraft.util.ActionResult
+import net.minecraft.util.Hand
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.ChunkSectionPos
 import net.minecraft.util.math.MathHelper
@@ -91,6 +94,13 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		uuid
 	}
 
+	override fun interact(player: PlayerEntity, hand: Hand): ActionResult {
+		return if (!entityWorld.isClient) {
+			val engine = entityWorld.getEngine() as DNDServerEngine
+			engine.removeCharacter(character ?: return ActionResult.FAIL)
+			ActionResult.SUCCESS_SERVER
+		} else ActionResult.PASS
+	}
 
 	open fun isClimbing(): Boolean {
 		val blockPos = this.blockPos
@@ -261,7 +271,7 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		return if (this.isSprinting) 0.026f else 0.02f
 	}
 
-	private fun travelControlled(controllingPlayer: PlayerEntity?, movementInput: Vec3d?) {
+	private fun travelControlled(controllingPlayer: PlayerEntity, movementInput: Vec3d) {
 //		val vec3d: Vec3d? = this.getControlledMovementInput(controllingPlayer, movementInput)
 //		this.tickControlled(controllingPlayer, vec3d)
 //		if (this.canMoveVoluntarily()) {
@@ -376,9 +386,10 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		profiler.push("travel")
 		val vec3d2 = Vec3d(this.sidewaysSpeed.toDouble(), this.upwardSpeed.toDouble(), this.forwardSpeed.toDouble())
 
-		if (this.controllingPassenger is DNDEntity && this.isAlive) {
+		/**if (this.controllingPassenger is DNDEntity && this.isAlive) {
 			//this.travelControlled(playerEntity, vec3d2)
-		} else if (this.canMoveVoluntarily() && this.canActVoluntarily()) {
+		} else*/
+		if (this.canMoveVoluntarily() && this.canActVoluntarily()) {
 			this.travel(vec3d2)
 		}
 
@@ -450,6 +461,11 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		return changes
 	}
 
+	override fun setPosition(x: Double, y: Double, z: Double) {
+		super.setPosition(x, y, z)
+		character?.pos = Vec3d(x, y, z)
+	}
+
 	override fun getMovement(): Vec3d? {
 		val entity = this.vehicle
 		return if (entity != null && entity.controllingPassenger != this) entity.movement else this.movement
@@ -471,6 +487,10 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 
 	override fun getGravity(): Double {
 		return 0.08
+	}
+
+	override fun canHit(): Boolean {
+		return true
 	}
 
 	override fun isCollidable(entity: Entity?): Boolean {

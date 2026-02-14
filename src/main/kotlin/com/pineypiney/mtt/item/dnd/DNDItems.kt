@@ -28,6 +28,8 @@ class DNDItems {
 		val GREAT_SWORD = registerWeapon("great_sword", WeaponType.GREAT_SWORD, 50, 6f, ::DNDMeleeItem)
 		val GREAT_CLUB = registerWeapon("great_club", WeaponType.GREAT_CLUB, 20L, 10f, ::DNDMeleeItem)
 
+		val QUARTERSTAFF = registerWeapon("quarterstaff", WeaponType.QUARTERSTAFF, 20L, 4f, ::DNDMeleeItem)
+
 		val SHORTBOW = registerWeapon("shortbow", WeaponType.SHORTBOW, 25, 2f, ::DNDRangedItem)
 		val LONGBOW = registerWeapon("longbow", WeaponType.LONGBOW, 50, 2f, ::DNDRangedItem)
 		val LIGHT_CROSSBOW = registerWeapon("light_crossbow", WeaponType.LIGHT_CROSSBOW, 25, 5f, ::DNDRangedItem)
@@ -42,6 +44,17 @@ class DNDItems {
 		val SHIELD = register("shield"){ s -> DNDShieldItem(s, CoinValue.gold(10), 6f, 2) }
 
 		val TORCH = registerAccessory("torch", CoinValue(1L), 1f, DNDEquipmentType.TORCH, Item.Settings())
+
+		val PREFAB_SPAWN_EGG = Items.register(
+			RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, "prefab_spawn_egg")),
+			::PrefabSpawnEggItem,
+			Item.Settings()
+		)
+		val CHARACTER_KILL_STICK = Items.register(
+			RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, "character_kill_stick")),
+			::CharacterKillStickItem,
+			Item.Settings()
+		)
 
 		@Suppress("UNCHECKED_CAST")
 		fun <E: DNDItem> register(mishapartyy: String, settings: Item.Settings = Item.Settings(), factory: (Item.Settings) -> E): E{

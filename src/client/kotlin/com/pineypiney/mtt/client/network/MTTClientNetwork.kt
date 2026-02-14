@@ -3,6 +3,7 @@ package com.pineypiney.mtt.client.network
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.client.dnd.DNDClientEngine
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
+import com.pineypiney.mtt.dnd.characters.SimpleCharacter
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
@@ -69,6 +70,14 @@ object MTTClientNetwork {
 		ClientPlayNetworking.registerGlobalReceiver(CharacterSheetS2CPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
 			val character = SheetCharacter(payload.sheet, payload.uuid, engine)
+			engine.addCharacter(character)
+			val networkHandler = ctx.client().networkHandler ?: return@registerGlobalReceiver
+			character.readNbt(payload.nbt, networkHandler.registryManager)
+		}
+
+		ClientPlayNetworking.registerGlobalReceiver(CharacterParamsS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
+			val character = SimpleCharacter(payload.params, payload.uuid, engine)
 			engine.addCharacter(character)
 			val networkHandler = ctx.client().networkHandler ?: return@registerGlobalReceiver
 			character.readNbt(payload.nbt, networkHandler.registryManager)

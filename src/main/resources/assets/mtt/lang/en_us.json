@@ -2,12 +2,18 @@
 	"category.mtt": "MTT",
 
 	"key.mtt.character_sheet": "Open Character Sheet",
+	"itemGroup.mtt.melee_weapons": "Melee Weapons",
+	"itemGroup.mtt.ranged_weapons": "Ranged Weapons",
+	"itemGroup.mtt.armour": "Armour",
+	"itemGroup.mtt.accessories": "Accessories",
+	"itemGroup.mtt.utils": "DND Utilities",
 
 	"item.mtt.dagger": "Dagger",
 	"item.mtt.short_sword": "Short Sword",
 	"item.mtt.long_sword": "Long Sword",
 	"item.mtt.great_sword": "Great Sword",
 	"item.mtt.great_club": "Great Club",
+	"item.mtt.quarterstaff": "Quarterstaff",
 
 	"item.mtt.shortbow": "Shortbow",
 	"item.mtt.longbow": "Longbow",
@@ -23,6 +29,8 @@
 	"item.mtt.shield": "Shield",
 
 	"item.mtt.torch": "Torch",
+	"item.mtt.prefab_spawn_egg": "Prefab Spawn Egg",
+	"item.mtt.character_kill_stick": "Character Kill Stick",
 
 	"item.mtt.spell_book": "Spell Book",
 
@@ -38,11 +46,6 @@
 
 	"item.mtt.tooltip.hit_bonus": "Hit Bonus",
 	"item.mtt.tooltip.damage": "Damage",
-
-	"itemGroup.mtt.melee_weapons": "Melee Weapons",
-	"itemGroup.mtt.ranged_weapons": "Ranged Weapons",
-	"itemGroup.mtt.armour": "Armour",
-	"itemGroup.mtt.accessories": "Accessories",
 
 	"mtt.screen.dnd_inventory": "DND Inventory",
 	"mtt.screen.character_maker": "Character Maker",

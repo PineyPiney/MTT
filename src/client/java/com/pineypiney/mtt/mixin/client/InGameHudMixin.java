@@ -10,7 +10,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -21,8 +20,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(InGameHud.class)
 public abstract class InGameHudMixin {
-
-	@Shadow @Nullable protected abstract PlayerEntity getCameraPlayer();
 
 	@Shadow @Final private static Identifier HOTBAR_TEXTURE;
 
@@ -41,7 +38,6 @@ public abstract class InGameHudMixin {
 		var player = client.player;
 		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(player);
 		if(player == null || character == null) return; // If this player doesn't have a character then render as normal
-
 
 		Arm offhandArm = player.getMainArm().getOpposite();
 		int i = context.getScaledWindowWidth() / 2;

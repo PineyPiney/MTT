@@ -183,7 +183,7 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 		if(!offhand.isEmpty) return offhand
 
 		val mainHand = getStack(hand).item
-		return if((mainHand is DNDWeaponItem) && mainHand.weaponType.twoHanded) getStack(hand)
+		return if (selectedSlot < 2 && (mainHand is DNDWeaponItem) && mainHand.weaponType.twoHanded) getStack(hand)
 		else ItemStack.EMPTY
 	}
 

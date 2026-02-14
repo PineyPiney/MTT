@@ -61,7 +61,7 @@ class WeaponType(override val id: String, val damageType: DamageType, val numDic
 			farDistance = 12f
 		)
 		val MACE = melee("mace", DamageType.BLUDGEONING, 1, 6, false)
-		val QUARTER_STAFF = melee("quarter_staff", DamageType.BLUDGEONING, 1, 6, false, versatile = true)
+		val QUARTERSTAFF = melee("quarterstaff", DamageType.BLUDGEONING, 1, 6, false, versatile = true)
 		val SICKLE = melee("sickle", DamageType.SLASHING, 1, 4, false, light = true)
 		val SPEAR =
 			melee("spear", DamageType.PIERCING, 1, 6, false, versatile = true, nearDistance = 4f, farDistance = 12f)
