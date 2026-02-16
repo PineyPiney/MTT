@@ -3,6 +3,7 @@ package com.pineypiney.mtt.dnd.traits
 import com.pineypiney.mtt.dnd.characters.CharacterModel
 import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.spells.Spell
 import com.pineypiney.mtt.dnd.traits.feats.Feat
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.util.Localisation
@@ -214,7 +215,7 @@ class SpellcastingAbilityTrait(val options: Set<Ability>): Trait<SpellcastingAbi
 
 }
 
-class SpellTrait(val unlockLevel: Int, val spells: Set<String>): Trait<SpellTrait>(){
+class SpellTrait(val unlockLevel: Int, val spells: Set<Spell>) : Trait<SpellTrait>() {
 	override fun getCodec(): TraitCodec<SpellTrait>  = TraitCodec.SPELL_CODEC
 
 	override fun getLabelKey(): String {

@@ -1,7 +1,11 @@
 package com.pineypiney.mtt.mixin.client;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity;
+import com.pineypiney.mtt.client.dnd.spell_selector.SpellSelector;
+import com.pineypiney.mtt.mixin_interfaces.DNDClient;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerLikeState;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.render.GameRenderer;
@@ -71,56 +75,13 @@ public class GameRendererMixin {
 		}
 	}
 
-	/*
-	@Unique
-	private static EntityHitResult raycast(World world, Character player, Vec3d min, Vec3d max, Box box, double maxDistance) {
-		double d = maxDistance;
-		Entity entity2 = null;
-		Vec3d vec3d = null;
-
-		for (Entity entity3 : world.getOtherEntities(entity, box, predicate)) {
-			Box box2 = entity3.getBoundingBox().expand(entity3.getTargetingMargin());
-			Optional<Vec3d> optional = box2.raycast(min, max);
-			if (box2.contains(min)) {
-				if (d >= 0.0) {
-					entity2 = entity3;
-					vec3d = optional.orElse(min);
-					d = 0.0;
-				}
-			} else if (optional.isPresent()) {
-				Vec3d vec3d2 = optional.get();
-				double e = min.squaredDistanceTo(vec3d2);
-				if (e < d || d == 0.0) {
-					if (entity3.getRootVehicle() == entity.getRootVehicle()) {
-						if (d == 0.0) {
-							entity2 = entity3;
-							vec3d = vec3d2;
-						}
-					} else {
-						entity2 = entity3;
-						vec3d = vec3d2;
-						d = e;
-					}
-				}
-			}
-		}
-
-		return entity2 == null ? null : new EntityHitResult(entity2, vec3d);
+	@Inject(method = "updateCrosshairTarget", at = @At("TAIL"))
+	private void updateCrosshairTarget(CallbackInfo ci, @Local(argsOnly = true) float tickProgress) {
+		DNDClient dndClient = ((DNDClient) client);
+		SpellSelector selector = dndClient.mTT$getSpellSelector();
+		double range = selector != null ? selector.getSpell().getSettings().getRange() : 60.0;
+		if (client.getCameraEntity() != null)
+			dndClient.mTT$setDndCrosshairTarget(ClientPlayerEntity.getCrosshairTarget(client.getCameraEntity(), range, range, tickProgress));
+		if (selector != null) selector.update();
 	}
-
-	@Unique
-	private static List<Entity> getOtherEntities(World world, @Nullable Entity except, Box box, Predicate<? super Entity> predicate) {
-		Profilers.get().visit("getEntities");
-		List<Entity> list = Lists.<Entity>newArrayList();
-		world.getEntitiesByType(MTTEntities.Companion.getPLAYER(), box)
-		world.getEntityLookup().forEachIntersects(box, entity -> {
-			if (entity != except && predicate.test(entity)) {
-				list.add(entity);
-			}
-		});
-
-		return list;
-	}
-
-	 */
 }

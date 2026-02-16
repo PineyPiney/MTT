@@ -17,7 +17,10 @@ class DamageType(val id: String, val colour: Int, val icon: Icon) {
 		val SLASHING = register("slashing", Colors.LIGHT_GRAY, Icons.SLASHING)
 		val BLUDGEONING = register("bludgeoning", Colors.LIGHT_GRAY, Icons.BLUDGEONING)
 		val PIERCING = register("piercing", Colors.LIGHT_GRAY, Icons.PIERCING)
+		val ACID = register("acid", 0xFF00FF00u.toInt(), Icons.SLASHING)
 		val FIRE = register("fire", 0xFFFF8800u.toInt(), Icons.SLASHING)
+		val NECROTIC = register("necrotic", 0xFF38FF8Bu.toInt(), Icons.SLASHING)
+		val POISON = register("poison", 0xFF009F00u.toInt(), Icons.SLASHING)
 
 		fun find(name: String) = list.firstOrNull { it.id == name } ?: SLASHING
 	}

@@ -4,7 +4,7 @@ import com.pineypiney.mtt.dnd.server.network.ServerCharacterNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
 import java.util.*
 
-class CharacterManager(val engine: DNDServerEngine) {
+class CharacterManager(val engine: ServerDNDEngine) {
 	val handlers = mutableMapOf<UUID, ServerCharacterNetworkHandler>()
 
 	fun connectPlayer(player: ServerPlayerEntity) {

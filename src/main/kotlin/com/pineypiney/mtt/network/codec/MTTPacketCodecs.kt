@@ -8,6 +8,7 @@ import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.NamedTrait
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
+import com.pineypiney.mtt.dnd.spells.Spell
 import com.pineypiney.mtt.dnd.traits.*
 import com.pineypiney.mtt.dnd.traits.features.Feature
 import com.pineypiney.mtt.dnd.traits.features.Features
@@ -234,6 +235,8 @@ object MTTPacketCodecs {
 		flt, CharacterModel::eyeY,
 		::CharacterModel
 	)
+
+	val SPELL = str.xmap(Spell::findById, Spell::id)
 
 	val SOURCE = object : PacketCodec<ByteBuf, Source> {
 		override fun decode(buf: ByteBuf): Source {

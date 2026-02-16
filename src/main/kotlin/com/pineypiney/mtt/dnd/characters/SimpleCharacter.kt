@@ -7,7 +7,10 @@ import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
+import com.pineypiney.mtt.dnd.traits.ProficiencyTrait
 import com.pineypiney.mtt.dnd.traits.Size
+import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
+import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import com.pineypiney.mtt.network.payloads.s2c.CharacterParamsS2CPayload
@@ -17,6 +20,7 @@ import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.DynamicRegistryManager
+import net.minecraft.util.math.MathHelper
 import net.minecraft.world.World
 import java.util.*
 
@@ -45,6 +49,32 @@ class SimpleCharacter(val details: Params, uuid: UUID, engine: DNDEngine) : Char
 			details.armourClass = value
 		}
 
+	val proficiencies = mutableSetOf<Proficiency>()
+
+	init {
+		for (trait in details.dndClass.coreTraits) {
+			if (trait is ProficiencyTrait) proficiencies.addAll(trait.data.given)
+		}
+		for (trait in race.traits) {
+			if (trait is ProficiencyTrait) proficiencies.addAll(trait.data.given)
+		}
+		for (namedTrait in race.namedTraits) {
+			for (trait in namedTrait.traits) {
+				if (trait is ProficiencyTrait) proficiencies.addAll(trait.data.given)
+			}
+		}
+		if (details.subrace != null) {
+			for (trait in details.subrace.traits) {
+				if (trait is ProficiencyTrait) proficiencies.addAll(trait.data.given)
+			}
+			for (namedTrait in details.subrace.namedTraits) {
+				for (trait in namedTrait.traits) {
+					if (trait is ProficiencyTrait) proficiencies.addAll(trait.data.given)
+				}
+			}
+		}
+	}
+
 	override fun createEntity(world: World): DNDEntity {
 		val entity = ServerDNDEntity(world, this)
 		return entity
@@ -54,6 +84,17 @@ class SimpleCharacter(val details: Params, uuid: UUID, engine: DNDEngine) : Char
 		val nbt = NbtCompound()
 		writeNbt(nbt, regManager)
 		return CharacterParamsS2CPayload(uuid, details, nbt)
+	}
+
+	override fun getLevel(): Int = details.level
+
+	override fun isProficientIn(equipment: EquipmentType): Boolean =
+		proficiencies.contains(Proficiency.findById(equipment.id))
+
+	override fun getProficiencyBonus(): Int = MathHelper.ceilDiv(details.level, 4) + 1
+
+	override fun toString(): String {
+		return "$name($race, ${details.dndClass} ${details.level})"
 	}
 
 	class Params(

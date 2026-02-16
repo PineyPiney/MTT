@@ -1,22 +1,19 @@
 package com.pineypiney.mtt.dnd.characters
 
-import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.network.ServerDNDEntity
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
-import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
+import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.network.payloads.s2c.CharacterSheetS2CPayload
-import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.DynamicRegistryManager
 import net.minecraft.world.World
 import java.util.*
-import kotlin.math.max
 
 class SheetCharacter(val sheet: CharacterSheet, uuid: UUID, engine: DNDEngine) : Character(uuid, engine) {
 	override var name: String
@@ -47,20 +44,12 @@ class SheetCharacter(val sheet: CharacterSheet, uuid: UUID, engine: DNDEngine) :
 		return CharacterSheetS2CPayload(uuid, sheet, nbt)
 	}
 
-	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int{
-		var i = if(weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
-		if(sheet.isProficientIn(weaponType)) i += sheet.calculateProficiencyBonus()
-		i += stack[MTTComponents.HIT_BONUS_TYPE] ?: 0
-		return i
-	}
+	override fun getLevel(): Int = sheet.level
 
-	fun getDamageBonus(weaponType: WeaponType, stack: ItemStack): Int{
-		var i = if(weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
-		i += stack[MTTComponents.DAMAGE_BONUS_TYPE] ?: 0
-		return i
-	}
+	override fun isProficientIn(equipment: EquipmentType): Boolean = sheet.isProficientIn(equipment)
+	override fun getProficiencyBonus(): Int = sheet.calculateProficiencyBonus()
 
 	override fun toString(): String {
-		return "Sheet Character[$name, $uuid]"
+		return "$name($race, (${sheet.classes.entries.joinToString { (dndClass, level) -> "$dndClass $level" }}))"
 	}
 }

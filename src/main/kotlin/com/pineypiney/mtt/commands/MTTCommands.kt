@@ -8,7 +8,7 @@ import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.Barbarian
 import com.pineypiney.mtt.dnd.race.Race
-import com.pineypiney.mtt.dnd.server.DNDServerEngine
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.network.payloads.s2c.DNDEngineUpdateS2CPayload
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
@@ -43,8 +43,8 @@ object MTTCommands {
 		})
 
 	@Suppress("UNCHECKED_CAST")
-	fun getEngine(ctx: CommandContext<ServerCommandSource>): DNDServerEngine {
-		return (ctx.source.server as DNDEngineHolder<DNDServerEngine>).`mtt$getDNDEngine`()
+	fun getEngine(ctx: CommandContext<ServerCommandSource>): ServerDNDEngine {
+		return (ctx.source.server as DNDEngineHolder<ServerDNDEngine>).`mtt$getDNDEngine`()
 	}
 
 	private fun DND_COMMANDS(access: CommandRegistryAccess) = literal("dnd")

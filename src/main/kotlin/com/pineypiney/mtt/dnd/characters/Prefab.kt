@@ -5,7 +5,8 @@ import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
-import com.pineypiney.mtt.dnd.server.DNDServerEngine
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine
+import com.pineypiney.mtt.dnd.spells.Spell
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.util.*
 import kotlinx.serialization.json.JsonObject
@@ -27,7 +28,7 @@ class Prefab(
 	val dndClass: DNDClass,
 	val abilities: Abilities,
 	val inventory: Set<Supplier<Pair<Int, ItemStack>>>,
-	val spells: Set<String>
+	val spells: Set<Spell>
 ) {
 
 	fun createCharacter(level: Int, engine: DNDEngine): SimpleCharacter {
@@ -46,7 +47,7 @@ class Prefab(
 	}
 
 	companion object {
-		fun fromJson(json: JsonObject, engine: DNDServerEngine): Prefab {
+		fun fromJson(json: JsonObject, engine: ServerDNDEngine): Prefab {
 			val name: Supplier<String> = when (val nameJson = json["name"]) {
 				is JsonObject -> {
 					(if (nameJson.containsKey("generator")) {
@@ -95,7 +96,15 @@ class Prefab(
 			addEquipment(inventory, equipmentJson, 12, "range_main")
 			addEquipment(inventory, equipmentJson, 13, "range_offhand")
 
-			val spells = setOf<String>()
+			val spells = mutableSetOf<Spell>()
+			if (json.containsKey("spells")) {
+				for (spellJson in json.array("spells")) {
+					if (spellJson is JsonObject) {
+						val spell = Spell.findById(spellJson.string("spell"))
+						spells.add(spell)
+					}
+				}
+			}
 
 			return Prefab(name, race, subrace, race.models.first().id, dndClass, abilities, inventory, spells)
 		}

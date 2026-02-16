@@ -5,18 +5,20 @@ import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
-import com.pineypiney.mtt.dnd.server.DNDServerEngine
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.network.payloads.c2s.*
 import com.pineypiney.mtt.network.payloads.s2c.*
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.util.math.Vec3d
 import java.util.*
 
 object MTTNetwork {
 
-	fun getEngine(ctx: ServerPlayNetworking.Context) = (ctx.server() as? DNDEngineHolder<*>)?.`mtt$getDNDEngine`() as? DNDServerEngine
+	fun getEngine(ctx: ServerPlayNetworking.Context) =
+		(ctx.server() as? DNDEngineHolder<*>)?.`mtt$getDNDEngine`() as? ServerDNDEngine
 
 	@Suppress("UNCHECKED_CAST")
 	fun registerPayloads() {
@@ -37,6 +39,10 @@ object MTTNetwork {
 		PayloadTypeRegistry.playC2S().register(TeleportConfirmC2SPayload.ID, TeleportConfirmC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S()
 			.register(CharacterInteractCharacterC2SPayload.ID, CharacterInteractCharacterC2SPayload.CODEC)
+		PayloadTypeRegistry.playC2S().register(CastSpellC2SPayload.ID, CastSpellC2SPayload.CODEC)
+
+
+
 
 		ServerPlayNetworking.registerGlobalReceiver(OpenDNDScreenC2SPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
@@ -131,6 +137,14 @@ object MTTNetwork {
 			val character = engine.getCharacterFromPlayer(ctx.player().uuid)
 			val target = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
 			character?.attack(target)
+		}
+
+		ServerPlayNetworking.registerGlobalReceiver(CastSpellC2SPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
+			val character = engine.getCharacterFromPlayer(ctx.player().uuid) ?: return@registerGlobalReceiver
+			for (target in payload.locations) {
+				payload.spell.cast(character, Vec3d(target), payload.level, engine.getCombat(character))
+			}
 		}
 	}
 }

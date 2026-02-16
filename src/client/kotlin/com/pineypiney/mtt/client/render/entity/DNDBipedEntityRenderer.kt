@@ -1,7 +1,8 @@
 package com.pineypiney.mtt.client.render.entity
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.client.dnd.DNDClientEngine
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine
+import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity
 import com.pineypiney.mtt.client.render.MTTRenderers
 import com.pineypiney.mtt.client.render.entity.model.BipedModelData
 import com.pineypiney.mtt.client.render.entity.model.DNDBipedEntityModel
@@ -53,7 +54,7 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		state.character = entity.character ?: return
 
 		state.invisibleToPlayer = if(MinecraftClient.getInstance().options.perspective.isFirstPerson) {
-			DNDClientEngine.getInstance().running && DNDClientEngine.getClientCharacterUUID() == state.character.uuid
+			ClientDNDEngine.getInstance().running && ClientDNDEngine.getClientCharacterUUID() == state.character.uuid
 		}
 		else false
 
@@ -65,6 +66,7 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 
 		state.limbSwingAnimationProgress = entity.limbAnimator.getAnimationProgress(f)
 		state.limbSwingAmplitude = entity.limbAnimator.getAmplitude(f)
+		state.outlineColor = (entity as ClientDNDEntity).selectionColour
 	}
 
 	override fun render(
@@ -166,7 +168,7 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 			matrices,
 			model.getLayer(texture),
 			state.light,
-			655350,
+			655360,
 			-1,
 			null,
 			state.outlineColor,

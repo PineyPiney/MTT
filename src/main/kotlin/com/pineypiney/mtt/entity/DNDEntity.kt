@@ -2,7 +2,8 @@ package com.pineypiney.mtt.entity
 
 import com.google.common.annotations.VisibleForTesting
 import com.pineypiney.mtt.dnd.characters.Character
-import com.pineypiney.mtt.dnd.server.DNDServerEngine
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine
+import com.pineypiney.mtt.item.dnd.DNDItems
 import com.pineypiney.mtt.network.payloads.s2c.EntityDNDEquipmentUpdateS2CPayload
 import com.pineypiney.mtt.screen.DNDScreenHandler
 import com.pineypiney.mtt.util.getEngine
@@ -40,6 +41,12 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 
 	var character: Character? = null
 
+	var name: String
+		get() = customName?.string ?: "Unnamed Character"
+		set(value) {
+			customName = Text.literal(value)
+		}
+
 	var hipHeight: Float = .75f
 	val limbAnimator = LimbAnimator()
 	var entityBodyYaw: Float = 0f
@@ -47,6 +54,7 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	var entityHeadYaw: Float = 0f
 	var lastHeadYaw: Float = 0f
 	val lastEquippedStacks = Array(20){ ItemStack.EMPTY }
+	var effectsChanged = true
 
 	private var lastBlockPos: BlockPos? = null
 	private var climbingPos: BlockPos? = null
@@ -61,10 +69,6 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	private var noDrag = false
 	private var headTrackingIncrements = 0
 	private var serverHeadYaw = 0.0
-
-	var name: String
-		get() = customName?.string ?: "Unnamed Character"
-		set(value) { customName = Text.literal(value) }
 
 	private var movement = Vec3d.ZERO
 
@@ -95,8 +99,8 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	}
 
 	override fun interact(player: PlayerEntity, hand: Hand): ActionResult {
-		return if (!entityWorld.isClient) {
-			val engine = entityWorld.getEngine() as DNDServerEngine
+		return if (!entityWorld.isClient && player.getStackInHand(hand).item == DNDItems.CHARACTER_KILL_STICK) {
+			val engine = entityWorld.getEngine() as ServerDNDEngine
 			engine.removeCharacter(character ?: return ActionResult.FAIL)
 			ActionResult.SUCCESS_SERVER
 		} else ActionResult.PASS

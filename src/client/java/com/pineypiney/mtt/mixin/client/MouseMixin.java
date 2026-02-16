@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.mixin.client;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.pineypiney.mtt.client.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.input.Scroller;
@@ -19,7 +19,7 @@ public class MouseMixin {
 
 	@Redirect(method = "onMouseScroll", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;setSelectedSlot(I)V"))
 	private void scrollDNDHotbar(PlayerInventory instance, int slot, @Local(ordinal = 0) int i){
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(client.player);
+		var character = ClientDNDEngine.Companion.getRunningAndPlayerCharacter(client.player);
 		if(character == null) instance.setSelectedSlot(slot);
 		else character.getInventory().setSelectedSlot(Scroller.scrollCycling(i, character.getInventory().getSelectedSlot(), character.getInventory().getHotbarSize()));
 	}

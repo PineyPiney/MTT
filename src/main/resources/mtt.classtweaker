@@ -10,6 +10,9 @@ accessible field net/minecraft/server/world/ServerChunkLoadingManager$EntityTrac
 # For ClientDNDEntity
 accessible field net/minecraft/client/network/ClientPlayerEntity ticksLeftToDoubleTapSprint I
 
+# For GameRendererMixin
+accessible method net/minecraft/client/network/ClientPlayerEntity getCrosshairTarget (Lnet/minecraft/entity/Entity;DDF)Lnet/minecraft/util/hit/HitResult;
+
 # For HeldItemRendererMixin
 accessible method net/minecraft/client/render/item/HeldItemRenderer getHandRenderType (Lnet/minecraft/client/network/ClientPlayerEntity;)Lnet/minecraft/client/render/item/HeldItemRenderer$HandRenderType;
 accessible class net/minecraft/client/render/item/HeldItemRenderer$HandRenderType

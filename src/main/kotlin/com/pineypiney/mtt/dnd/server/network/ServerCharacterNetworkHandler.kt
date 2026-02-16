@@ -2,7 +2,7 @@ package com.pineypiney.mtt.dnd.server.network
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.characters.Character
-import com.pineypiney.mtt.dnd.server.DNDServerEngine
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.network.payloads.c2s.CharacterMoveC2SPayload
 import com.pineypiney.mtt.network.payloads.c2s.TeleportConfirmC2SPayload
@@ -23,7 +23,7 @@ import net.minecraft.util.shape.VoxelShapes
 import net.minecraft.world.WorldView
 import net.minecraft.world.rule.GameRules
 
-class ServerCharacterNetworkHandler(val engine: DNDServerEngine, val player: ServerPlayerEntity) {
+class ServerCharacterNetworkHandler(val engine: ServerDNDEngine, val player: ServerPlayerEntity) {
 
 	var character: Character? = null
 
@@ -156,7 +156,7 @@ class ServerCharacterNetworkHandler(val engine: DNDServerEngine, val player: Ser
 						if (entity.noClip ||
 							player.isSleeping ||
 							(!bl4 || !serverWorld.isSpaceEmpty(entity, box)) &&
-							!this.isEntityNotCollidingWithBlocks(serverWorld, player, box, d, e, h)
+							!this.isEntityNotCollidingWithBlocks(serverWorld, entity, box, d, e, h)
 						) {
 							entity.updatePositionAndAngles(d, e, h, f, g)
 							this.floating =

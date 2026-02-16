@@ -1,0 +1,12 @@
+package com.pineypiney.mtt.dnd.spells
+
+enum class School {
+	ABJURATION,
+	CONJURATION,
+	DIVINATION,
+	ENCHANTMENT,
+	EVOCATION,
+	ILLUSION,
+	NECROMANCY,
+	TRANSMUTATION
+}

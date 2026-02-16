@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.client.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -36,7 +36,7 @@ public abstract class InGameHudMixin {
 	@Inject(method = "renderHotbar", at = @At("HEAD"), cancellable = true)
 	private void renderDNDHotbar(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci){
 		var player = client.player;
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(player);
+		var character = ClientDNDEngine.Companion.getRunningAndPlayerCharacter(player);
 		if(player == null || character == null) return; // If this player doesn't have a character then render as normal
 
 		Arm offhandArm = player.getMainArm().getOpposite();
@@ -77,7 +77,7 @@ public abstract class InGameHudMixin {
 
 	@ModifyVariable(method = "tick()V", at = @At("STORE"), ordinal = 0)
 	private ItemStack getHeldStack(ItemStack playerStack){
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(client.player);
+		var character = ClientDNDEngine.Companion.getRunningAndPlayerCharacter(client.player);
 		return character == null ? playerStack : character.getInventory().getHeldStack();
 	}
 }

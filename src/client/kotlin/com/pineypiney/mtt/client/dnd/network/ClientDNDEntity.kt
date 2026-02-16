@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.client.dnd.network
 
-import com.pineypiney.mtt.client.dnd.DNDClientEngine
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.util.getEngine
 import net.minecraft.client.MinecraftClient
@@ -8,6 +8,7 @@ import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.client.network.ClientPlayerLikeState
 import net.minecraft.entity.Entity
 import net.minecraft.entity.MovementType
+import net.minecraft.entity.data.DataTracker
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
@@ -17,6 +18,17 @@ import kotlin.math.sqrt
 class ClientDNDEntity(world: World) : DNDEntity(world) {
 
 	val state = ClientPlayerLikeState()
+
+	var selectionColour = 0
+
+	override fun onDataTrackerUpdate(entries: List<DataTracker.SerializedEntry<*>?>?) {
+		super.onDataTrackerUpdate(entries)
+		val engine = entityWorld.getEngine() as ClientDNDEngine
+		val player = engine.client.player
+		if (engine.running && player != null && engine.getCharacterUUIDFromPlayer(player.uuid) == character?.uuid) {
+			engine.client.cameraEntity = this
+		}
+	}
 
 	override fun tick() {
 		state.tick(entityPos, velocity)
@@ -69,13 +81,20 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 	}
 
 	override fun move(type: MovementType, movement: Vec3d) {
-		if (DNDClientEngine.getClientCharacter() != character) return
+		if (ClientDNDEngine.getClientCharacter() != character) return
 		val oldX = x
 		val oldZ = z
 		super.move(type, movement)
 		val dx = x - oldX
 		val dz = z - oldZ
 		state.addDistanceMoved(sqrt(dx * dx + dz * dz).toFloat() * .6f)
+	}
+
+	fun highlight(bl: Boolean, colour: Int = 0) {
+		if (this.getFlag(6) != bl) {
+			this.setFlag(6, bl)
+		}
+		selectionColour = colour
 	}
 
 	private fun canStartSprinting(player: ClientPlayerEntity): Boolean {
@@ -127,6 +146,6 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 	}
 
 	fun clientIsControlling(): Boolean {
-		return DNDClientEngine.getClientCharacter() == character
+		return ClientDNDEngine.getClientCharacter() == character
 	}
 }

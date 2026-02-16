@@ -9,11 +9,12 @@ import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
 import net.minecraft.client.MinecraftClient
+import net.minecraft.entity.Entity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.util.math.Box
 import java.util.*
 
-class DNDClientEngine(val client: MinecraftClient) : DNDEngine() {
+class ClientDNDEngine(val client: MinecraftClient) : DNDEngine() {
 
 	// On the client side the only players that we have to care about are the ones
 	// in the same dimension as the client and in close proximity (100 blocks here)
@@ -45,23 +46,26 @@ class DNDClientEngine(val client: MinecraftClient) : DNDEngine() {
 	override fun associatePlayer(player: UUID, character: UUID) {
 		super.associatePlayer(player, character)
 		if (running && player == client.player?.uuid) {
-			val characterEntity = getEntityFromPlayer(player)
-			client.cameraEntity = characterEntity ?: client.player
+			updateCameraEntity(getEntityFromPlayer(player) ?: client.player)
 		}
 	}
 
 	override fun dissociatePlayer(player: UUID) {
 		super.dissociatePlayer(player)
+		updateCameraEntity(client.player)
+	}
+
+	private fun updateCameraEntity(entity: Entity?) {
 		val oldEntity = client.cameraEntity
 		if (oldEntity is ClientDNDEntity) {
 			oldEntity.trackedPosition.pos = oldEntity.entityPos
 		}
-		client.cameraEntity = client.player
+		client.cameraEntity = entity
 	}
 
 	companion object {
 		fun getInstance() =
-			(MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as DNDClientEngine
+			(MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ClientDNDEngine
 
 		fun getClientCharacter(): SheetCharacter? {
 			val client = MinecraftClient.getInstance()

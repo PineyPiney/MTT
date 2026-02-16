@@ -14,7 +14,7 @@ class HelmetModel<S : DNDBipedEntityRenderState>(
 ) : Model<S>(root, factory) {
 	val head = root.getChild("head")
 
-	fun setAngles(state: DNDBipedEntityRenderState){
+	override fun setAngles(state: S) {
 		head.yaw = state.relativeHeadYaw * MathHelper.RADIANS_PER_DEGREE
 		head.pitch = state.pitch * MathHelper.RADIANS_PER_DEGREE
 	}
