@@ -1,7 +1,10 @@
 package com.pineypiney.mtt.item.dnd.equipment
 
+import com.pineypiney.mtt.component.DamageRolls
 import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.CoinValue
+import com.pineypiney.mtt.dnd.DamageType
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import net.minecraft.component.DataComponentTypes
@@ -32,6 +35,18 @@ abstract class DNDWeaponItem(settings: Settings): DNDEquipmentItem(settings) {
 			entries.add(uncommonStack)
 			entries.add(rareStack)
 			entries.add(veryRareStack)
+		}
+
+		fun getDamage(stack: ItemStack, character: Character): DamageRolls {
+			val item = stack.item
+			val componentBase = stack.components[MTTComponents.DAMAGE_ROLL_TYPE]
+			val base = if (item !is DNDWeaponItem) {
+				componentBase ?: DamageRolls.DiceDamage(DamageType.BLUDGEONING, 0, 1, character.abilities.strMod + 1)
+			} else {
+				componentBase ?: item.weaponType.asRoll()
+			}
+			val bonus = stack.components[MTTComponents.EXTRA_DAMAGE]
+			return if (bonus == null) DamageRolls(listOf(base)) else bonus + base
 		}
 	}
 }

@@ -40,6 +40,12 @@ class MTTEntities {
 				.build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(MTT.MOD_ID, "test")))
 		)
 
+		val SHAPE: EntityType<ShapeEntity> = Registry.register(
+			Registries.ENTITY_TYPE, Identifier.of(MTT.MOD_ID, "shape"),
+			EntityType.Builder.create(::ShapeEntity, SpawnGroup.MISC)
+				.build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(MTT.MOD_ID, "shape")))
+		)
+
 		fun registerEntities(){
 
 			FabricDefaultAttributeRegistry.register(TEST, LivingEntity.createLivingAttributes())

@@ -2,7 +2,7 @@ package com.pineypiney.mtt.mixin.client;
 
 import com.google.common.base.MoreObjects;
 import com.llamalad7.mixinextras.sugar.Local;
-import com.pineypiney.mtt.client.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import com.pineypiney.mtt.client.render.entity.DNDPlayerEntityRenderer;
 import com.pineypiney.mtt.mixin_interfaces.CharacterController;
 import net.minecraft.client.MinecraftClient;
@@ -59,7 +59,7 @@ public abstract class HeldItemRendererMixin {
 
 	@ModifyArgs(method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;Lnet/minecraft/client/network/ClientPlayerEntity;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;lerp(FFF)F", ordinal = 0))
 	private void characterPitch(Args args) {
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(client.player);
+		var character = ClientDNDEngine.Companion.getRunningAndPlayerCharacterEntity(client.player);
 		if (character == null) return;
 		CharacterController entity = (CharacterController) client.player;
 		if (entity == null) return;
@@ -72,7 +72,7 @@ public abstract class HeldItemRendererMixin {
 			at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;lerp(FFF)F", ordinal = 1)
 	)
 	private void characterYaw(Args args) {
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(client.player);
+		var character = ClientDNDEngine.Companion.getRunningAndPlayerCharacterEntity(client.player);
 		if (character == null) return;
 		CharacterController entity = (CharacterController) client.player;
 		if (entity == null) return;
@@ -82,7 +82,7 @@ public abstract class HeldItemRendererMixin {
 
 	@Inject(method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;Lnet/minecraft/client/network/ClientPlayerEntity;I)V", at = @At("HEAD"), cancellable = true)
 	private void renderItem(float tickProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, ClientPlayerEntity player, int light, CallbackInfo ci) {
-		var entity = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(client.player);
+		var entity = ClientDNDEngine.Companion.getRunningAndPlayerCharacterEntity(client.player);
 		if (entity == null) return;
 		CharacterController characterPlayer = (CharacterController) client.player;
 		if (characterPlayer == null) return;
@@ -118,7 +118,7 @@ public abstract class HeldItemRendererMixin {
 	@Inject(method = "renderArmHoldingItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/EntityRenderManager;getPlayerRenderer(Lnet/minecraft/client/network/AbstractClientPlayerEntity;)Lnet/minecraft/client/render/entity/PlayerEntityRenderer;"), cancellable = true)
 	private void renderCharacterArm(MatrixStack matrices, OrderedRenderCommandQueue queue, int light, float equipProgress, float swingProgress, Arm arm, CallbackInfo ci) {
 		var player = client.player;
-		var characterEntity = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(player);
+		var characterEntity = ClientDNDEngine.Companion.getRunningAndPlayerCharacterEntity(player);
 		if (player == null || characterEntity == null || characterEntity.getCharacter() == null) return;
 
 		var renderer = (DNDPlayerEntityRenderer) this.entityRenderDispatcher.getRenderer(characterEntity);
@@ -128,7 +128,7 @@ public abstract class HeldItemRendererMixin {
 
 	@ModifyVariable(method = "renderFirstPersonItem", at = @At(value = "HEAD"), argsOnly = true)
 	public ItemStack renderCharacterFirstPersonItem(ItemStack value, @Local(argsOnly = true) Hand hand) {
-		var engine = DNDClientEngine.Companion.getInstance();
+		var engine = ClientDNDEngine.Companion.getInstance();
 		if (!engine.getRunning() || client.player == null) return value;
 		var character = engine.getCharacterFromPlayer(client.player.getUuid());
 		return character == null ? value : hand == Hand.MAIN_HAND ? character.getInventory().getHeldStack() : character.getInventory().getOffhandSlotStack();

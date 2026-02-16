@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.mixin;
 
-import com.pineypiney.mtt.dnd.server.DNDServerEngine;
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
@@ -9,13 +9,13 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(ServerWorld.class)
-public class ServerWorldMixin implements DNDEngineHolder<DNDServerEngine> {
+public class ServerWorldMixin implements DNDEngineHolder<ServerDNDEngine> {
 
 
 	@Shadow @Final private MinecraftServer server;
 
 	@Override
-	public DNDServerEngine mtt$getDNDEngine() {
-		return (DNDServerEngine)((DNDEngineHolder<?>)server).mtt$getDNDEngine();
+	public ServerDNDEngine mtt$getDNDEngine() {
+		return (ServerDNDEngine) ((DNDEngineHolder<?>) server).mtt$getDNDEngine();
 	}
 }

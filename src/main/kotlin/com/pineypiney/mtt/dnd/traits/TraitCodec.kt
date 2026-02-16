@@ -3,8 +3,10 @@ package com.pineypiney.mtt.dnd.traits
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.characters.CharacterModel
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.spells.Spell
 import com.pineypiney.mtt.dnd.traits.feats.Feat
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs.decodeList
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs.encodeCollection
 import io.netty.buffer.ByteBuf
@@ -341,20 +343,20 @@ interface TraitCodec<T: Trait<T>> : PacketCodec<ByteBuf, T> {
 			override val ID: String = "spell"
 
 			override fun decode(buf: ByteBuf): SpellTrait {
-				return SpellTrait(PacketCodecs.INTEGER.decode(buf), decodeList(buf, PacketCodecs.STRING).toSet())
+				return SpellTrait(PacketCodecs.INTEGER.decode(buf), decodeList(buf, MTTPacketCodecs.SPELL).toSet())
 			}
 
 			override fun encode(buf: ByteBuf, value: SpellTrait) {
 				PacketCodecs.INTEGER.encode(buf, value.unlockLevel)
-				encodeCollection(buf, value.spells, PacketCodecs.STRING)
+				encodeCollection(buf, value.spells, MTTPacketCodecs.SPELL)
 			}
 
 			override fun readFromJson(json: JsonElement, traits: MutableCollection<Trait<*>>) {
 				when(json){
-					is JsonPrimitive -> traits.add(SpellTrait(1, setOf(json.content)))
+					is JsonPrimitive -> traits.add(SpellTrait(1, setOf(Spell.findById(json.content))))
 					is JsonObject -> {
 						val level = json["level"]?.jsonPrimitive?.intOrNull ?: 1
-						val spells = readJsonList(json["spell"]!!, JsonPrimitive::content)
+						val spells = readJsonList(json["spell"]!!) { Spell.findById(it.content) }
 						if(spells.isNotEmpty()) traits.add(SpellTrait(level, spells.toSet()))
 					}
 					is JsonArray -> json.forEach { readFromJson(it, traits) }

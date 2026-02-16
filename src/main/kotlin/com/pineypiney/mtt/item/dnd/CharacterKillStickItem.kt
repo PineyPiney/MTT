@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.item.dnd
 
-import com.pineypiney.mtt.dnd.server.DNDServerEngine
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.util.getEngine
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.Item
@@ -12,7 +12,7 @@ class CharacterKillStickItem(settings: Settings) : Item(settings) {
 
 	override fun use(world: World, user: PlayerEntity, hand: Hand): ActionResult {
 		return if (user.isSneaking && !world.isClient) {
-			val engine = world.getEngine() as DNDServerEngine
+			val engine = world.getEngine() as ServerDNDEngine
 			engine.addCharacter(engine.characterBin.restoreCharacter() ?: return ActionResult.PASS)
 			ActionResult.SUCCESS_SERVER
 		} else ActionResult.PASS

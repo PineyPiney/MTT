@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.client.network
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.client.dnd.DNDClientEngine
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.characters.SimpleCharacter
 import com.pineypiney.mtt.dnd.race.Race
@@ -13,7 +13,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 object MTTClientNetwork {
 
 	private fun getEngine(ctx: ClientPlayNetworking.Context) =
-		(ctx.client() as? DNDEngineHolder<*>)?.`mtt$getDNDEngine`() as? DNDClientEngine
+		(ctx.client() as? DNDEngineHolder<*>)?.`mtt$getDNDEngine`() as? ClientDNDEngine
 
 	@Suppress("UNCHECKED_CAST")
 	fun registerPayloads() {

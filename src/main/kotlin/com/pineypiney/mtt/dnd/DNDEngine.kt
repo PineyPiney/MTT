@@ -70,6 +70,7 @@ abstract class DNDEngine {
 	fun getAllCharacters() = characters
 	fun getAllPlayerCharacters() = playerCharacters.mapNotNull { getCharacterFromPlayer(it.key) }
 
+	fun getCombat(character: Character) = combats.firstOrNull { it.combatants.contains(character) }
 	fun isInCombat(character: Character) = combats.any { it.combatants.contains(character) }
 
 	fun tick(){

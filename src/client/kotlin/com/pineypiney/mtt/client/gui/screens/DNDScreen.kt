@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.client.gui.screens
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.client.dnd.DNDClientEngine
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine
 import com.pineypiney.mtt.client.render.entity.state.DNDBipedEntityRenderState
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.DNDInventory
@@ -36,11 +36,11 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 	private var scrolling = false
 	private var scrollPosition = 0f
 	private val searchBox = TextFieldWidget(textRenderer, x + 213, y + 6, 80, 9, Text.translatable("itemGroup.search"))
-	private lateinit var engine: DNDClientEngine
+	private lateinit var engine: ClientDNDEngine
 
 	override fun init() {
 		super.init()
-		engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`() as DNDClientEngine
+		engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ClientDNDEngine
 		searchBox.setMaxLength(50)
 		searchBox.setDrawsBackground(false)
 		searchBox.isVisible = false

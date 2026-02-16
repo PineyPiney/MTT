@@ -32,7 +32,7 @@ import java.util.*
 import kotlin.experimental.and
 import kotlin.io.path.notExists
 
-class DNDServerEngine(val server: MinecraftServer) : DNDEngine() {
+class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 
 	override var running: Boolean
 		get() = super.running

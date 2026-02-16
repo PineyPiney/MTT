@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.mixin;
 
 import com.mojang.datafixers.DataFixer;
-import com.pineypiney.mtt.dnd.server.DNDServerEngine;
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import net.minecraft.network.QueryableServer;
 import net.minecraft.resource.ResourcePackManager;
@@ -27,12 +27,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.BooleanSupplier;
 
 @Mixin(MinecraftServer.class)
-public abstract class MinecraftServerMixin extends ReentrantThreadExecutor<ServerTask> implements QueryableServer, ChunkErrorHandler, CommandOutput, DNDEngineHolder<DNDServerEngine> {
+public abstract class MinecraftServerMixin extends ReentrantThreadExecutor<ServerTask> implements QueryableServer, ChunkErrorHandler, CommandOutput, DNDEngineHolder<ServerDNDEngine> {
 
 	// The engine has to be defined after all other fields have been set
 	// because it uses the resource manager to load custom file types
 	@Unique
-	DNDServerEngine dndEngine;
+	ServerDNDEngine dndEngine;
 
 	public MinecraftServerMixin(){
 		super("Server");
@@ -40,7 +40,7 @@ public abstract class MinecraftServerMixin extends ReentrantThreadExecutor<Serve
 
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void init(Thread serverThread, LevelStorage.Session session, ResourcePackManager dataPackManager, SaveLoader saveLoader, Proxy proxy, DataFixer dataFixer, ApiServices apiServices, ChunkLoadProgress chunkLoadProgress, CallbackInfo ci) {
-		dndEngine = new DNDServerEngine((MinecraftServer)(Object)this);
+		dndEngine = new ServerDNDEngine((MinecraftServer) (Object) this);
 	}
 
 	@Inject(method = "runServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;setupServer()Z"))
@@ -65,7 +65,7 @@ public abstract class MinecraftServerMixin extends ReentrantThreadExecutor<Serve
 
 	@Unique
 	@Override
-	public DNDServerEngine mtt$getDNDEngine() {
+	public ServerDNDEngine mtt$getDNDEngine() {
 		return dndEngine;
 	}
 }

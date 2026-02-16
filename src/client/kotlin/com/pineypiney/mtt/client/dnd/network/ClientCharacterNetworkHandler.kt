@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.client.dnd.network
 
-import com.pineypiney.mtt.client.dnd.DNDClientEngine
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine
 import com.pineypiney.mtt.network.payloads.c2s.CharacterMoveC2SPayload
 import com.pineypiney.mtt.network.payloads.c2s.TeleportConfirmC2SPayload
 import com.pineypiney.mtt.network.payloads.s2c.CharacterPositionLookS2CPayload
@@ -11,7 +11,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.packet.s2c.play.PositionFlag
 import net.minecraft.util.math.Vec3d
 
-class ClientCharacterNetworkHandler(val engine: DNDClientEngine) {
+class ClientCharacterNetworkHandler(val engine: ClientDNDEngine) {
 
 	fun onPlayerPositionLook(payload: CharacterPositionLookS2CPayload) {
 		val playerEntity: PlayerEntity = engine.client.player ?: return

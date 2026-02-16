@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.dnd.server.DNDServerEngine;
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.SaveLoading;
@@ -22,7 +22,7 @@ public class IntegratedServerLoaderMixin {
 	@Inject(method = "load(Lnet/minecraft/server/SaveLoading$DataPacks;Lnet/minecraft/server/SaveLoading$LoadContextSupplier;Lnet/minecraft/server/SaveLoading$SaveApplierFactory;)Ljava/lang/Object;", at = @At("TAIL"))
 	private <D, R> void loadMixin(SaveLoading.DataPacks dataPacks, SaveLoading.LoadContextSupplier<D> loadContextSupplier, SaveLoading.SaveApplierFactory<D, R> saveApplierFactory, CallbackInfoReturnable<R> cir) {
 		if (client.getServer() instanceof DNDEngineHolder<?> holder) {
-			if (holder.mtt$getDNDEngine() instanceof DNDServerEngine engine) engine.loadData();
+			if (holder.mtt$getDNDEngine() instanceof ServerDNDEngine engine) engine.loadData();
 		}
 	}
 }

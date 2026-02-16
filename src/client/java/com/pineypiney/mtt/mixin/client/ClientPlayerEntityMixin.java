@@ -2,7 +2,7 @@ package com.pineypiney.mtt.mixin.client;
 
 import com.mojang.authlib.GameProfile;
 import com.pineypiney.mtt.MTT;
-import com.pineypiney.mtt.client.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import com.pineypiney.mtt.dnd.DNDEngine;
 import com.pineypiney.mtt.dnd.characters.SheetCharacter;
 import com.pineypiney.mtt.entity.DNDEntity;
@@ -71,7 +71,7 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
 
 	@Redirect(method = "getCrosshairTarget(Lnet/minecraft/entity/Entity;DDF)Lnet/minecraft/util/hit/HitResult;", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/projectile/ProjectileUtil;raycast(Lnet/minecraft/entity/Entity;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Vec3d;Lnet/minecraft/util/math/Box;Ljava/util/function/Predicate;D)Lnet/minecraft/util/hit/EntityHitResult;"))
 	private static EntityHitResult raycastDNDEntities(Entity entity, Vec3d min, Vec3d max, Box box, Predicate<Entity> predicate, double maxDistance) {
-		var engine = DNDClientEngine.Companion.getInstance();
+		var engine = ClientDNDEngine.Companion.getInstance();
 		if (engine.getRunning() && entity instanceof DNDEntity dndEntity) {
 			var character = dndEntity.getCharacter();
 			if (character != null) {
@@ -90,14 +90,14 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
 
 	@Override
 	public ItemStack getActiveOrMainHandStack() {
-		var character = DNDClientEngine.Companion.getRunningAndPlayerCharacter(this);
+		var character = ClientDNDEngine.Companion.getRunningAndPlayerCharacter(this);
 		if (character == null) return super.getActiveOrMainHandStack();
 		else return character.getInventory().getHeldStack();
 	}
 
 	@Override
 	public void changeLookDirection(double cursorDeltaX, double cursorDeltaY) {
-		DNDEntity entity = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(this);
+		DNDEntity entity = ClientDNDEngine.Companion.getRunningAndPlayerCharacterEntity(this);
 		if (entity == null) super.changeLookDirection(cursorDeltaX, cursorDeltaY);
 		else entity.changeLookDirection(cursorDeltaX, cursorDeltaY);
 	}
@@ -130,7 +130,7 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
 
 	@Inject(method = "sendMovementPackets", at = @At("HEAD"), cancellable = true)
 	private void sendCharacterMovementPackets(CallbackInfo ci) {
-		DNDEntity entity = DNDClientEngine.Companion.getRunningAndPlayerCharacterEntity(this);
+		DNDEntity entity = ClientDNDEngine.Companion.getRunningAndPlayerCharacterEntity(this);
 		if (entity == null) return;
 
 		ci.cancel();
@@ -164,12 +164,12 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
 		}
 
 		if (bl2) {
-			this.characterLastYawClient = this.getYaw();
-			this.characterLastPitchClient = this.getPitch();
+			this.characterLastYawClient = entity.getYaw();
+			this.characterLastPitchClient = entity.getPitch();
 		}
 
-		this.characterLastOnGround = this.isOnGround();
-		this.characterLastHorizontalCollision = this.horizontalCollision;
+		this.characterLastOnGround = entity.isOnGround();
+		this.characterLastHorizontalCollision = entity.horizontalCollision;
 //		this.autoJumpEnabled = this.client.options.getAutoJump().getValue();
 	}
 

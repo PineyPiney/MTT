@@ -2,6 +2,7 @@ package com.pineypiney.mtt.client.render
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.client.render.entity.DNDPlayerEntityRenderer
+import com.pineypiney.mtt.client.render.entity.ShapeEntityRenderer
 import com.pineypiney.mtt.client.render.entity.TestEntityRenderer
 import com.pineypiney.mtt.client.render.entity.model.BipedModelData
 import com.pineypiney.mtt.entity.MTTEntities
@@ -9,9 +10,9 @@ import com.pineypiney.mtt.util.float
 import com.pineypiney.mtt.util.int
 import kotlinx.serialization.json.*
 import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry
-import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.model.*
+import net.minecraft.client.render.entity.EntityRendererFactories
 import net.minecraft.client.render.entity.model.EntityModelLayer
 import net.minecraft.client.render.entity.model.EntityModelPartNames
 import net.minecraft.util.Identifier
@@ -25,8 +26,9 @@ class MTTRenderers {
 		val EQUIPMENT_MODELS = Array(5) { mutableMapOf<String, EntityModelLayer>() }
 
 		fun registerRenderers(){
-			EntityRendererRegistry.register(MTTEntities.DND_ENTITY, ::DNDPlayerEntityRenderer)
-			EntityRendererRegistry.register(MTTEntities.TEST, ::TestEntityRenderer)
+			EntityRendererFactories.register(MTTEntities.DND_ENTITY, ::DNDPlayerEntityRenderer)
+			EntityRendererFactories.register(MTTEntities.TEST, ::TestEntityRenderer)
+			EntityRendererFactories.register(MTTEntities.SHAPE, ::ShapeEntityRenderer)
 		}
 
 		fun registerBipedModels() = registerAllModels(BIPED_MODELS, "entity", ::readEntityModelFromJson)

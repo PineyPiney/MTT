@@ -1,11 +1,16 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.client.dnd.DNDClientEngine;
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
+import com.pineypiney.mtt.client.dnd.spell_selector.SpellLocationSelector;
+import com.pineypiney.mtt.client.dnd.spell_selector.SpellSelector;
 import com.pineypiney.mtt.client.render.MTTRenderers;
 import com.pineypiney.mtt.dnd.characters.Character;
 import com.pineypiney.mtt.dnd.characters.SheetCharacter;
+import com.pineypiney.mtt.dnd.spells.Spells;
 import com.pineypiney.mtt.entity.DNDEntity;
+import com.pineypiney.mtt.mixin_interfaces.DNDClient;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
+import com.pineypiney.mtt.network.payloads.c2s.CastSpellC2SPayload;
 import com.pineypiney.mtt.network.payloads.c2s.CharacterInteractCharacterC2SPayload;
 import com.pineypiney.mtt.network.payloads.c2s.OpenDNDScreenC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
@@ -34,6 +39,7 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Vec3d;
 import org.jetbrains.annotations.Nullable;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
@@ -44,10 +50,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.List;
 import java.util.Optional;
 
 @Mixin(MinecraftClient.class)
-public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientEngine> {
+public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDEngine>, DNDClient {
 	@Shadow @Nullable public ClientPlayerEntity player;
 
 	@Shadow
@@ -112,6 +119,14 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientE
 		MTTRenderers.Companion.registerBipedModels();
 		MTTRenderers.Companion.registerEquipmentModels();
 	}
+
+	@Nullable
+	@Unique
+	public HitResult dndCrosshairTarget = null;
+	@Unique
+	ClientDNDEngine dndEngine = new ClientDNDEngine((MinecraftClient) (Object) this);
+	@Unique
+	@Nullable SpellSelector selector = new SpellLocationSelector(Spells.INSTANCE.getFAERIE_FIRE(), 3);
 
 	@Inject(method = "handleInputEvents", at = @At(value = "JUMP", opcode = Opcodes.IF_ICMPGE, ordinal = 0), cancellable = true)
 	private void handleInputs(CallbackInfo ci) {
@@ -189,7 +204,7 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientE
 			}
 
 			while (this.options.useKey.wasPressed()) {
-				this.doItemUse();
+				doUseItem(character);
 			}
 
 			while (this.options.pickItemKey.wasPressed()) {
@@ -210,23 +225,64 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<DNDClientE
 
 	@Unique
 	void doAttack(Character character) {
-		if (crosshairTarget instanceof EntityHitResult entityHitResult && crosshairTarget.getType() == HitResult.Type.ENTITY) {
-			if (entityHitResult.getEntity() instanceof DNDEntity dndEntity) {
-				if (dndEntity.getCharacter() != null && dndEntity.getCharacter() != character) {
-					character.attack(dndEntity.getCharacter());
-					ClientPlayNetworking.send(new CharacterInteractCharacterC2SPayload(dndEntity.getCharacter().getUuid()));
+		if (player == null) return;
+		if (selector != null) {
+			if (player.isSneaking()) {
+				if (selector.selectionsMade() == selector.getSpell().getTargetCount()) {
+					List<Vec3d> locations = selector.getLocations();
+					ClientPlayNetworking.send(new CastSpellC2SPayload(selector.getSpell(), 1, locations));
+					selector.cancel();
+				}
+			} else if (selector.select()) {
+				player.swingHand(Hand.MAIN_HAND);
+			}
+		} else {
+			if (crosshairTarget instanceof EntityHitResult entityHitResult && crosshairTarget.getType() == HitResult.Type.ENTITY) {
+				if (entityHitResult.getEntity() instanceof DNDEntity dndEntity) {
+					if (dndEntity.getCharacter() != null && dndEntity.getCharacter() != character) {
+						character.attack(dndEntity.getCharacter());
+						ClientPlayNetworking.send(new CharacterInteractCharacterC2SPayload(dndEntity.getCharacter().getUuid()));
+					}
 				}
 			}
 		}
-		if (player != null) player.swingHand(Hand.MAIN_HAND);
+		player.swingHand(Hand.MAIN_HAND);
 	}
 
 	@Unique
-	DNDClientEngine dndEngine = new DNDClientEngine((MinecraftClient)(Object)this);
+	void updateSelector(Character character) {
+
+	}
+
+	@Unique
+	void doUseItem(Character character) {
+		if (selector != null && selector.unselect() && player != null) player.swingHand(Hand.MAIN_HAND);
+		else doItemUse();
+	}
 
 	@Override
-	public DNDClientEngine mtt$getDNDEngine() {
+	public ClientDNDEngine mtt$getDNDEngine() {
 		return dndEngine;
+	}
+
+	@Override
+	public @Nullable SpellSelector mTT$getSpellSelector() {
+		return selector;
+	}
+
+	@Override
+	public void mTT$setSpellSelector(@Nullable SpellSelector selector) {
+		this.selector = selector;
+	}
+
+	@Override
+	public @Nullable HitResult mTT$getDndCrosshairTarget() {
+		return dndCrosshairTarget;
+	}
+
+	@Override
+	public void mTT$setDndCrosshairTarget(@Nullable HitResult dndCrosshairTarget) {
+		this.dndCrosshairTarget = dndCrosshairTarget;
 	}
 
 	@Unique

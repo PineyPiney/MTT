@@ -1,15 +1,16 @@
 package com.pineypiney.mtt.dnd.characters
 
 import com.mojang.logging.LogUtils
+import com.pineypiney.mtt.component.DamageRolls
+import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.DNDEngine
-import com.pineypiney.mtt.dnd.Damage
-import com.pineypiney.mtt.dnd.DamageType
 import com.pineypiney.mtt.dnd.race.Race
-import com.pineypiney.mtt.dnd.server.DNDServerEngine
 import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
 import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
+import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
+import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.DNDInventory
 import com.pineypiney.mtt.item.dnd.DNDItem
@@ -37,6 +38,7 @@ import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
 import java.util.*
+import kotlin.math.max
 import kotlin.math.min
 
 abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHandlerFactory {
@@ -85,18 +87,9 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 		(stack.item as? DNDItem)?.addToCharacter(this, stack)
 	}
 
-	fun getDamage(): Set<Damage> {
+	fun getDamage(): DamageRolls {
 		val stack = inventory.getHeldStack()
-		val weapon = stack.item
-		return if (weapon !is DNDWeaponItem) {
-			setOf(Damage(abilities.strMod + 1, DamageType.BLUDGEONING))
-		} else setOf(
-			Damage(
-				Damage.Roll(weapon.weaponType.numDice, weapon.weaponType.sides),
-				0,
-				weapon.weaponType.damageType
-			)
-		)
+		return DNDWeaponItem.getDamage(stack, this)
 	}
 
 	fun attack(target: Character) {
@@ -104,22 +97,13 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 		val roll = D20.roll()
 		val crit = roll == 20
 		if (crit || roll >= armour) {
-			hit(target, getDamage(), crit)
+			target.damage(getDamage(), crit, this)
 		}
 	}
 
-	fun hit(target: Character, damages: Set<Damage>, crit: Boolean) {
-		if (engine is DNDServerEngine) {
-			val player = engine.getControllingPlayer(uuid) ?: return
-			for (damage in damages) {
-				val amount = damage.roll(crit)
-				player.sendMessage(
-					Text.literal("Dealt $amount ")
-						.append(damage.type.getText())
-						.append(" damage to ${target.name} who is ${(target.pos.distanceTo(this.pos))} blocks away"),
-					false
-				)
-			}
+	fun damage(damage: DamageRolls, crit: Boolean, attacker: Character?) {
+		for (damage in damage.types) {
+			damage.roll(crit, attacker != null && attacker.inventory.getOffhand() == null)
 		}
 	}
 
@@ -158,6 +142,25 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 	abstract fun createEntity(world: World): DNDEntity
 
 	abstract fun createPayload(regManager: DynamicRegistryManager): CustomPayload
+
+	abstract fun getLevel(): Int
+
+	abstract fun isProficientIn(equipment: EquipmentType): Boolean
+
+	abstract fun getProficiencyBonus(): Int
+
+	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int {
+		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
+		if (isProficientIn(weaponType)) i += getProficiencyBonus()
+		i += stack[MTTComponents.HIT_BONUS_TYPE] ?: 0
+		return i
+	}
+
+	fun getDamageBonus(weaponType: WeaponType, stack: ItemStack): Int {
+		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
+		i += stack[MTTComponents.DAMAGE_BONUS_TYPE] ?: 0
+		return i
+	}
 
 	override fun getDisplayName(): Text {
 		return Text.literal(name)
