@@ -126,10 +126,6 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 			val payload: CustomPayload = updates.removeFirst()
 			sendPayload(payload)
 		}
-
-		for (player in playerEntities) {
-			player.screenHandler.sendContentUpdates()
-		}
 	}
 
 	/**

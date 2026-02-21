@@ -63,6 +63,8 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine() {
 		client.cameraEntity = entity
 	}
 
+	override fun isClient(): Boolean = true
+
 	companion object {
 		fun getInstance() =
 			(MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ClientDNDEngine

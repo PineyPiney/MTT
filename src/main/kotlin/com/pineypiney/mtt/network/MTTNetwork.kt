@@ -6,7 +6,9 @@ import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
+import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
+import com.pineypiney.mtt.mixin_interfaces.MTTServerPlayer
 import com.pineypiney.mtt.network.payloads.c2s.*
 import com.pineypiney.mtt.network.payloads.s2c.*
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
@@ -27,18 +29,18 @@ object MTTNetwork {
 		PayloadTypeRegistry.playS2C().register(CharacterSheetS2CPayload.ID, CharacterSheetS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(CharacterParamsS2CPayload.ID, CharacterParamsS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(EntityDNDEquipmentUpdateS2CPayload.ID, EntityDNDEquipmentUpdateS2CPayload.CODEC)
-		PayloadTypeRegistry.playS2C()
-			.register(CharacterPositionLookS2CPayload.ID, CharacterPositionLookS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(CharacterPositionLookS2CPayload.ID, CharacterPositionLookS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(CharacterDamageS2CPayload.ID, CharacterDamageS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(OpenDNDScreenS2CPayload.ID, OpenDNDScreenS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(CharacterConditionsS2CPayload.ID, CharacterConditionsS2CPayload.CODEC)
 
 		PayloadTypeRegistry.playC2S().register(OpenDNDScreenC2SPayload.ID, OpenDNDScreenC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(ClickButtonC2SPayload.ID, ClickButtonC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(UpdateTraitC2SPayload.ID, UpdateTraitC2SPayload.CODEC)
-		PayloadTypeRegistry.playC2S()
-			.register(UpdateSelectedDNDSlotC2SPayload.ID, UpdateSelectedDNDSlotC2SPayload.CODEC)
+		PayloadTypeRegistry.playC2S().register(UpdateSelectedDNDSlotC2SPayload.ID, UpdateSelectedDNDSlotC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(CharacterMoveC2SPayload.ID, CharacterMoveC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(TeleportConfirmC2SPayload.ID, TeleportConfirmC2SPayload.CODEC)
-		PayloadTypeRegistry.playC2S()
-			.register(CharacterInteractCharacterC2SPayload.ID, CharacterInteractCharacterC2SPayload.CODEC)
+		PayloadTypeRegistry.playC2S().register(CharacterInteractCharacterC2SPayload.ID, CharacterInteractCharacterC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(CastSpellC2SPayload.ID, CastSpellC2SPayload.CODEC)
 
 
@@ -47,7 +49,7 @@ object MTTNetwork {
 		ServerPlayNetworking.registerGlobalReceiver(OpenDNDScreenC2SPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
 			val character = engine.getCharacterFromPlayer(ctx.player().uuid)
-			if (character != null) ctx.player().openHandledScreen(character)
+			if (character != null) (ctx.player() as? MTTServerPlayer)?.`mTT$openCharacterInventory`(character)
 		}
 
 		ServerPlayNetworking.registerGlobalReceiver(ClickButtonC2SPayload.ID) { payload, ctx ->
@@ -142,8 +144,8 @@ object MTTNetwork {
 		ServerPlayNetworking.registerGlobalReceiver(CastSpellC2SPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
 			val character = engine.getCharacterFromPlayer(ctx.player().uuid) ?: return@registerGlobalReceiver
-			for (target in payload.locations) {
-				payload.spell.cast(character, Vec3d(target), payload.level, engine.getCombat(character))
+			for ((i, target) in payload.locations.withIndex()) {
+				payload.spell.cast(character, Vec3d(target), payload.angles.getOrNull(i) ?: 0f, payload.level, Ability.INTELLIGENCE, engine.getCombat(character))
 			}
 		}
 	}

@@ -193,7 +193,6 @@ class HealthBonusTrait(val base: Int, val perLevel: Int): Trait<HealthBonusTrait
 		if (perLevel > 0) set.add(LiteralPart("mtt.health.bonus.per_level.declaration", perLevel))
 		return set
 	}
-
 }
 
 class SpellcastingAbilityTrait(val options: Set<Ability>): Trait<SpellcastingAbilityTrait>(){
@@ -220,7 +219,7 @@ class SpellTrait(val unlockLevel: Int, val spells: Set<Spell>) : Trait<SpellTrai
 
 	override fun getLabelKey(): String {
 		return if (spells.size != 1) super.getLabelKey()
-		else "mtt.spell.${spells.first()}"
+		else spells.first().getTranslationKey()
 	}
 
 	override fun getParts(): Set<TraitPart> {
@@ -229,10 +228,12 @@ class SpellTrait(val unlockLevel: Int, val spells: Set<Spell>) : Trait<SpellTrai
 				getDeclarationKey(),
 				Localisation.translateList(spells.toList(), false, ::getTranslationKey),
 				unlockLevel
-			)
+			) { sheet, src ->
+				sheet.learnedSpells.addAll(src, spells)
+				sheet.preparedSpells.addAll(src, spells)
+			}
 		)
 	}
-
 }
 
 class AbilityImprovementTrait(val options: Set<Ability>, val points: Int): Trait<AbilityImprovementTrait>(){

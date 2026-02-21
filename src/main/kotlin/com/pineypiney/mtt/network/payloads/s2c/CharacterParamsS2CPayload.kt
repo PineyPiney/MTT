@@ -10,16 +10,15 @@ import net.minecraft.network.packet.CustomPayload
 import net.minecraft.util.Identifier
 import java.util.*
 
-class CharacterParamsS2CPayload(val uuid: UUID, val params: SimpleCharacter.Params, val nbt: NbtCompound) :
-	CustomPayload {
+class CharacterParamsS2CPayload(val uuid: UUID, val params: SimpleCharacter.Params, val nbt: NbtCompound) : CustomPayload {
 
 	override fun getId(): CustomPayload.Id<out CustomPayload> {
 		return ID
 	}
 
 	companion object {
-		val CHARACTER_SHEET_PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "params")
-		val ID = CustomPayload.Id<CharacterParamsS2CPayload>(CHARACTER_SHEET_PAYLOAD_ID)
+		val CHARACTER_PARAMS_PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "params")
+		val ID = CustomPayload.Id<CharacterParamsS2CPayload>(CHARACTER_PARAMS_PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(
 			MTTPacketCodecs.UUID_CODEC, CharacterParamsS2CPayload::uuid,
 			SimpleCharacter.Params.PACKET_CODEC, CharacterParamsS2CPayload::params,

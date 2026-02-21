@@ -17,6 +17,8 @@ import net.minecraft.client.render.entity.EntityRendererFactory
 import net.minecraft.client.render.state.CameraRenderState
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.util.Identifier
+import org.joml.AxisAngle4f
+import org.joml.Quaternionf
 
 class ShapeEntityRenderer(ctx: EntityRendererFactory.Context) :
 	EntityRenderer<ShapeEntity, ShapeEntityRenderState>(ctx) {
@@ -27,6 +29,7 @@ class ShapeEntityRenderer(ctx: EntityRendererFactory.Context) :
 
 	override fun updateRenderState(entity: ShapeEntity, state: ShapeEntityRenderState, tickProgress: Float) {
 		super.updateRenderState(entity, state, tickProgress)
+		state.rotation = entity.yaw
 		state.shape = entity.shape
 		state.colour = entity.colour
 	}
@@ -39,8 +42,10 @@ class ShapeEntityRenderer(ctx: EntityRendererFactory.Context) :
 	) {
 		if (renderState.shape == SpellShape.Single) return
 		val renderer = prepareRenderer(renderState.shape, renderState.colour) ?: return
+		matrices.push()
+		matrices.multiply(Quaternionf(AxisAngle4f(Math.toRadians(renderState.rotation.toDouble()).toFloat(), 0f, -1f, 0f)))
 		queue.submitCustom(matrices, RENDER_LAYER(renderState.shape.type.texture), renderer)
-
+		matrices.pop()
 	}
 
 	fun <S : SpellShape> prepareRenderer(shape: S, colour: Int): ShapeCommandRenderer<S>? {
@@ -64,6 +69,7 @@ class ShapeEntityRenderer(ctx: EntityRendererFactory.Context) :
 		}
 
 		val CIRCLE = register(ShapeType.CIRCLE, ::CircleCommandRenderer)
+		val CONE = register(ShapeType.CONE, ::ConeCommandRenderer)
 		val SQUARE = register(ShapeType.SQUARE, ::SquareCommandRenderer)
 		val SPHERE = register(ShapeType.SPHERE, ::SphereCommandRenderer)
 		val CUBE = register(ShapeType.CUBE, ::CubeCommandRenderer)

@@ -6,7 +6,7 @@ import kotlin.random.Random
 
 object D20 {
 	val random = Random(System.currentTimeMillis())
-	fun roll() = random.nextInt(20)
+	fun roll() = random.nextInt(1, 21)
 	fun adv() = max(roll(), roll())
 	fun dis() = min(roll(), roll())
 }

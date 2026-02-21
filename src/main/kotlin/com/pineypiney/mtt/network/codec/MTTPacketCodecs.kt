@@ -2,9 +2,13 @@ package com.pineypiney.mtt.network.codec
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.dnd.Background
+import com.pineypiney.mtt.dnd.DamageType
+import com.pineypiney.mtt.dnd.Duration
 import com.pineypiney.mtt.dnd.characters.CharacterModel
 import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.classes.DNDClass
+import com.pineypiney.mtt.dnd.conditions.Condition
+import com.pineypiney.mtt.dnd.conditions.Conditions
 import com.pineypiney.mtt.dnd.race.NamedTrait
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
@@ -18,6 +22,10 @@ import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import java.util.*
 import kotlin.math.min
+import kotlin.reflect.full.companionObject
+import kotlin.reflect.full.companionObjectInstance
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaGetter
 
 object MTTPacketCodecs {
 
@@ -82,15 +90,6 @@ object MTTPacketCodecs {
 			keyCodec.encode(buf, key)
 			valueCodec.encode(buf, value)
 		}
-	}
-
-	fun <B: ByteBuf, T, TC> from(codec: PacketCodec<B, TC>, to: (T) -> TC, from: (TC) -> T): PacketCodec<B, T> = object :
-		PacketCodec<B, T> {
-		override fun decode(buf: B): T {
-			val base = codec.decode(buf)
-			return from(base)
-		}
-		override fun encode(buf: B, value: T) = codec.encode(buf, to(value))
 	}
 
 	fun <T, C : Collection<T>> smallCollection(codec: PacketCodec<ByteBuf, T>, func: (Int, (Int) -> T) -> C) = object :
@@ -217,16 +216,53 @@ object MTTPacketCodecs {
 
 	}
 
+	val ID = str.xmap(MTT::identifier, MTT::identifierString)
+
 	val UUID_CODEC = PacketCodec.tuple(
 		PacketCodecs.LONG, UUID::getMostSignificantBits,
 		PacketCodecs.LONG, UUID::getLeastSignificantBits,
 		::UUID
 	)
 
-	val CLASS = from(PacketCodecs.STRING, DNDClass::id) { id: String ->
-		DNDClass.classes.firstOrNull { it.id == id }
-			?: throw Exception("Cannot decode DNDClass: No class found with id $id")
+	val DURATION = object : PacketCodec<ByteBuf, Duration> {
+		override fun decode(buf: ByteBuf): Duration {
+			@Suppress("UNCHECKED_CAST")
+			val id = bytInt.decode(buf)
+			val codec = when (id) {
+				0 -> Duration.Time.PACKET_CODEC
+				1 -> Duration.Turns.PACKET_CODEC
+				2 -> Duration.ShortRest.PACKET_CODEC
+				3 -> Duration.LongRest.PACKET_CODEC
+				else -> throw Error("Unknown DND Duration ID $id")
+			}
+			return codec.decode(buf)
+		}
+
+		override fun encode(buf: ByteBuf, value: Duration) {
+			encodeDuration(buf, value)
+		}
+
+		fun <D : Duration> encodeDuration(buf: ByteBuf, value: D) {
+			bytInt.encode(buf, value.getID())
+			@Suppress("UNCHECKED_CAST")
+			val codec = try {
+				val companionClass = value::class.companionObject
+				val property = companionClass?.memberProperties?.first { it.name == "PACKET_CODEC" }
+				val codec = property?.javaGetter?.invoke(value::class.companionObjectInstance!!)
+				codec as PacketCodec<ByteBuf, D>
+			} catch (e: Exception) {
+				MTT.logger.error("Could not find static property PACKET_CODEC in Duration class ${value::class}")
+				throw e
+			}
+			codec.encode(buf, value)
+		}
 	}
+
+	val DAMAGE_TYPE = str.xmap(DamageType::find, DamageType::id)
+
+	val ABILITY = bytInt.xmap({ Ability.entries[it] }, Ability::ordinal)
+
+	val CLASS = PacketCodecs.STRING.xmap(DNDClass::findById, DNDClass::id)
 
 	val MODEL = PacketCodec.tuple(
 		str, CharacterModel::id,
@@ -237,10 +273,14 @@ object MTTPacketCodecs {
 	)
 
 	val SPELL = str.xmap(Spell::findById, Spell::id)
+	val SPELLS = smallCollection(SPELL, ::Set)
 
 	val SOURCE = object : PacketCodec<ByteBuf, Source> {
 		override fun decode(buf: ByteBuf): Source {
 			val type = str.decode(buf)
+			when (type) {
+				"spell" -> return Source.SpellSource
+			}
 			val id = str.decode(buf)
 			return when(type){
 				"race" -> Source.RaceSource(Race.findById(id))
@@ -249,7 +289,7 @@ object MTTPacketCodecs {
 					val subraceID = str.decode(buf)
 					Source.SubraceSource(race, race.getSubrace(subraceID)!!)
 				}
-				"class" -> Source.ClassSource(DNDClass.classes.first { it.id == id })
+				"class" -> Source.ClassSource(DNDClass.findById(id))
 				"background" -> Source.BackgroundSource(Background.findById(id))
 				"feature" -> Source.FeatureSource(id)
 				"dm" -> Source.DMOverrideSource(UUID.fromString(id))
@@ -264,6 +304,7 @@ object MTTPacketCodecs {
 				is Source.ClassSource -> setOf("class", value.clazz.id)
 				is Source.BackgroundSource -> setOf("background", value.background.id)
 				is Source.FeatureSource -> setOf("feature", value.id)
+				is Source.SpellSource -> setOf("spell")
 				is Source.DMOverrideSource -> setOf("dm", value.dm.toString())
 			}
 			for (part in parts) str.encode(buf, part)
@@ -327,6 +368,18 @@ object MTTPacketCodecs {
 		::Race
 	)
 
+	val CONDITION = object : PacketCodec<ByteBuf, Condition.ConditionState<*>> {
+		override fun decode(buf: ByteBuf): Condition.ConditionState<*> {
+			val condition = Conditions.findById(ID.decode(buf))
+			return condition.createState(buf)
+		}
+
+		override fun encode(buf: ByteBuf, value: Condition.ConditionState<*>) {
+			ID.encode(buf, value.condition.id)
+			value.encode(buf)
+		}
+	}
+
 	val CHARACTER_SHEET = object : PacketCodec<ByteBuf, CharacterSheet> {
 
 		override fun decode(buf: ByteBuf): CharacterSheet {
@@ -346,10 +399,13 @@ object MTTPacketCodecs {
 
 			sheet.decodeProperties(buf)
 			decodeMap(buf, CLASS, bytInt, sheet.classes)
-			decodeMap(buf, SOURCE, collection(str, ::mutableSetOf), sheet.advantages)
-			decodeMap(buf, SOURCE, collection(str, ::mutableSetOf), sheet.resistances)
-			decodeMap(buf, SOURCE, collection(Proficiency.CODEC, ::mutableSetOf), sheet.proficiencies)
-			decodeMap(buf, SOURCE, collection(FEATURE, ::mutableSetOf), sheet.features)
+			sheet.advantages.decode(buf, smallCollection(str, ::mutableSetOf))
+			sheet.resistances.decode(buf, smallCollection(str, ::mutableSetOf))
+			sheet.proficiencies.decode(buf, smallCollection(Proficiency.CODEC, ::mutableSetOf))
+			sheet.features.decode(buf, smallCollection(FEATURE, ::mutableSetOf))
+			sheet.learnedSpells.decode(buf, smallCollection(SPELL, ::mutableSetOf))
+			sheet.preparedSpells.decode(buf, smallCollection(SPELL, ::mutableSetOf))
+			sheet.conditions.decode(buf, smallCollection(CONDITION, ::mutableSetOf))
 
 			sheet.model = sheet.race.getModel(str.decode(buf))
 
@@ -372,10 +428,13 @@ object MTTPacketCodecs {
 
 			value.encodeProperties(buf)
 			encodeMap(buf, value.classes, CLASS, bytInt)
-			encodeMap(buf, value.advantages, SOURCE, collection(str, ::mutableSetOf))
-			encodeMap(buf, value.resistances, SOURCE, collection(str, ::mutableSetOf))
-			encodeMap(buf, value.proficiencies, SOURCE, collection(Proficiency.CODEC, ::mutableSetOf))
-			encodeMap(buf, value.features, SOURCE, collection(FEATURE, ::mutableSetOf))
+			value.advantages.encode(buf, smallCollection(str, ::mutableSetOf))
+			value.resistances.encode(buf, smallCollection(str, ::mutableSetOf))
+			value.proficiencies.encode(buf, smallCollection(Proficiency.CODEC, ::mutableSetOf))
+			value.features.encode(buf, smallCollection(FEATURE, ::mutableSetOf))
+			value.learnedSpells.encode(buf, smallCollection(SPELL, ::mutableSetOf))
+			value.preparedSpells.encode(buf, smallCollection(SPELL, ::mutableSetOf))
+			value.conditions.encode(buf, smallCollection(CONDITION, ::mutableSetOf))
 
 			str.encode(buf, value.model.id)
 		}

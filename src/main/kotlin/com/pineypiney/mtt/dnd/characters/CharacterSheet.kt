@@ -3,12 +3,11 @@ package com.pineypiney.mtt.dnd.characters
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.Property
 import com.pineypiney.mtt.dnd.classes.DNDClass
+import com.pineypiney.mtt.dnd.conditions.Condition
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
-import com.pineypiney.mtt.dnd.traits.Abilities
-import com.pineypiney.mtt.dnd.traits.CreatureType
-import com.pineypiney.mtt.dnd.traits.Size
-import com.pineypiney.mtt.dnd.traits.Source
+import com.pineypiney.mtt.dnd.spells.Spell
+import com.pineypiney.mtt.dnd.traits.*
 import com.pineypiney.mtt.dnd.traits.features.Feature
 import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
@@ -38,10 +37,13 @@ class CharacterSheet {
 
 	val abilities = Abilities()
 	val classes = mutableMapOf<DNDClass, Int>()
-	val advantages = mutableMapOf<Source, MutableSet<String>>()
-	val resistances = mutableMapOf<Source, MutableSet<String>>()
-	val proficiencies = mutableMapOf<Source, MutableSet<Proficiency>>()
-	val features = mutableMapOf<Source, MutableSet<Feature>>()
+	val advantages = SourceMap<String>()
+	val resistances = SourceMap<String>()
+	val proficiencies = SourceMap<Proficiency>()
+	val features = SourceMap<Feature>()
+	val learnedSpells = SourceMap<Spell>()
+	val preparedSpells = SourceMap<Spell>()
+	val conditions = SourceMap<Condition.ConditionState<*>>()
 
 	fun addTypeSource(type: CreatureType, src: Source) {
 		typeProperty.sources[src] = type
@@ -57,45 +59,20 @@ class CharacterSheet {
 
 	fun addLanguage(language: String, src: Source) = addLanguages(listOf(language), src)
 	fun addLanguages(languages: List<String>, src: Source) {}
-
-	fun addAdvantage(newAdvantage: String, src: Source) {
-		val current = advantages[src]
-		if (current != null) current.add(newAdvantage)
-		else advantages[src] = mutableSetOf(newAdvantage)
-	}
-
-	fun addAdvantages(newAdvantages: Collection<String>, src: Source) {
-		val current = advantages[src]
-		if (current != null) current.addAll(newAdvantages)
-		else advantages[src] = newAdvantages.toMutableSet()
-	}
-
-	fun addResistance(newResistance: String, src: Source) {
-		val current = resistances[src]
-		if (current != null) current.add(newResistance)
-		else resistances[src] = mutableSetOf(newResistance)
-	}
-
-	fun addResistances(newResistances: Collection<String>, src: Source) {
-		val current = resistances[src]
-		if (current != null) current.addAll(newResistances)
-		else resistances[src] = newResistances.toMutableSet()
-	}
-
-	fun addProficiency(newProficiency: Proficiency, src: Source) {
-		val current = proficiencies[src]
-		if (current != null) current.add(newProficiency)
-		else proficiencies[src] = mutableSetOf(newProficiency)
-	}
-
-	fun addProficiencies(newProficiencies: Collection<Proficiency>, src: Source) {
-		val current = proficiencies[src]
-		if (current != null) current.addAll(newProficiencies)
-		else proficiencies[src] = newProficiencies.toMutableSet()
-	}
+	fun addAdvantage(newAdvantage: String, src: Source) = advantages.add(src, newAdvantage)
+	fun addAdvantages(newAdvantages: Collection<String>, src: Source) = advantages.addAll(src, newAdvantages)
+	fun addResistance(newResistance: String, src: Source) = resistances.add(src, newResistance)
+	fun addResistances(newResistances: Collection<String>, src: Source) = resistances.addAll(src, newResistances)
+	fun addProficiency(newProficiency: Proficiency, src: Source) = proficiencies.add(src, newProficiency)
+	fun addProficiencies(newProficiencies: Collection<Proficiency>, src: Source) = proficiencies.addAll(src, newProficiencies)
 
 	fun isProficientIn(equipmentType: EquipmentType): Boolean {
 		val proficiency = Proficiency.findById(equipmentType.id)
+		return proficiencies.any { it.value.contains(proficiency) }
+	}
+
+	fun isProficientIn(ability: Ability): Boolean {
+		val proficiency = Proficiency.findById(ability.id)
 		return proficiencies.any { it.value.contains(proficiency) }
 	}
 

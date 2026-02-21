@@ -34,7 +34,7 @@ class Prefab(
 	fun createCharacter(level: Int, engine: DNDEngine): SimpleCharacter {
 		var maxHealth = dndClass.healthDie
 		repeat(level - 1) { maxHealth += Random.nextInt(dndClass.healthDie) }
-		val params = SimpleCharacter.Params(name.get(), race, subrace, modelID, dndClass, level, maxHealth)
+		val params = SimpleCharacter.Params(name.get(), race, subrace, modelID, dndClass, level, maxHealth, spells)
 		params.abilities.setValues(abilities)
 		val char = SimpleCharacter(params, UUID.randomUUID(), engine)
 		for (item in inventory) {
@@ -62,7 +62,8 @@ class Prefab(
 			}
 			val race = Race.findById(json.string("race", "human"))
 			val subrace = race.getSubrace(json.string("subrace"))
-			val dndClass = DNDClass.classes.first { it.id == json.string("class") }
+			val classId = json.string("class")
+			val dndClass = DNDClass.classes.findOrError("No DND Class with ID $classId") { it.id == classId }
 			val abilities = Abilities()
 			abilities.setValues(json.array("abilities").map { it.jsonPrimitive.int }.toIntArray())
 

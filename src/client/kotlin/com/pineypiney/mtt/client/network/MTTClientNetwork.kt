@@ -2,23 +2,26 @@ package com.pineypiney.mtt.client.network
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
+import com.pineypiney.mtt.client.gui.screens.DNDScreen
 import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.characters.SimpleCharacter
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.network.payloads.s2c.*
+import com.pineypiney.mtt.screen.DNDScreenHandler
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.minecraft.text.Text
 
 object MTTClientNetwork {
 
 	private fun getEngine(ctx: ClientPlayNetworking.Context) =
-		(ctx.client() as? DNDEngineHolder<*>)?.`mtt$getDNDEngine`() as? ClientDNDEngine
+		(ctx.client() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ClientDNDEngine
 
 	@Suppress("UNCHECKED_CAST")
 	fun registerPayloads() {
 		ClientPlayNetworking.registerGlobalReceiver(DNDEngineUpdateS2CPayload.ID) { payload, ctx ->
-			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
+			val engine = getEngine(ctx)
 			when (payload.field) {
 				"running" -> {
 					engine.running = payload.data[0] == 1
@@ -68,7 +71,7 @@ object MTTClientNetwork {
 		}
 
 		ClientPlayNetworking.registerGlobalReceiver(CharacterSheetS2CPayload.ID) { payload, ctx ->
-			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
+			val engine = getEngine(ctx)
 			val character = SheetCharacter(payload.sheet, payload.uuid, engine)
 			engine.addCharacter(character)
 			val networkHandler = ctx.client().networkHandler ?: return@registerGlobalReceiver
@@ -76,7 +79,7 @@ object MTTClientNetwork {
 		}
 
 		ClientPlayNetworking.registerGlobalReceiver(CharacterParamsS2CPayload.ID) { payload, ctx ->
-			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
+			val engine = getEngine(ctx)
 			val character = SimpleCharacter(payload.params, payload.uuid, engine)
 			engine.addCharacter(character)
 			val networkHandler = ctx.client().networkHandler ?: return@registerGlobalReceiver
@@ -90,7 +93,23 @@ object MTTClientNetwork {
 			for ((slot, stack) in payload.changes) inventory.equipment[slot] = stack
 		}
 		ClientPlayNetworking.registerGlobalReceiver(CharacterPositionLookS2CPayload.ID) { payload, ctx ->
-			getEngine(ctx)?.networkHandler?.onPlayerPositionLook(payload)
+			getEngine(ctx).networkHandler.onPlayerPositionLook(payload)
+		}
+		ClientPlayNetworking.registerGlobalReceiver(CharacterDamageS2CPayload.ID) { payload, ctx ->
+			getEngine(ctx).networkHandler.onCharacterDamage(payload)
+		}
+		ClientPlayNetworking.registerGlobalReceiver(OpenDNDScreenS2CPayload.ID) { payload, ctx ->
+			val player = ctx.client().player ?: return@registerGlobalReceiver
+			val engine = getEngine(ctx)
+			val character = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
+			val screenHandler = DNDScreenHandler(payload.syncId, character)
+			player.currentScreenHandler = screenHandler
+			ctx.client().setScreen(DNDScreen(screenHandler, player.getInventory(), Text.literal(character.name)))
+		}
+		ClientPlayNetworking.registerGlobalReceiver(CharacterConditionsS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx)
+			val character = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
+			character.conditions.readNbt(payload.nbt)
 		}
 	}
 }

@@ -21,11 +21,15 @@ abstract class DNDClass(val id: String, val healthDie: Int) {
 		sheet.features[Source.ClassSource(this)]?.addAll(features[classLevel - 1])
 	}
 
+	override fun toString(): String {
+		return id.replaceFirstChar(Char::uppercase)
+	}
+
 	companion object {
 		val classes = listOf(Barbarian, Fighter, Ranger, Wizard)
 
 		fun findById(id: String): DNDClass {
-			return classes.firstOrNull { it.id == id } ?: throw IllegalArgumentException("No Race with id $id")
+			return classes.firstOrNull { it.id == id } ?: throw IllegalArgumentException("No DND Class with id $id")
 		}
 	}
 }

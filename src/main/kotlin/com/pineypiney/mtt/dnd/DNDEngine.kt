@@ -68,7 +68,8 @@ abstract class DNDEngine {
 	}
 
 	fun getAllCharacters() = characters
-	fun getAllPlayerCharacters() = playerCharacters.mapNotNull { getCharacterFromPlayer(it.key) }
+	fun getAllPlayableCharacters() = characters.filterIsInstance<SheetCharacter>()
+	fun getAllPlayerCharacters() = playerCharacters.mapNotNull { getCharacter(it.value) as SheetCharacter }
 
 	fun getCombat(character: Character) = combats.firstOrNull { it.combatants.contains(character) }
 	fun isInCombat(character: Character) = combats.any { it.combatants.contains(character) }
@@ -76,6 +77,8 @@ abstract class DNDEngine {
 	fun tick(){
 
 	}
+
+	open fun isClient(): Boolean = false
 
 	val updates = mutableListOf<CustomPayload>()
 }

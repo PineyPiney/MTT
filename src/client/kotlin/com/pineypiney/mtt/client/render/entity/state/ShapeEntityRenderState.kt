@@ -4,6 +4,7 @@ import com.pineypiney.mtt.dnd.spells.SpellShape
 import net.minecraft.client.render.entity.state.EntityRenderState
 
 open class ShapeEntityRenderState : EntityRenderState() {
+	var rotation = 0f
 	var shape: SpellShape = SpellShape.Single
 	var colour: Int = -1
 }

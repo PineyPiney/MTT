@@ -5,6 +5,7 @@ import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
+import com.pineypiney.mtt.dnd.traits.features.Features
 import net.minecraft.nbt.NbtCompound
 import java.util.*
 import kotlin.jvm.optionals.getOrNull
@@ -81,15 +82,18 @@ sealed interface Source {
 		}
 	}
 
+	object SpellSource : Source {
+		override val overridePower: Int = 32
+
+		override fun writeNbt(nbt: NbtCompound) {
+			nbt.putString("spell", "spell")
+		}
+	}
+
 	class DMOverrideSource(val dm: UUID): Source {
 		override val overridePower: Int = Int.MAX_VALUE
 		override fun writeNbt(nbt: NbtCompound) {
-			val str = ByteArray(16)
-			for(i in 0..7){
-				str[i] = ((dm.mostSignificantBits shr (i * 8)) and 255).toByte()
-				str[i + 8] = ((dm.leastSignificantBits shr (i * 8)) and 255).toByte()
-			}
-			nbt.putString("dm", str.toString(Charsets.ISO_8859_1))
+			nbt.putLongArray("dm", longArrayOf(dm.mostSignificantBits, dm.leastSignificantBits))
 		}
 
 		override fun equals(other: Any?): Boolean {
@@ -104,13 +108,31 @@ sealed interface Source {
 	companion object {
 
 		fun readNbt(nbt: NbtCompound, engine: ServerDNDEngine): Source? {
-			nbt.getString("race").getOrNull()?.let {
-				val race = Race.findById(it)
+			nbt.getString("subrace").getOrNull()?.let { id ->
+				val race = Race.findById(nbt.getString("race").get())
+				return SubraceSource(race, race.getSubrace(id) ?: return null)
+			}
+			nbt.getString("race").getOrNull()?.let { id ->
+				val race = Race.findById(id)
 				return RaceSource(race)
 			}
 			nbt.getString("class").getOrNull()?.let { id ->
-				val clazz = DNDClass.classes.firstOrNull { it.id == id }
-				if(clazz != null) return ClassSource(clazz)
+				val clazz = DNDClass.findById(id)
+				return ClassSource(clazz)
+			}
+			nbt.getString("background").getOrNull()?.let { id ->
+				val background = Background.findById(id)
+				return BackgroundSource(background)
+			}
+			nbt.getString("feature").getOrNull()?.let { id ->
+				val feature = Features.set.firstOrNull { it.id == id } ?: return null
+				return FeatureSource(feature.id)
+			}
+			nbt.getString("spell").getOrNull()?.let { id ->
+				return SpellSource
+			}
+			nbt.getLongArray("dm").getOrNull()?.let {
+				return DMOverrideSource(UUID(it[0], it[1]))
 			}
 			return null
 		}

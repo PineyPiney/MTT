@@ -11,7 +11,7 @@ class OpenDNDScreenC2SPayload(val screenType: Int): CustomPayload {
 	override fun getId(): CustomPayload.Id<out CustomPayload> = ID
 
 	companion object {
-		val OPEN_SCREEN_PAYLOAD_ID = Identifier.of(MTT.Companion.MOD_ID, "open_screen")
+		val OPEN_SCREEN_PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "open_screen")
 		val ID = CustomPayload.Id<OpenDNDScreenC2SPayload>(OPEN_SCREEN_PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(PacketCodecs.INTEGER, OpenDNDScreenC2SPayload::screenType, ::OpenDNDScreenC2SPayload)
 	}

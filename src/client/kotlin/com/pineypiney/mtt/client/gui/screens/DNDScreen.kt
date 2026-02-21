@@ -2,7 +2,6 @@ package com.pineypiney.mtt.client.gui.screens
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
-import com.pineypiney.mtt.client.render.entity.state.DNDBipedEntityRenderState
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.DNDInventory
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
@@ -14,6 +13,8 @@ import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.ingame.HandledScreen
 import net.minecraft.client.gui.widget.TextFieldWidget
 import net.minecraft.client.render.entity.state.EntityRenderState
+import net.minecraft.client.render.entity.state.LivingEntityRenderState
+import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityPose
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.text.Text
@@ -30,8 +31,6 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 		backgroundWidth = 326
 		backgroundHeight = 150
 	}
-
-	constructor(handler: DNDScreenHandler, playerInventory: PlayerInventory): this(handler, playerInventory, Text.translatable("mtt.screen.dnd_inventory"))
 
 	private var scrolling = false
 	private var scrollPosition = 0f
@@ -86,7 +85,7 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 			15
 		)
 
-		val player = engine.getEntityFromPlayer(client?.player?.uuid ?: return) ?: return
+		val player = engine.getEntityOfCharacter(handler.character.uuid) ?: return
 		drawEntity(context, x + 44, y + 19, x + 84, y + 107, 36, 0f, mouseX.toFloat(), mouseY.toFloat(), player)
 	}
 
@@ -120,17 +119,18 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 		/**
 		 * Direct copy of [net.minecraft.client.gui.screen.ingame.InventoryScreen.drawEntity]
 		 */
-		fun drawEntity(context: DrawContext, x1: Int, y1: Int, x2: Int, y2: Int, size: Int, f: Float, mouseX: Float, mouseY: Float, entity: DNDEntity) {
-			val g = (x1 + x2) * .5f
-			val h = (y1 + y2) * .5f
-			val i = atan(((g - mouseX) * .025f))
-			val j = atan(((h - mouseY) * .025f))
+		fun drawEntity(context: DrawContext, x1: Int, y1: Int, x2: Int, y2: Int, size: Int, scale: Float, mouseX: Float, mouseY: Float, entity: DNDEntity) {
+			val f = (x1 + x2) * .5f
+			val g = (y1 + y2) * .5f
+			val h = atan(((f - mouseX) * .025f))
+			val i = atan(((g - mouseY) * .025f))
 			val quaternion = Quaternionf().rotateZ(Math.PI.toFloat())
-			val quaternion2 = Quaternionf().rotateX(j * 20f * MathHelper.RADIANS_PER_DEGREE)
+			val quaternion2 = Quaternionf().rotateX(i * 20f * MathHelper.RADIANS_PER_DEGREE)
 			quaternion.mul(quaternion2)
 
+//			val entity = MinecraftClient.getInstance().world?.getEntitiesByType(EntityType.HORSE, Box(entity.entityPos.subtract(10.0), entity.entityPos.add(10.0))){ true }?.firstOrNull() ?: return
 			val entityRenderState = getEntityState(entity)
-			if (entityRenderState is DNDBipedEntityRenderState) {
+			if (entityRenderState is LivingEntityRenderState) {
 				entityRenderState.bodyYaw = 180.0f + h * 20.0f
 				entityRenderState.relativeHeadYaw = h * 20.0f
 				if (entityRenderState.pose != EntityPose.GLIDING) {
@@ -142,12 +142,15 @@ class DNDScreen(handler: DNDScreenHandler, playerInventory: PlayerInventory, tit
 				entityRenderState.width /= entityRenderState.baseScale
 				entityRenderState.height /= entityRenderState.baseScale
 				entityRenderState.baseScale = 1.0f
+
+				entityRenderState.invisibleToPlayer = false
+				entityRenderState.displayName = null
 			}
-			val vector3f = Vector3f(0.0f, entity.height * .5f + f, 0.0f)
+			val vector3f = Vector3f(0.0f, entity.height * .5f + scale, 0.0f)
 			context.addEntity(entityRenderState, size.toFloat(), vector3f, quaternion, quaternion2, x1, y1, x2, y2)
 		}
 
-		private fun getEntityState(entity: DNDEntity): EntityRenderState {
+		private fun getEntityState(entity: Entity): EntityRenderState {
 			val entityRenderManager = MinecraftClient.getInstance().entityRenderDispatcher
 			val entityRenderer = entityRenderManager.getRenderer(entity)
 			val entityRenderState: EntityRenderState = entityRenderer.getAndUpdateRenderState(entity, 1.0f)

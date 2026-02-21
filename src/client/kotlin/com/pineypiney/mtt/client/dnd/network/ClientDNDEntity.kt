@@ -1,17 +1,23 @@
 package com.pineypiney.mtt.client.dnd.network
 
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
+import com.pineypiney.mtt.client.gui.screens.SpellBookScreen
+import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.util.getEngine
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.client.network.ClientPlayerLikeState
 import net.minecraft.entity.Entity
+import net.minecraft.entity.EntityPose
 import net.minecraft.entity.MovementType
 import net.minecraft.entity.data.DataTracker
+import net.minecraft.text.Text
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
+import net.minecraft.util.math.random.Random
 import net.minecraft.world.World
+import kotlin.jvm.optionals.getOrDefault
 import kotlin.math.min
 import kotlin.math.sqrt
 
@@ -20,6 +26,8 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 	val state = ClientPlayerLikeState()
 
 	var selectionColour = 0
+
+	val texts = mutableSetOf<CharacterGameText>()
 
 	override fun onDataTrackerUpdate(entries: List<DataTracker.SerializedEntry<*>?>?) {
 		super.onDataTrackerUpdate(entries)
@@ -32,6 +40,8 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 
 	override fun tick() {
 		state.tick(entityPos, velocity)
+		texts.removeAll { it.lifetime <= 0 }
+		texts.forEach(CharacterGameText::tick)
 		super.tick()
 	}
 
@@ -97,6 +107,12 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 		selectionColour = colour
 	}
 
+	override fun openSpellBook() {
+		val character = character as? SheetCharacter ?: return
+		val allSpells = character.getPreparedSpells()
+		MinecraftClient.getInstance().setScreen(SpellBookScreen(allSpells.toList()))
+	}
+
 	private fun canStartSprinting(player: ClientPlayerEntity): Boolean {
 		return !this.isSprinting && player.input.hasForwardMovement() && canSprint()
 //				&& !this.isBlockedFromSprinting() && (!this.isGliding() || this.isSubmergedInWater())
@@ -125,6 +141,13 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 		return engine.running && engine.getCharacterFromPlayer(
 			MinecraftClient.getInstance().player?.uuid ?: return false
 		) == character
+	}
+
+	fun addSplashText(text: Text) {
+		val viewPos = MinecraftClient.getInstance().gameRenderer.camera.cameraPos
+		val collision = getDimensions(EntityPose.STANDING).getBoxAt(entityPos).raycast(viewPos, eyePos).getOrDefault(eyePos)
+		val pos = collision.add(viewPos.subtract(entityPos).normalize())
+		texts.add(CharacterGameText(text, pos.subtract(entityPos), Vec3d.ZERO.addRandom(Random.createLocal(), .04f), 40))
 	}
 
 	fun getFovMultiplier(firstPerson: Boolean, fovEffectScale: Float): Float {

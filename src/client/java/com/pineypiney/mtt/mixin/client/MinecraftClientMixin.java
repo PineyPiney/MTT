@@ -1,13 +1,12 @@
 package com.pineypiney.mtt.mixin.client;
 
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
-import com.pineypiney.mtt.client.dnd.spell_selector.SpellLocationSelector;
 import com.pineypiney.mtt.client.dnd.spell_selector.SpellSelector;
 import com.pineypiney.mtt.client.render.MTTRenderers;
 import com.pineypiney.mtt.dnd.characters.Character;
 import com.pineypiney.mtt.dnd.characters.SheetCharacter;
-import com.pineypiney.mtt.dnd.spells.Spells;
 import com.pineypiney.mtt.entity.DNDEntity;
+import com.pineypiney.mtt.item.dnd.DNDItem;
 import com.pineypiney.mtt.mixin_interfaces.DNDClient;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import com.pineypiney.mtt.network.payloads.c2s.CastSpellC2SPayload;
@@ -29,7 +28,10 @@ import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.toast.TutorialToast;
 import net.minecraft.client.util.NarratorManager;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.dialog.type.Dialog;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.registry.entry.RegistryEntry;
@@ -55,14 +57,18 @@ import java.util.Optional;
 
 @Mixin(MinecraftClient.class)
 public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDEngine>, DNDClient {
-	@Shadow @Nullable public ClientPlayerEntity player;
 
 	@Shadow
 	@Final
 	private static Text SOCIAL_INTERACTIONS_NOT_AVAILABLE;
 	@Shadow
+	@Nullable
+	public ClientPlayerEntity player;
+
+	@Shadow
 	@Final
 	public GameOptions options;
+
 	@Shadow
 	@Final
 	public InGameHud inGameHud;
@@ -70,30 +76,26 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDE
 	@Shadow
 	@Nullable
 	public ClientPlayerInteractionManager interactionManager;
-
 	@Shadow
 	@Nullable
 	public Screen currentScreen;
-
 	@Shadow
 	@Nullable
 	public Overlay overlay;
 	@Shadow
-	@org.jspecify.annotations.Nullable
-	public HitResult crosshairTarget;
-	@Shadow
-	private int itemUseCooldown;
+	@Nullable
+	public ClientWorld world;
 	@Shadow
 	@Final
 	private NarratorManager narratorManager;
-
-	@Shadow public abstract void setScreen(@Nullable Screen screen);
-
 	@Shadow
-	private @Nullable TutorialToast socialInteractionsToast;
-
-	@Shadow
-	protected abstract void doItemUse();
+	@Nullable
+	public HitResult crosshairTarget;
+	@Unique
+	@Nullable
+	public HitResult dndCrosshairTarget = null;
+	@Unique
+	ClientDNDEngine dndEngine;
 
 	@Shadow
 	protected abstract void doItemPick();
@@ -114,19 +116,22 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDE
 	@Shadow
 	protected abstract boolean isConnectedToServer();
 
+	@Unique
+	@Nullable
+	SpellSelector selector = null;
+	@Shadow
+	@Nullable
+	private TutorialToast socialInteractionsToast;
+
+	@Shadow
+	public abstract void setScreen(@Nullable Screen screen);
+
 	@Inject(method = "<init>", at = @At("TAIL"))
 	private void init(RunArgs args, CallbackInfo ci) {
 		MTTRenderers.Companion.registerBipedModels();
 		MTTRenderers.Companion.registerEquipmentModels();
+		dndEngine = new ClientDNDEngine((MinecraftClient) (Object) this);
 	}
-
-	@Nullable
-	@Unique
-	public HitResult dndCrosshairTarget = null;
-	@Unique
-	ClientDNDEngine dndEngine = new ClientDNDEngine((MinecraftClient) (Object) this);
-	@Unique
-	@Nullable SpellSelector selector = new SpellLocationSelector(Spells.INSTANCE.getFAERIE_FIRE(), 3);
 
 	@Inject(method = "handleInputEvents", at = @At(value = "JUMP", opcode = Opcodes.IF_ICMPGE, ordinal = 0), cancellable = true)
 	private void handleInputs(CallbackInfo ci) {
@@ -217,10 +222,6 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDE
 				}
 			}
 		}
-
-		if (this.options.useKey.isPressed() && this.itemUseCooldown == 0 && !this.player.isUsingItem()) {
-			this.doItemUse();
-		}
 	}
 
 	@Unique
@@ -230,8 +231,10 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDE
 			if (player.isSneaking()) {
 				if (selector.selectionsMade() == selector.getSpell().getTargetCount()) {
 					List<Vec3d> locations = selector.getLocations();
-					ClientPlayNetworking.send(new CastSpellC2SPayload(selector.getSpell(), 1, locations));
+					List<Float> angles = selector.getAngles();
+					ClientPlayNetworking.send(new CastSpellC2SPayload(selector.getSpell(), 1, locations, angles));
 					selector.cancel();
+					selector = null;
 				}
 			} else if (selector.select()) {
 				player.swingHand(Hand.MAIN_HAND);
@@ -240,7 +243,6 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDE
 			if (crosshairTarget instanceof EntityHitResult entityHitResult && crosshairTarget.getType() == HitResult.Type.ENTITY) {
 				if (entityHitResult.getEntity() instanceof DNDEntity dndEntity) {
 					if (dndEntity.getCharacter() != null && dndEntity.getCharacter() != character) {
-						character.attack(dndEntity.getCharacter());
 						ClientPlayNetworking.send(new CharacterInteractCharacterC2SPayload(dndEntity.getCharacter().getUuid()));
 					}
 				}
@@ -250,14 +252,20 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDE
 	}
 
 	@Unique
-	void updateSelector(Character character) {
-
-	}
-
-	@Unique
 	void doUseItem(Character character) {
-		if (selector != null && selector.unselect() && player != null) player.swingHand(Hand.MAIN_HAND);
-		else doItemUse();
+		if (selector != null && player != null) {
+			if (player.isSneaking()) {
+				selector.cancel();
+				selector = null;
+				player.swingHand(Hand.MAIN_HAND);
+			} else if (selector.unselect()) player.swingHand(Hand.MAIN_HAND);
+		} else {
+			ItemStack stack = character.getInventory().getHeldStack();
+			Item item = stack.getItem();
+			if (item instanceof DNDItem dndItem) {
+				dndItem.use(dndEngine, character);
+			}
+		}
 	}
 
 	@Override

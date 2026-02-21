@@ -1,6 +1,5 @@
 package com.pineypiney.mtt.dnd.traits.proficiencies
 
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import net.minecraft.network.codec.PacketCodecs
 
 class Proficiency(val id: String, val type: String, val tags: Set<String>) {
@@ -117,6 +116,6 @@ class Proficiency(val id: String, val type: String, val tags: Set<String>) {
 		fun findByType(type: String) = set.filter { it.type == type }
 		fun findByTag(tag: String) = set.filter { it.tags.contains(tag) }
 
-		val CODEC = MTTPacketCodecs.from(PacketCodecs.STRING, Proficiency::id, Proficiency::findById)
+		val CODEC = PacketCodecs.STRING.xmap(::findById, Proficiency::id)
 	}
 }

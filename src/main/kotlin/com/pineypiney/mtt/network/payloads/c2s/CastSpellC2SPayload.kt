@@ -10,12 +10,13 @@ import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
 import org.joml.Vector3fc
 
-class CastSpellC2SPayload(val spell: Spell, val level: Int, val locations: List<Vector3fc>) : CustomPayload {
+class CastSpellC2SPayload(val spell: Spell, val level: Int, val locations: List<Vector3fc>, val angles: List<Float>) : CustomPayload {
 
-	constructor(spell: Spell, level: Int, locations: Collection<Vec3d>) : this(
+	constructor(spell: Spell, level: Int, locations: Collection<Vec3d>, angles: List<Float>) : this(
 		spell,
 		level,
-		locations.map(Vec3d::toVector3f)
+		locations.map(Vec3d::toVector3f),
+		angles
 	)
 
 	override fun getId(): CustomPayload.Id<out CustomPayload> = ID
@@ -28,6 +29,7 @@ class CastSpellC2SPayload(val spell: Spell, val level: Int, val locations: List<
 			MTTPacketCodecs.SPELL, CastSpellC2SPayload::spell,
 			MTTPacketCodecs.bytInt, CastSpellC2SPayload::level,
 			MTTPacketCodecs.smallCollection(PacketCodecs.VECTOR_3F, ::List), CastSpellC2SPayload::locations,
+			MTTPacketCodecs.smallCollection(PacketCodecs.FLOAT, ::List), CastSpellC2SPayload::angles,
 			::CastSpellC2SPayload
 		)
 	}

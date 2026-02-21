@@ -2,6 +2,8 @@ package com.pineypiney.mtt.entity
 
 import com.pineypiney.mtt.dnd.spells.SpellShape
 import net.minecraft.entity.Entity
+import net.minecraft.entity.EntityDimensions
+import net.minecraft.entity.EntityPose
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.data.DataTracker
@@ -19,6 +21,11 @@ class ShapeEntity(type: EntityType<ShapeEntity>, world: World) : Entity(type, wo
 	constructor(world: World, shape: SpellShape, pos: Vec3d) : this(MTTEntities.SHAPE, world) {
 		this.shape = shape
 		this.setPosition(pos)
+	}
+
+	override fun getDimensions(pose: EntityPose?): EntityDimensions? {
+		val box = shape.getHitBox(entityPos, yaw)
+		return EntityDimensions.fixed(box.lengthX.toFloat(), .5f)
 	}
 
 	override fun initDataTracker(builder: DataTracker.Builder) {}

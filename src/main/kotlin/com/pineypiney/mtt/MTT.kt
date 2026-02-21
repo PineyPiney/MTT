@@ -29,5 +29,9 @@ class MTT : ModInitializer {
 		fun identifier(path: String): Identifier {
 			return if (path.contains(':')) Identifier.of(path) else Identifier.of(MOD_ID, path)
 		}
+
+		fun identifierString(id: Identifier): String {
+			return if (id.namespace == MOD_ID) id.path else id.toString()
+		}
 	}
 }

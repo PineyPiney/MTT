@@ -21,6 +21,10 @@ class ShapeType<S : SpellShape>(val texture: Identifier) {
 			MTT.identifier("circle"),
 			ShapeType<SpellShape.Circle>(MTT.identifier("textures/entity/shape/circle.png"))
 		)
+		val CONE = register(
+			MTT.identifier("cone"),
+			ShapeType<SpellShape.Cone>(MTT.identifier("textures/entity/shape/cone.png"))
+		)
 		val SQUARE = register(
 			MTT.identifier("square"),
 			ShapeType<SpellShape.Square>(MTT.identifier("textures/entity/shape/square.png"))

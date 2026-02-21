@@ -2,9 +2,9 @@ package com.pineypiney.mtt.dnd.traits.features
 
 import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.traits.Ability
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.PacketCodec
-import net.minecraft.network.codec.PacketCodecs
 import kotlin.math.max
 import kotlin.random.Random
 
@@ -21,8 +21,8 @@ class Features {
 
 		companion object {
 			val CODEC = PacketCodec.tuple(
-				Ability.CODEC, AbilityScoreImprovement::ability,
-				PacketCodecs.INTEGER, AbilityScoreImprovement::boost,
+				MTTPacketCodecs.ABILITY, AbilityScoreImprovement::ability,
+				MTTPacketCodecs.bytInt, AbilityScoreImprovement::boost,
 				::AbilityScoreImprovement
 			)
 		}
@@ -38,10 +38,7 @@ class Features {
 		}
 
 		companion object {
-			val CODEC = PacketCodec.tuple(
-				Ability.CODEC, UnarmouredDefense::second,
-				::UnarmouredDefense
-			)
+			val CODEC = MTTPacketCodecs.ABILITY.xmap(::UnarmouredDefense, UnarmouredDefense::second)
 		}
 	}
 

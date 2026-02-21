@@ -3,6 +3,7 @@ package com.pineypiney.mtt.client.dnd.network
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
 import com.pineypiney.mtt.network.payloads.c2s.CharacterMoveC2SPayload
 import com.pineypiney.mtt.network.payloads.c2s.TeleportConfirmC2SPayload
+import com.pineypiney.mtt.network.payloads.s2c.CharacterDamageS2CPayload
 import com.pineypiney.mtt.network.payloads.s2c.CharacterPositionLookS2CPayload
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.minecraft.entity.Entity
@@ -59,5 +60,13 @@ class ClientCharacterNetworkHandler(val engine: ClientDNDEngine) {
 			entity.setLastPositionAndAngles(entityPosition4.position(), entityPosition4.yaw(), entityPosition4.pitch())
 			return false
 		}
+	}
+
+	fun onCharacterDamage(payload: CharacterDamageS2CPayload) {
+		val character = engine.getCharacter(payload.character) ?: return
+		character.health -= payload.amount
+
+		val entity = engine.getEntityOfCharacter(character.uuid) as? ClientDNDEntity ?: return
+		entity.addSplashText(payload.type.getAmountText(payload.amount))
 	}
 }

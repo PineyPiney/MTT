@@ -4,8 +4,13 @@ import com.mojang.logging.LogUtils
 import com.pineypiney.mtt.component.DamageRolls
 import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.DNDEngine
+import com.pineypiney.mtt.dnd.conditions.ConditionManager
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.rolls.SavingThrow
+import com.pineypiney.mtt.dnd.server.ServerDNDEngine
+import com.pineypiney.mtt.dnd.spells.Spell
 import com.pineypiney.mtt.dnd.traits.Abilities
+import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
 import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
@@ -13,13 +18,11 @@ import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.DNDInventory
-import com.pineypiney.mtt.item.dnd.DNDItem
+import com.pineypiney.mtt.item.dnd.DNDGameItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDShieldItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDWeaponItem
-import com.pineypiney.mtt.screen.DNDScreenHandler
+import com.pineypiney.mtt.network.payloads.s2c.CharacterDamageS2CPayload
 import com.pineypiney.mtt.util.D20
-import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtDouble
@@ -28,11 +31,8 @@ import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.DynamicRegistryManager
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.screen.NamedScreenHandlerFactory
-import net.minecraft.screen.ScreenHandler
 import net.minecraft.storage.NbtReadView
 import net.minecraft.storage.NbtWriteView
-import net.minecraft.text.Text
 import net.minecraft.util.ErrorReporter
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
@@ -41,7 +41,7 @@ import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHandlerFactory {
+abstract class Character(val uuid: UUID, val engine: DNDEngine) {
 
 	abstract var name: String
 	abstract val race: Race
@@ -53,7 +53,8 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 	abstract val maxHealth: Int
 	abstract val abilities: Abilities
 	abstract var baseArmourClass: Int
-	val inventory: DNDInventory = DNDInventory()
+	val inventory: DNDInventory = DNDInventory(this)
+	abstract val conditions: ConditionManager
 
 	var world: RegistryKey<World> = World.OVERWORLD
 	var pos = Vec3d(0.0, 0.0, 0.0)
@@ -84,7 +85,7 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 
 	fun addItemStack(stack: ItemStack){
 		inventory.insertStack(-1, stack)
-		(stack.item as? DNDItem)?.addToCharacter(this, stack)
+		(stack.item as? DNDGameItem)?.addToCharacter(this, stack)
 	}
 
 	fun getDamage(): DamageRolls {
@@ -101,9 +102,14 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 		}
 	}
 
-	fun damage(damage: DamageRolls, crit: Boolean, attacker: Character?) {
+	fun damage(damage: DamageRolls, crit: Boolean, attacker: Character?, savingThrow: SavingThrow? = null) {
+		val saved = savingThrow?.roll(this) ?: false
 		for (damage in damage.types) {
-			damage.roll(crit, attacker != null && attacker.inventory.getOffhand() == null)
+			var amount = damage.roll(crit, attacker != null && attacker.inventory.getOffhand() == null)
+			if (saved) amount /= 2
+			if (amount > 0) {
+				if (engine is ServerDNDEngine) engine.updates.add(CharacterDamageS2CPayload(uuid, damage.type, amount))
+			}
 		}
 	}
 
@@ -145,9 +151,15 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 
 	abstract fun getLevel(): Int
 
+	abstract fun getPreparedSpells(): Set<Spell>
+
 	abstract fun isProficientIn(equipment: EquipmentType): Boolean
 
+	abstract fun isProficientIn(ability: Ability): Boolean
+
 	abstract fun getProficiencyBonus(): Int
+
+	open fun rollSavingThrow(savingThrow: SavingThrow): Boolean = savingThrow.roll(this)
 
 	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int {
 		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
@@ -160,13 +172,6 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) : NamedScreenHan
 		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
 		i += stack[MTTComponents.DAMAGE_BONUS_TYPE] ?: 0
 		return i
-	}
-
-	override fun getDisplayName(): Text {
-		return Text.literal(name)
-	}
-	override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity): ScreenHandler? {
-		return DNDScreenHandler(syncId, playerInventory, inventory)
 	}
 
 	fun getErrorReporterContext() = ErrorReportingContext(this)

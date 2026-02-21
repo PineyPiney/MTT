@@ -8,6 +8,11 @@ import net.minecraft.util.Colors
 class DamageType(val id: String, val colour: Int, val icon: Icon) {
 
 	fun getText() = Text.translatable("mtt.damage_type.$id").withColor(colour).append(icon.toText())
+	fun getAmountText(amount: Int) = Text.translatable("mtt.damage_type.amount", amount, getText())
+
+	override fun toString(): String {
+		return "$id Damage"
+	}
 
 	companion object {
 
@@ -18,9 +23,12 @@ class DamageType(val id: String, val colour: Int, val icon: Icon) {
 		val BLUDGEONING = register("bludgeoning", Colors.LIGHT_GRAY, Icons.BLUDGEONING)
 		val PIERCING = register("piercing", Colors.LIGHT_GRAY, Icons.PIERCING)
 		val ACID = register("acid", 0xFF00FF00u.toInt(), Icons.SLASHING)
+		val COLD = register("cold", 0xFF82DEFAu.toInt(), Icons.SLASHING)
 		val FIRE = register("fire", 0xFFFF8800u.toInt(), Icons.SLASHING)
+		val LIGHTNING = register("lightning", 0xFFFFEE00u.toInt(), Icons.SLASHING)
 		val NECROTIC = register("necrotic", 0xFF38FF8Bu.toInt(), Icons.SLASHING)
 		val POISON = register("poison", 0xFF009F00u.toInt(), Icons.SLASHING)
+		val RADIANT = register("radiant", 0xFFFFFF60u.toInt(), Icons.SLASHING)
 
 		fun find(name: String) = list.firstOrNull { it.id == name } ?: SLASHING
 	}

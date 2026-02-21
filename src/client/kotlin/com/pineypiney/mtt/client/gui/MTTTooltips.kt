@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.client.gui
 
 import com.pineypiney.mtt.client.MTTClient
-import com.pineypiney.mtt.item.dnd.DNDItem
+import com.pineypiney.mtt.item.dnd.DNDGameItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDMeleeItem
 import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback
 import net.minecraft.text.Text
@@ -13,7 +13,7 @@ class MTTTooltips {
 		fun registerTooltips(){
 			ItemTooltipCallback.EVENT.register { stack, ctx, type, list ->
 				val item = stack.item
-				if(item !is DNDItem) return@register
+				if (item !is DNDGameItem) return@register
 				val character = MTTClient.getClientCharacter() ?: return@register
 
 				if(item is DNDMeleeItem) {
@@ -29,11 +29,11 @@ class MTTTooltips {
 					if(item.weaponType.nearDistance > 0f) list.add(Text.translatable("item.mtt.property.thrown").append(": (${item.weaponType.nearDistance}/${item.weaponType.farDistance})"))
 				}
 
-				val rarity = DNDItem.getRarity(stack)
+				val rarity = DNDGameItem.getRarity(stack)
 				list.add(Text.translatable("item.mtt.tooltip.rarity").append(": ").append(Text.translatable("item.mtt.tooltip.${rarity.lowercase()}").withColor(rarity.colour)))
 
-				val gold = DNDItem.getValue(stack)
-				val weight = DNDItem.getWeight(stack)
+				val gold = DNDGameItem.getValue(stack)
+				val weight = DNDGameItem.getWeight(stack)
 				list.add(Text.literal(gold.toString()).withColor(Formatting.GOLD.colorValue!!))
 				list.add(Text.literal("$weight lb."))
 			}

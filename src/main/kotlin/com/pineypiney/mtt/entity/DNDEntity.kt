@@ -5,7 +5,6 @@ import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.item.dnd.DNDItems
 import com.pineypiney.mtt.network.payloads.s2c.EntityDNDEquipmentUpdateS2CPayload
-import com.pineypiney.mtt.screen.DNDScreenHandler
 import com.pineypiney.mtt.util.getEngine
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.*
@@ -71,8 +70,6 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	private var serverHeadYaw = 0.0
 
 	private var movement = Vec3d.ZERO
-
-	val screenHandler = DNDScreenHandler(1, character?.inventory ?: DNDInventory())
 
 	init {
 		isCustomNameVisible = true
@@ -441,6 +438,8 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		lastPitch = pitch
 		lastYaw = yaw
 	}
+
+	open fun openSpellBook() {}
 
 	private fun sendEquipmentUpdates() {
 		val changes = getEquipmentChanges()

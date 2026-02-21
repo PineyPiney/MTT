@@ -1,27 +1,22 @@
 package com.pineypiney.mtt.entity
 
+import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.item.dnd.DNDItems
 import com.pineypiney.mtt.item.dnd.equipment.DNDArmourItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDEquipmentItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDWeaponItem
-import com.pineypiney.mtt.screen.DNDScreenHandler
-import net.minecraft.component.DataComponentTypes
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.inventory.Inventories
 import net.minecraft.inventory.Inventory
 import net.minecraft.inventory.StackWithSlot
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
-import net.minecraft.screen.ScreenHandler
-import net.minecraft.screen.ScreenHandlerFactory
 import net.minecraft.storage.ReadView
 import net.minecraft.storage.WriteView
-import net.minecraft.text.Text
-import net.minecraft.util.Rarity
 import net.minecraft.util.collection.DefaultedList
 import kotlin.math.min
 
-class DNDInventory : Inventory, ScreenHandlerFactory {
+class DNDInventory(val character: Character) : Inventory {
 
 	val equipment = DefaultedList.ofSize(EQUIPMENT_SIZE, ItemStack.EMPTY)
 	val items = MutableList<ItemStack>(63){ ItemStack.EMPTY }
@@ -259,15 +254,8 @@ class DNDInventory : Inventory, ScreenHandlerFactory {
 		markDirty()
 	}
 
-	override fun createMenu(syncId: Int, playerInventory: PlayerInventory, player: PlayerEntity?): ScreenHandler {
-		return DNDScreenHandler(syncId, playerInventory, this)
-	}
-
 	companion object {
 		val EQUIPMENT_SIZE = 20
-		val SPELL_BOOK = ItemStack(Items.ENCHANTED_BOOK).apply{
-			set(DataComponentTypes.ITEM_NAME, Text.translatable("item.mtt.spell_book"))
-			set(DataComponentTypes.RARITY, Rarity.RARE)
-		}
+		val SPELL_BOOK = ItemStack(DNDItems.SPELL_BOOK)
 	}
 }

@@ -1,5 +1,6 @@
 package com.pineypiney.mtt.screen
 
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.entity.DNDInventory
 import com.pineypiney.mtt.item.dnd.equipment.DNDEquipmentType
 import com.pineypiney.mtt.screen.slot.DNDEquipmentSlot
@@ -7,20 +8,15 @@ import com.pineypiney.mtt.screen.slot.DNDMainHandWeaponSlot
 import com.pineypiney.mtt.screen.slot.DNDOffhandWeaponSlot
 import com.pineypiney.mtt.screen.slot.DNDSlot
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.screen.ScreenHandler
 import net.minecraft.screen.slot.SlotActionType
 import net.minecraft.util.math.MathHelper
 import kotlin.math.max
 
-class DNDScreenHandler(syncID: Int, private val inventory: DNDInventory) : ScreenHandler(MTTScreenHandlers.DND_SCREEN_HANDLER, syncID) {
+class DNDScreenHandler(syncID: Int, val character: Character) : ScreenHandler(null, syncID) {
 
-	// Server side constructor sends the existing DNDInventory
-	constructor(syncID: Int, playerInventory: PlayerInventory, inventory: DNDInventory): this(syncID, inventory)
-
-	// Client side constructor send a new empty DNDInventory to be filled by the ScreenHandler
-	constructor(syncID: Int, playerInventory: PlayerInventory): this(syncID, DNDInventory())
+	val inventory = character.inventory
 
 	init {
 		addInventorySlots()

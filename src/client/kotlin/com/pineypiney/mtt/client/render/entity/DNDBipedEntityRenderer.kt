@@ -2,6 +2,7 @@ package com.pineypiney.mtt.client.render.entity
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
+import com.pineypiney.mtt.client.dnd.network.CharacterGameText
 import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity
 import com.pineypiney.mtt.client.render.MTTRenderers
 import com.pineypiney.mtt.client.render.entity.model.BipedModelData
@@ -12,6 +13,7 @@ import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.item.dnd.equipment.VisibleAccessoryItem
 import net.minecraft.client.MinecraftClient
+import net.minecraft.client.font.TextRenderer
 import net.minecraft.client.model.ModelPart
 import net.minecraft.client.render.command.OrderedRenderCommandQueue
 import net.minecraft.client.render.entity.EntityRenderer
@@ -19,6 +21,7 @@ import net.minecraft.client.render.entity.EntityRendererFactory
 import net.minecraft.client.render.state.CameraRenderState
 import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.entity.EntityPose
+import net.minecraft.text.Style
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.RotationAxis
@@ -66,7 +69,10 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 
 		state.limbSwingAnimationProgress = entity.limbAnimator.getAnimationProgress(f)
 		state.limbSwingAmplitude = entity.limbAnimator.getAmplitude(f)
-		state.outlineColor = (entity as ClientDNDEntity).selectionColour
+		if (entity !is ClientDNDEntity) return
+		state.outlineColor = entity.selectionColour
+		state.texts.clear()
+		state.texts.addAll(entity.texts)
 	}
 
 	override fun render(
@@ -100,7 +106,9 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		)
 		renderHelmet(state, data, matrices, queue, state.light)
 		matrices.pop()
-		super.render(state, matrices, queue, cameraState)
+
+		for (text in state.texts) renderText(text, queue, matrices, state, cameraState)
+		renderLabelIfPresent(state, matrices, queue, cameraState)
 	}
 
 	protected open fun setupTransforms(state: S, matrices: MatrixStack) {
@@ -177,6 +185,24 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		matrices.pop()
 	}
 
+	fun renderText(text: CharacterGameText, queue: OrderedRenderCommandQueue, matrices: MatrixStack, state: S, cameraState: CameraRenderState) {
+
+		val client = MinecraftClient.getInstance()
+		matrices.push()
+		matrices.translate(text.pos)
+		matrices.multiply(cameraState.orientation)
+		val s = .015f
+		matrices.scale(s, -s, s)
+		val width = 150
+		val lines = client.textRenderer.textHandler.wrapLines(text.text, width, Style.EMPTY)
+		val height = lines.size * 9
+		for ((i, line) in lines.withIndex()) {
+			val x = client.textRenderer.getWidth(line) * -.5f
+			val y = i * 9 - (height * .5f)
+			queue.submitText(matrices, x, y, text.text.asOrderedText(), false, TextRenderer.TextLayerType.NORMAL, state.light, -1, 0, 0)
+		}
+		matrices.pop()
+	}
 
 	private fun clampBodyYaw(entity: E, degrees: Float, tickProgress: Float): Float {
 		return MathHelper.lerpAngleDegrees(tickProgress, entity.lastBodyYaw, entity.bodyYaw)

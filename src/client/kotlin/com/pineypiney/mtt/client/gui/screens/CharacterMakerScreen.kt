@@ -106,10 +106,10 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 	}
 
 	override fun drawForeground(context: DrawContext, mouseX: Int, mouseY: Int) {
-		drawCenteredText(context, "mtt.race", 32, 16)
-		drawCenteredText(context, "mtt.class", 96, 16)
-		drawCenteredText(context, "mtt.abilities", 160, 16)
-		drawCenteredText(context, "mtt.background", 224, 16)
+		drawCentredText(context, "mtt.race", 32, 16)
+		drawCentredText(context, "mtt.class", 96, 16)
+		drawCentredText(context, "mtt.abilities", 160, 16)
+		drawCentredText(context, "mtt.background", 224, 16)
 	}
 
 	override fun drawBackground(context: DrawContext, deltaTicks: Float, mouseX: Int, mouseY: Int) {
@@ -140,7 +140,7 @@ class CharacterMakerScreen(handler: CharacterMakerScreenHandler, playerInventory
 		}
 	}
 
-	fun drawCenteredText(ctx: DrawContext, key: String, x: Int, y: Int){
+	fun drawCentredText(ctx: DrawContext, key: String, x: Int, y: Int) {
 		val text = Text.translatable(key)
 		val width = textRenderer.getWidth(text)
 		ctx.drawText(textRenderer, text, x - (width / 2), y, MTTScreens.textColour, false)

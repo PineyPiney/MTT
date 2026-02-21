@@ -10,6 +10,11 @@ import net.minecraft.client.network.ClientPlayerLikeState;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import org.spongepowered.asm.mixin.Final;
@@ -79,9 +84,21 @@ public class GameRendererMixin {
 	private void updateCrosshairTarget(CallbackInfo ci, @Local(argsOnly = true) float tickProgress) {
 		DNDClient dndClient = ((DNDClient) client);
 		SpellSelector selector = dndClient.mTT$getSpellSelector();
-		double range = selector != null ? selector.getSpell().getSettings().getRange() : 60.0;
-		if (client.getCameraEntity() != null)
-			dndClient.mTT$setDndCrosshairTarget(ClientPlayerEntity.getCrosshairTarget(client.getCameraEntity(), range, range, tickProgress));
+		double range = selector != null ? selector.getSpell().getSettings().getRange() * .2 : 60.0;
+		if (client.getCameraEntity() != null) {
+			HitResult hitResult = ClientPlayerEntity.getCrosshairTarget(client.getCameraEntity(), range + 1.0, range + 1.0, tickProgress);
+			HitResult returnResult = hitResult.getType() == HitResult.Type.MISS ? hitResult : switch (hitResult) {
+				case EntityHitResult e:
+					double dist2 = e.getEntity().getBoundingBox().squaredMagnitude(client.getCameraEntity().getBoundingBox());
+					yield dist2 > range * range ? BlockHitResult.createMissed(e.getPos(), Direction.UP, BlockPos.ofFloored(hitResult.getPos())) : e;
+				case BlockHitResult b:
+					double bDist2 = client.getCameraEntity().getBoundingBox().squaredMagnitude(b.getPos());
+					yield bDist2 > range * range ? BlockHitResult.createMissed(b.getPos(), b.getSide(), b.getBlockPos()) : b;
+				default:
+					yield hitResult;
+			};
+			dndClient.mTT$setDndCrosshairTarget(returnResult);
+		}
 		if (selector != null) selector.update();
 	}
 }

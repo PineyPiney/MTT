@@ -1,9 +1,12 @@
 package com.pineypiney.mtt.dnd.characters
 
 import com.pineypiney.mtt.dnd.DNDEngine
+import com.pineypiney.mtt.dnd.conditions.ConditionManager
 import com.pineypiney.mtt.dnd.network.ServerDNDEntity
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.spells.Spell
 import com.pineypiney.mtt.dnd.traits.Abilities
+import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
 import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
@@ -32,6 +35,7 @@ class SheetCharacter(val sheet: CharacterSheet, uuid: UUID, engine: DNDEngine) :
 	override var baseArmourClass: Int
 		get() = sheet.armourClass
 		set(value) { sheet.armourClass = value }
+	override val conditions: ConditionManager = ConditionManager(this, sheet.conditions)
 
 	override fun createEntity(world: World): DNDEntity {
 		val entity = ServerDNDEntity(world, this)
@@ -46,7 +50,12 @@ class SheetCharacter(val sheet: CharacterSheet, uuid: UUID, engine: DNDEngine) :
 
 	override fun getLevel(): Int = sheet.level
 
+	override fun getPreparedSpells(): Set<Spell> {
+		return sheet.preparedSpells.getAll().toSet()
+	}
+
 	override fun isProficientIn(equipment: EquipmentType): Boolean = sheet.isProficientIn(equipment)
+	override fun isProficientIn(ability: Ability): Boolean = sheet.isProficientIn(ability)
 	override fun getProficiencyBonus(): Int = sheet.calculateProficiencyBonus()
 
 	override fun toString(): String {

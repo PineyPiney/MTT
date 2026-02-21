@@ -67,6 +67,8 @@ class SpellLocationSelector(spell: Spell, val numLocations: Int) : SpellSelector
 		return selected.map { it.entityPos }
 	}
 
+	override fun getAngles(): List<Float> = emptyList()
+
 	override fun cancel() {
 		hoveredEntity?.highlight(false)
 		hoveredEntity = null
@@ -159,7 +161,7 @@ class SpellLocationSelector(spell: Spell, val numLocations: Int) : SpellSelector
 			selected.add(it)
 			return true
 		}
-		val entity = ShapeEntity(world, spell.settings.shape, pos)
+		val entity = ShapeEntity(world, spell.settings.shape, spell.settings.shape.placeAtCentre(pos, 0f))
 		return if (selected.add(entity)) {
 			world.addEntity(entity)
 			true

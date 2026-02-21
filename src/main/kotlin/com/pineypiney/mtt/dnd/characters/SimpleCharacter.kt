@@ -2,13 +2,13 @@ package com.pineypiney.mtt.dnd.characters
 
 import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
+import com.pineypiney.mtt.dnd.conditions.Condition
+import com.pineypiney.mtt.dnd.conditions.ConditionManager
 import com.pineypiney.mtt.dnd.network.ServerDNDEntity
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
-import com.pineypiney.mtt.dnd.traits.Abilities
-import com.pineypiney.mtt.dnd.traits.CreatureType
-import com.pineypiney.mtt.dnd.traits.ProficiencyTrait
-import com.pineypiney.mtt.dnd.traits.Size
+import com.pineypiney.mtt.dnd.spells.Spell
+import com.pineypiney.mtt.dnd.traits.*
 import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.dnd.traits.proficiencies.Proficiency
 import com.pineypiney.mtt.entity.DNDEntity
@@ -50,6 +50,7 @@ class SimpleCharacter(val details: Params, uuid: UUID, engine: DNDEngine) : Char
 		}
 
 	val proficiencies = mutableSetOf<Proficiency>()
+	override val conditions: ConditionManager = ConditionManager(this, details.conditions)
 
 	init {
 		for (trait in details.dndClass.coreTraits) {
@@ -88,8 +89,13 @@ class SimpleCharacter(val details: Params, uuid: UUID, engine: DNDEngine) : Char
 
 	override fun getLevel(): Int = details.level
 
+	override fun getPreparedSpells(): Set<Spell> = details.spells
+
 	override fun isProficientIn(equipment: EquipmentType): Boolean =
 		proficiencies.contains(Proficiency.findById(equipment.id))
+
+	override fun isProficientIn(ability: Ability): Boolean =
+		proficiencies.contains(Proficiency.findById(ability.id))
 
 	override fun getProficiencyBonus(): Int = MathHelper.ceilDiv(details.level, 4) + 1
 
@@ -104,11 +110,13 @@ class SimpleCharacter(val details: Params, uuid: UUID, engine: DNDEngine) : Char
 		val modelId: String,
 		val dndClass: DNDClass,
 		val level: Int,
-		val maxHealth: Int
+		val maxHealth: Int,
+		val spells: Set<Spell>
 	) {
 		val abilities = Abilities()
 		var health = maxHealth
 		var armourClass = 10
+		val conditions = SourceMap<Condition.ConditionState<*>>()
 
 		companion object {
 			val PACKET_CODEC = object : PacketCodec<ByteBuf, Params> {
@@ -120,11 +128,13 @@ class SimpleCharacter(val details: Params, uuid: UUID, engine: DNDEngine) : Char
 					val dndClass = DNDClass.findById(PacketCodecs.STRING.decode(buf))
 					val level = MTTPacketCodecs.bytInt.decode(buf)
 					val maxHealth = MTTPacketCodecs.shtInt.decode(buf)
-					val value = Params(name, race, subrace, modelId, dndClass, level, maxHealth)
+					val spells = MTTPacketCodecs.SPELLS.decode(buf)
+					val value = Params(name, race, subrace, modelId, dndClass, level, maxHealth, spells)
 
 					value.abilities.decode(buf)
 					value.armourClass = MTTPacketCodecs.bytInt.decode(buf)
 					value.health = MTTPacketCodecs.shtInt.decode(buf)
+					value.conditions.decode(buf, MTTPacketCodecs.smallCollection(MTTPacketCodecs.CONDITION, ::mutableSetOf))
 
 					return value
 				}
@@ -137,10 +147,12 @@ class SimpleCharacter(val details: Params, uuid: UUID, engine: DNDEngine) : Char
 					PacketCodecs.STRING.encode(buf, value.dndClass.id)
 					MTTPacketCodecs.bytInt.encode(buf, value.level)
 					MTTPacketCodecs.shtInt.encode(buf, value.maxHealth)
+					MTTPacketCodecs.SPELLS.encode(buf, value.spells)
 
 					value.abilities.encode(buf)
 					MTTPacketCodecs.bytInt.encode(buf, value.armourClass)
 					MTTPacketCodecs.shtInt.encode(buf, value.health)
+					value.conditions.encode(buf, MTTPacketCodecs.smallCollection(MTTPacketCodecs.CONDITION, ::mutableSetOf))
 				}
 
 			}

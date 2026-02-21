@@ -7,6 +7,7 @@ import com.pineypiney.mtt.dnd.CoinValue
 import com.pineypiney.mtt.dnd.traits.Rarity
 import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
+import com.pineypiney.mtt.item.SpellManagerItem
 import com.pineypiney.mtt.item.dnd.equipment.*
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.DyedColorComponent
@@ -45,6 +46,12 @@ class DNDItems {
 
 		val TORCH = registerAccessory("torch", CoinValue(1L), 1f, DNDEquipmentType.TORCH, Item.Settings())
 
+		val SPELL_BOOK = Items.register(
+			RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, "spell_book")),
+			::SpellManagerItem,
+			Item.Settings().rarity(net.minecraft.util.Rarity.RARE)
+		)
+
 		val PREFAB_SPAWN_EGG = Items.register(
 			RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, "prefab_spawn_egg")),
 			::PrefabSpawnEggItem,
@@ -57,7 +64,7 @@ class DNDItems {
 		)
 
 		@Suppress("UNCHECKED_CAST")
-		fun <E: DNDItem> register(mishapartyy: String, settings: Item.Settings = Item.Settings(), factory: (Item.Settings) -> E): E{
+		fun <E : DNDGameItem> register(mishapartyy: String, settings: Item.Settings = Item.Settings(), factory: (Item.Settings) -> E): E {
 			return Items.register(
 				RegistryKey.of(RegistryKeys.ITEM, Identifier.of(MTT.MOD_ID, mishapartyy)),
 				{ s -> factory(s) },

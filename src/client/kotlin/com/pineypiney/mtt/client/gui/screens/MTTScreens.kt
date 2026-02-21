@@ -10,7 +10,6 @@ class MTTScreens {
 		val textColour = -12566464
 
 		fun registerScreens(){
-			HandledScreens.register(MTTScreenHandlers.DND_SCREEN_HANDLER, ::DNDScreen)
 			HandledScreens.register(MTTScreenHandlers.CHARACTER_MAKER_SCREEN_HANDLER, ::CharacterMakerScreen)
 		}
 	}

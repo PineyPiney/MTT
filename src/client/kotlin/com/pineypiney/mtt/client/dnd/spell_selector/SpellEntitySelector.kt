@@ -44,6 +44,8 @@ class SpellEntitySelector(spell: Spell, val numEntities: Int, val duplicate: Boo
 		return selected.map { it.entityPos }
 	}
 
+	override fun getAngles(): List<Float> = emptyList()
+
 	override fun cancel() {
 		hovering?.highlight(false)
 		hovering = null

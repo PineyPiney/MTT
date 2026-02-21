@@ -12,7 +12,7 @@ class CubeCommandRenderer(shape: SpellShape.Cube, colour: Int) : ShapeCommandRen
 		quad(
 			matricesEntry,
 			vertexConsumer,
-			Vector3f(-length, 0.01f, -length),
+			Vector3f(-length, 0.01f, 0f),
 			Vector3f(0f, 0f, length * 2f),
 			Vector3f(length * 2f, 0f, 0f),
 			colour
