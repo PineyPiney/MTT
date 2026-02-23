@@ -1,17 +1,17 @@
 package com.pineypiney.mtt.dnd.server
 
-import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 
 class CharacterBin(val size: Int) {
 
-	val characters = mutableListOf<Character>()
+	val characters = mutableListOf<ServerCharacter>()
 
-	fun binCharacter(character: Character) {
+	fun binCharacter(character: ServerCharacter) {
 		if (characters.size == size) {
 			characters.removeFirst()
 		}
 		characters.add(character)
 	}
 
-	fun restoreCharacter(): Character? = characters.removeLastOrNull()
+	fun restoreCharacter(): ServerCharacter? = characters.removeLastOrNull()
 }

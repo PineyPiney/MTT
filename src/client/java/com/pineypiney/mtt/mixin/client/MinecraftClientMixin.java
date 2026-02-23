@@ -4,7 +4,6 @@ import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import com.pineypiney.mtt.client.dnd.spell_selector.SpellSelector;
 import com.pineypiney.mtt.client.render.MTTRenderers;
 import com.pineypiney.mtt.dnd.characters.Character;
-import com.pineypiney.mtt.dnd.characters.SheetCharacter;
 import com.pineypiney.mtt.entity.DNDEntity;
 import com.pineypiney.mtt.item.dnd.DNDItem;
 import com.pineypiney.mtt.mixin_interfaces.DNDClient;
@@ -295,7 +294,7 @@ public abstract class MinecraftClientMixin implements DNDEngineHolder<ClientDNDE
 
 	@Unique
 	@Nullable
-	public SheetCharacter getDNDCharacter(){
+	public Character getDNDCharacter() {
 		ClientPlayerEntity player = this.player;
 		if(player == null) return null;
 		return dndEngine.getCharacterFromPlayer(player.getUuid());

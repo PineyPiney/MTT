@@ -1,9 +1,10 @@
 package com.pineypiney.mtt.client.dnd
 
+import com.pineypiney.mtt.client.dnd.network.ClientCharacter
 import com.pineypiney.mtt.client.dnd.network.ClientCharacterNetworkHandler
 import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity
 import com.pineypiney.mtt.dnd.DNDEngine
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
+import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
@@ -14,7 +15,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.util.math.Box
 import java.util.*
 
-class ClientDNDEngine(val client: MinecraftClient) : DNDEngine() {
+class ClientDNDEngine(val client: MinecraftClient) : DNDEngine<ClientCharacter>() {
 
 	// On the client side the only players that we have to care about are the ones
 	// in the same dimension as the client and in close proximity (100 blocks here)
@@ -30,17 +31,32 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine() {
 	init {
 		// reset the client in case it joins a different server before closing the client
 		ClientPlayConnectionEvents.DISCONNECT.register { handler, client ->
-			running = false
-			DM = null
-			characters.clear()
-			playerCharacters.clear()
+			reset()
 		}
 	}
 
+	fun onPlayerConnect() {
+
+	}
+
+	fun addCharactersToCombat(combatId: Int, characterUuids: Map<UUID, Int>) {
+		val combat = combats.firstOrNull { it.id == combatId }
+		val characters = characterUuids.mapKeys { (uuid, _) -> getCharacter(uuid)!! }
+		if (combat != null) combat.enterCharacters(characters)
+		else {
+			startCombat(combatId, characters)
+		}
+	}
+
+	fun removeCharactersFromCombat(combatId: Int, characterUuids: Collection<UUID>) {
+		val combat = combats.firstOrNull { it.id == combatId } ?: return
+		combat.exitCharacters(characterUuids)
+	}
+
 	override fun getControllingPlayer(character: UUID): PlayerEntity? {
-		val playerUUID = playerCharacters.entries.firstOrNull { it.value == character }?.key ?: return null
-		return if (client.player?.uuid == playerUUID) client.player
-		else client.server?.playerManager?.getPlayer(playerUUID)
+		val playerUuid = playerCharacters.entries.firstOrNull { it.value == character }?.key ?: return null
+		return if (client.player?.uuid == playerUuid) client.player
+		else client.server?.playerManager?.getPlayer(playerUuid)
 	}
 
 	override fun associatePlayer(player: UUID, character: UUID) {
@@ -69,19 +85,19 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine() {
 		fun getInstance() =
 			(MinecraftClient.getInstance() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ClientDNDEngine
 
-		fun getClientCharacter(): SheetCharacter? {
+		fun getClientCharacter(): ClientCharacter? {
 			val client = MinecraftClient.getInstance()
-			val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`()
+			val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ClientDNDEngine
 			return engine.getCharacterFromPlayer(client.player?.uuid ?: return null)
 		}
 
-		fun getClientCharacterUUID(): UUID? {
+		fun getClientCharacterUuid(): UUID? {
 			val client = MinecraftClient.getInstance()
 			val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`()
-			return engine.getCharacterUUIDFromPlayer(client.player?.uuid ?: return null)
+			return engine.getCharacterUuidFromPlayer(client.player?.uuid ?: return null)
 		}
 
-		fun getRunningAndPlayerCharacter(player: PlayerEntity?): SheetCharacter? {
+		fun getRunningAndPlayerCharacter(player: PlayerEntity?): Character? {
 			val engine = getInstance()
 			if (!engine.running) return null
 			return engine.getCharacterFromPlayer(player?.uuid ?: return null)
@@ -90,8 +106,8 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine() {
 		fun getRunningAndPlayerCharacterEntity(player: PlayerEntity?): DNDEntity? {
 			val engine = getInstance()
 			if (!engine.running) return null
-			val characterUUID = engine.getCharacterUUIDFromPlayer(player?.uuid ?: return null) ?: return null
-			return engine.getEntityOfCharacter(characterUUID)
+			val characterUuid = engine.getCharacterUuidFromPlayer(player?.uuid ?: return null) ?: return null
+			return engine.getEntityOfCharacter(characterUuid)
 		}
 	}
 }

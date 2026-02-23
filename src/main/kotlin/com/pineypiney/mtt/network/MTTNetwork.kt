@@ -2,8 +2,8 @@ package com.pineypiney.mtt.network
 
 import com.pineypiney.mtt.dnd.Background
 import com.pineypiney.mtt.dnd.DNDEngine
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.DNDClass
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.dnd.traits.Ability
@@ -28,11 +28,14 @@ object MTTNetwork {
 		PayloadTypeRegistry.playS2C().register(RaceS2CPayload.ID, RaceS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(CharacterSheetS2CPayload.ID, CharacterSheetS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(CharacterParamsS2CPayload.ID, CharacterParamsS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(DeleteCharacterS2CPayload.ID, DeleteCharacterS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(EntityDNDEquipmentUpdateS2CPayload.ID, EntityDNDEquipmentUpdateS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(CharacterPositionLookS2CPayload.ID, CharacterPositionLookS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(CharacterDamageS2CPayload.ID, CharacterDamageS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(OpenDNDScreenS2CPayload.ID, OpenDNDScreenS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(CharacterConditionsS2CPayload.ID, CharacterConditionsS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(EnterCombatS2CPayload.ID, EnterCombatS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(ExitCombatS2CPayload.ID, ExitCombatS2CPayload.CODEC)
 
 		PayloadTypeRegistry.playC2S().register(OpenDNDScreenC2SPayload.ID, OpenDNDScreenC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(ClickButtonC2SPayload.ID, ClickButtonC2SPayload.CODEC)
@@ -81,21 +84,21 @@ object MTTNetwork {
 				// and wants to save it to the character list
 				"sheet_maker" -> {
 					// Close the screen for the player
-					ctx.player()?.closeHandledScreen()
+					ctx.player().closeHandledScreen()
 
 					handler.applyTraits()
 					val engine = getEngine(ctx) ?: return@registerGlobalReceiver
 
 					// Add the new character to the engine
-					val character = SheetCharacter(
+					val character = ServerCharacter(
 						handler.sheet,
 						UUID.randomUUID(),
-						(ctx.server() as DNDEngineHolder<*>).`mtt$getDNDEngine`()
+						(ctx.server() as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ServerDNDEngine,
 					)
 					engine.addCharacter(character)
 
 					// Associate this player with their new character
-					val uuid = ctx.player()?.uuid
+					val uuid = ctx.player().uuid
 					if(uuid != null) engine.associatePlayer(uuid, character.uuid)
 				}
 			}
@@ -109,7 +112,7 @@ object MTTNetwork {
 
 
 		ServerPlayNetworking.registerGlobalReceiver(UpdateSelectedDNDSlotC2SPayload.ID) { payload, ctx ->
-			val engine: DNDEngine = (ctx.server() as DNDEngineHolder<*>).`mtt$getDNDEngine`()
+			val engine: DNDEngine<*> = (ctx.server() as DNDEngineHolder<*>).`mtt$getDNDEngine`()
 			val character = engine.getCharacterFromPlayer(ctx.player().uuid)
 			if (character != null) {
 				val dndSlot: Int = payload.slot

@@ -1,14 +1,16 @@
 package com.pineypiney.mtt.dnd.spells
 
+import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.combat.CombatManager
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.rolls.SavingThrow
 import com.pineypiney.mtt.dnd.traits.Ability
 import net.minecraft.util.math.Vec3d
 
 abstract class Spell(val id: String, val level: Int, val settings: Settings) {
 
-	abstract fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?)
+	abstract fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?)
 
 	open fun getSavingAbility(): Ability? = Ability.DEXTERITY
 
@@ -23,6 +25,16 @@ abstract class Spell(val id: String, val level: Int, val settings: Settings) {
 	}
 
 	open fun getTargetCount(): Int = 1
+
+	fun getCharacter(engine: DNDEngine<*>, location: Vec3d, combat: CombatManager?): Character? {
+		return if (combat == null) engine.getAllCharacters().firstOrNull { it.pos == location } ?: return null
+		else combat.getCharacterAt(location) ?: return null
+	}
+
+	fun forEachCharacter(engine: DNDEngine<*>, combat: CombatManager?, action: (character: Character) -> Unit) {
+		if (combat == null) engine.getAllCharacters().forEach(action)
+		else combat.forEachCharacter(action)
+	}
 
 	fun getTranslationKey() = "mtt.spell.$id"
 	fun getDescriptionKey() = "mtt.spell.$id.description"

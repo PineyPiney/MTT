@@ -2,7 +2,6 @@ package com.pineypiney.mtt.client.dnd.network
 
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
 import com.pineypiney.mtt.client.gui.screens.SpellBookScreen
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.util.getEngine
 import net.minecraft.client.MinecraftClient
@@ -33,7 +32,7 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 		super.onDataTrackerUpdate(entries)
 		val engine = entityWorld.getEngine() as ClientDNDEngine
 		val player = engine.client.player
-		if (engine.running && player != null && engine.getCharacterUUIDFromPlayer(player.uuid) == character?.uuid) {
+		if (engine.running && player != null && engine.getCharacterUuidFromPlayer(player.uuid) == character?.uuid) {
 			engine.client.cameraEntity = this
 		}
 	}
@@ -108,7 +107,7 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 	}
 
 	override fun openSpellBook() {
-		val character = character as? SheetCharacter ?: return
+		val character = character as? ClientCharacter ?: return
 		val allSpells = character.getPreparedSpells()
 		MinecraftClient.getInstance().setScreen(SpellBookScreen(allSpells.toList()))
 	}

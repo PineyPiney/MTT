@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.mixin.client;
 
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
-import com.pineypiney.mtt.dnd.characters.SheetCharacter;
+import com.pineypiney.mtt.dnd.characters.Character;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
@@ -38,7 +38,7 @@ public abstract class InGameHudMixin {
 	@Inject(method = "renderHotbar", at = @At("HEAD"), cancellable = true)
 	private void renderDNDHotbar(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci){
 		ClientPlayerEntity player = client.player;
-		SheetCharacter character = ClientDNDEngine.Companion.getRunningAndPlayerCharacter(player);
+		Character character = ClientDNDEngine.Companion.getRunningAndPlayerCharacter(player);
 		if(player == null || character == null) return; // If this player doesn't have a character then render as normal
 
 		Arm offhandArm = player.getMainArm().getOpposite();

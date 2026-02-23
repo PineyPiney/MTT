@@ -5,6 +5,7 @@ import com.pineypiney.mtt.dnd.Duration
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.combat.CombatManager
 import com.pineypiney.mtt.dnd.conditions.Conditions
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.rolls.SavingThrow
 import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.dnd.traits.Source
@@ -40,7 +41,7 @@ object Spells {
 			.verbal()
 			.semantic()
 	) {
-		override fun apply(caster: Character, target: Character, level: Int, spellCastingAbility: Ability) {
+		override fun apply(caster: ServerCharacter, target: Character, level: Int, spellCastingAbility: Ability) {
 			super.apply(caster, target, level, spellCastingAbility)
 			target.conditions.apply(Source.SpellSource, Conditions.CHILL_TOUCH.createState(Duration.Turns(caster.uuid, 2)))
 		}
@@ -77,7 +78,7 @@ object Spells {
 			.verbal()
 			.semantic()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 
 		}
 	})
@@ -101,7 +102,7 @@ object Spells {
 			.verbal()
 			.material()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 
 		}
 	})
@@ -114,7 +115,7 @@ object Spells {
 			.verbal()
 			.semantic()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 
 		}
 	})
@@ -127,7 +128,7 @@ object Spells {
 			.semantic()
 			.material()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 
 		}
 	})
@@ -140,7 +141,7 @@ object Spells {
 			.semantic()
 			.material()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 
 		}
 	})
@@ -153,7 +154,7 @@ object Spells {
 			.semantic()
 			.material()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 
 		}
 	})
@@ -197,7 +198,7 @@ object Spells {
 			.verbal()
 			.semantic()
 	) {
-		override fun apply(caster: Character, target: Character, level: Int, spellCastingAbility: Ability) {
+		override fun apply(caster: ServerCharacter, target: Character, level: Int, spellCastingAbility: Ability) {
 			super.apply(caster, target, level, spellCastingAbility)
 			target.conditions.apply(Source.SpellSource, Conditions.RAY_OF_FROST.createState(Duration.Turns(caster.uuid, 2)))
 		}
@@ -211,7 +212,7 @@ object Spells {
 			.verbal()
 			.semantic()
 	) {
-		override fun apply(caster: Character, target: Character, level: Int, spellCastingAbility: Ability) {
+		override fun apply(caster: ServerCharacter, target: Character, level: Int, spellCastingAbility: Ability) {
 			super.apply(caster, target, level, spellCastingAbility)
 			target.conditions.apply(Source.SpellSource, Conditions.SHOCKING_GRASP.createState(Duration.Turns(target.uuid, 1)))
 		}
@@ -225,7 +226,7 @@ object Spells {
 			.verbal()
 			.semantic()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 			caster.conditions.apply(Source.SpellSource, Conditions.TRUE_STRIKE.State(Duration.Turns(caster.uuid, 1), spellCastingAbility, true))
 		}
 	})
@@ -241,7 +242,7 @@ object Spells {
 			.semantic()
 			.material()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 
 		}
 	})
@@ -265,9 +266,8 @@ object Spells {
 			.verbal()
 			.semantic()
 	) {
-		override fun cast(caster: Character, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
-			val characters = combat?.combatants ?: caster.engine.getAllCharacters()
-			val target = characters.firstOrNull { it.pos == location } ?: return
+		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
+			val target = getCharacter(caster.engine, location, combat) ?: return
 			if (!target.rollSavingThrow(SavingThrow(Ability.WISDOM, getSaveThreshold(caster, spellCastingAbility)))) {
 				target.conditions.apply(Source.SpellSource, Conditions.CHARMED.State(caster.uuid, Duration.Time(3600)))
 			}

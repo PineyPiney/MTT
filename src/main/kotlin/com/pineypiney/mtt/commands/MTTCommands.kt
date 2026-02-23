@@ -8,9 +8,9 @@ import com.mojang.brigadier.context.CommandContext
 import com.pineypiney.mtt.commands.arguments.*
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.characters.CharacterSheet
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
 import com.pineypiney.mtt.dnd.classes.Wizard
 import com.pineypiney.mtt.dnd.conditions.Condition
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.dnd.spells.Spells
@@ -209,6 +209,12 @@ object MTTCommands {
 						}
 					))
 		)
+		.then(defaultCharacter(literal("flee")) { ctx, character ->
+			val engine = getEngine(ctx)
+			val combat = engine.getCombat(character) ?: return@defaultCharacter 0
+			combat.exitCharacter(character)
+			1
+		})
 
 		// Teleport the character
 		.then(defaultCharacter(literal("tp"), argument("location", Vec3ArgumentType.vec3())) { ctx, character ->
@@ -244,7 +250,7 @@ object MTTCommands {
 			val spells = setOf(Spells.CHILL_TOUCH, Spells.BURNING_HANDS)
 			sheet.learnedSpells.addAll(Source.ClassSource(Wizard), spells)
 			sheet.preparedSpells.addAll(Source.ClassSource(Wizard), spells)
-			val character = SheetCharacter(sheet, UUID.randomUUID(), engine)
+			val character = ServerCharacter(sheet, UUID.randomUUID(), engine)
 			engine.addCharacter(character)
 			engine.associatePlayer(player.uuid, character.uuid)
 			1

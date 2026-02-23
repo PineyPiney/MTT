@@ -6,5 +6,5 @@ import net.minecraft.item.Item
 import net.minecraft.util.ActionResult
 
 open class DNDItem(settings: Settings) : Item(settings) {
-	open fun use(engine: DNDEngine, character: Character): ActionResult = ActionResult.PASS
+	open fun use(engine: DNDEngine<*>, character: Character): ActionResult = ActionResult.PASS
 }

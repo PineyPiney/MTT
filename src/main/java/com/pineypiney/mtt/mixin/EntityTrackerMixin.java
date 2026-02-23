@@ -33,7 +33,7 @@ public abstract class EntityTrackerMixin {
 		if (entity instanceof DNDEntity dndEntity) {
 			Character character = dndEntity.getCharacter();
 			if (character == null) return instance.listeners;
-			DNDEngine engine = ExtensionsKt.getEngine(dndEntity.getEntityWorld());
+			DNDEngine<?> engine = ExtensionsKt.getEngine(dndEntity.getEntityWorld());
 			PlayerEntity player = engine.getControllingPlayer(character.getUuid());
 			return instance.listeners.stream().filter(l -> l.getPlayer() != player).collect(Collectors.toSet());
 		} else return instance.listeners;

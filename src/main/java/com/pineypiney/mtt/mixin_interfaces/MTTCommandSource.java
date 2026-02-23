@@ -9,12 +9,12 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public interface MTTCommandSource {
-	DNDEngine mTT$getEngine();
+	DNDEngine<?> mTT$getEngine();
 
 	PlayerEntity mTT$getPlayer();
 
 	default Collection<? extends Character> getCharacterSuggestions(boolean playersOnly) {
-		DNDEngine engine = mTT$getEngine();
+		DNDEngine<?> engine = mTT$getEngine();
 		return playersOnly ? engine.getAllPlayableCharacters() : engine.getAllCharacters();
 	}
 

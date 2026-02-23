@@ -24,7 +24,7 @@ public abstract class ServerCommandSourceMixin implements MTTCommandSource {
 	public abstract @Nullable ServerPlayerEntity getPlayer();
 
 	@Override
-	public DNDEngine mTT$getEngine() {
+	public DNDEngine<?> mTT$getEngine() {
 		return ((DNDEngineHolder<?>) server).mtt$getDNDEngine();
 	}
 

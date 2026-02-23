@@ -1,8 +1,8 @@
 package com.pineypiney.mtt.dnd.characters
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.classes.DNDClass
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.race.Subrace
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
@@ -31,12 +31,12 @@ class Prefab(
 	val spells: Set<Spell>
 ) {
 
-	fun createCharacter(level: Int, engine: DNDEngine): SimpleCharacter {
+	fun createCharacter(level: Int, engine: ServerDNDEngine): ServerCharacter {
 		var maxHealth = dndClass.healthDie
 		repeat(level - 1) { maxHealth += Random.nextInt(dndClass.healthDie) }
-		val params = SimpleCharacter.Params(name.get(), race, subrace, modelID, dndClass, level, maxHealth, spells)
-		params.abilities.setValues(abilities)
-		val char = SimpleCharacter(params, UUID.randomUUID(), engine)
+		val details = SimpleCharacterDetails(name.get(), race, subrace, modelID, dndClass, level, maxHealth, spells)
+		details.abilities.setValues(abilities)
+		val char = ServerCharacter(details, UUID.randomUUID(), engine)
 		for (item in inventory) {
 			val (slot, stack) = item.get()
 			if (slot == -1) char.inventory.insertStack(-1, stack)

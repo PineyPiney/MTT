@@ -57,7 +57,7 @@ abstract class DNDBipedEntityRenderer<E: DNDEntity, S: DNDBipedEntityRenderState
 		state.character = entity.character ?: return
 
 		state.invisibleToPlayer = if(MinecraftClient.getInstance().options.perspective.isFirstPerson) {
-			ClientDNDEngine.getInstance().running && ClientDNDEngine.getClientCharacterUUID() == state.character.uuid
+			ClientDNDEngine.getInstance().running && ClientDNDEngine.getClientCharacterUuid() == state.character.uuid
 		}
 		else false
 

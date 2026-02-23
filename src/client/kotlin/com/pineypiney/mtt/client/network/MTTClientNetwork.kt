@@ -2,9 +2,8 @@ package com.pineypiney.mtt.client.network
 
 import com.pineypiney.mtt.MTT
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
+import com.pineypiney.mtt.client.dnd.network.ClientCharacter
 import com.pineypiney.mtt.client.gui.screens.DNDScreen
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
-import com.pineypiney.mtt.dnd.characters.SimpleCharacter
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
@@ -72,7 +71,7 @@ object MTTClientNetwork {
 
 		ClientPlayNetworking.registerGlobalReceiver(CharacterSheetS2CPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx)
-			val character = SheetCharacter(payload.sheet, payload.uuid, engine)
+			val character = ClientCharacter(payload.sheet, payload.uuid, engine)
 			engine.addCharacter(character)
 			val networkHandler = ctx.client().networkHandler ?: return@registerGlobalReceiver
 			character.readNbt(payload.nbt, networkHandler.registryManager)
@@ -80,10 +79,15 @@ object MTTClientNetwork {
 
 		ClientPlayNetworking.registerGlobalReceiver(CharacterParamsS2CPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx)
-			val character = SimpleCharacter(payload.params, payload.uuid, engine)
+			val character = ClientCharacter(payload.details, payload.uuid, engine)
 			engine.addCharacter(character)
 			val networkHandler = ctx.client().networkHandler ?: return@registerGlobalReceiver
 			character.readNbt(payload.nbt, networkHandler.registryManager)
+		}
+
+		ClientPlayNetworking.registerGlobalReceiver(DeleteCharacterS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx)
+			engine.removeCharacter(payload.uuid)
 		}
 
 		ClientPlayNetworking.registerGlobalReceiver(EntityDNDEquipmentUpdateS2CPayload.ID) { payload, ctx ->
@@ -110,6 +114,14 @@ object MTTClientNetwork {
 			val engine = getEngine(ctx)
 			val character = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
 			character.conditions.readNbt(payload.nbt)
+		}
+		ClientPlayNetworking.registerGlobalReceiver(EnterCombatS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx)
+			engine.addCharactersToCombat(payload.combatID, payload.characters)
+		}
+		ClientPlayNetworking.registerGlobalReceiver(ExitCombatS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx)
+			engine.removeCharactersFromCombat(payload.combatID, payload.characters)
 		}
 	}
 }

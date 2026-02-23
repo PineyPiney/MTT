@@ -2,6 +2,7 @@ package com.pineypiney.mtt.entity
 
 import com.google.common.annotations.VisibleForTesting
 import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.item.dnd.DNDItems
 import com.pineypiney.mtt.network.payloads.s2c.EntityDNDEquipmentUpdateS2CPayload
@@ -98,7 +99,7 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	override fun interact(player: PlayerEntity, hand: Hand): ActionResult {
 		return if (!entityWorld.isClient && player.getStackInHand(hand).item == DNDItems.CHARACTER_KILL_STICK) {
 			val engine = entityWorld.getEngine() as ServerDNDEngine
-			engine.removeCharacter(character ?: return ActionResult.FAIL)
+			engine.removeCharacter(character as? ServerCharacter ?: return ActionResult.FAIL)
 			ActionResult.SUCCESS_SERVER
 		} else ActionResult.PASS
 	}
@@ -532,7 +533,7 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	}
 
 	override fun readCustomData(view: ReadView) {
-		val (most, least) = view.getOptionalLongArray("characterUUID").getOrNull() ?: return
+		val (most, least) = view.getOptionalLongArray("characterUuid").getOrNull() ?: return
 		val uuid = UUID(most, least)
 
 		// The data tracker is synced with the client
@@ -544,7 +545,7 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 
 	override fun writeCustomData(view: WriteView) {
 		val uuid = character?.uuid ?: return
-		view.putLongArray("characterUUID", longArrayOf(uuid.mostSignificantBits, uuid.leastSignificantBits))
+		view.putLongArray("characterUuid", longArrayOf(uuid.mostSignificantBits, uuid.leastSignificantBits))
 	}
 
 	companion object {

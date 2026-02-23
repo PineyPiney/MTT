@@ -7,7 +7,7 @@ import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
 import com.pineypiney.mtt.dnd.characters.Character
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.mixin_interfaces.MTTCommandSource
 import net.minecraft.command.CommandSource
 import net.minecraft.command.argument.EntityArgumentType
@@ -72,12 +72,12 @@ class DNDCharacterArgumentType(val playerCharactersOnly: Boolean) : ArgumentType
 	companion object {
 		fun getArgument(ctx: CommandContext<*>, arg: String) = ctx.getArgument(arg, CharacterArgument::class.java)
 
-		fun getCharacter(ctx: CommandContext<ServerCommandSource>, arg: String): Character {
-			return getArgument(ctx, arg).getCharacter(ctx.source)
+		fun getCharacter(ctx: CommandContext<ServerCommandSource>, arg: String): ServerCharacter {
+			return getArgument(ctx, arg).getCharacter(ctx.source) as ServerCharacter
 		}
 
-		fun getPlayableCharacter(ctx: CommandContext<ServerCommandSource>, arg: String): SheetCharacter {
-			return getArgument(ctx, arg).getCharacter(ctx.source) as SheetCharacter
+		fun getPlayableCharacter(ctx: CommandContext<ServerCommandSource>, arg: String): ServerCharacter {
+			return getArgument(ctx, arg).getCharacter(ctx.source) as ServerCharacter
 		}
 	}
 

@@ -1,6 +1,6 @@
 package com.pineypiney.mtt.mixin.client;
 
-import com.pineypiney.mtt.dnd.DNDEngine;
+import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import com.pineypiney.mtt.mixin_interfaces.MTTCommandSource;
 import net.minecraft.client.MinecraftClient;
@@ -20,8 +20,8 @@ public abstract class ClientCommandSourceMixin implements MTTCommandSource {
 	private MinecraftClient client;
 
 	@Override
-	public DNDEngine mTT$getEngine() {
-		return ((DNDEngineHolder<?>) client).mtt$getDNDEngine();
+	public ClientDNDEngine mTT$getEngine() {
+		return (ClientDNDEngine) ((DNDEngineHolder<?>) client).mtt$getDNDEngine();
 	}
 
 	@Override

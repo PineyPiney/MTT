@@ -5,16 +5,19 @@ import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.characters.CharacterTypeRegistry
 import com.pineypiney.mtt.dnd.characters.Prefab
+import com.pineypiney.mtt.dnd.combat.CombatManager
+import com.pineypiney.mtt.dnd.network.ServerCharacter
+import com.pineypiney.mtt.dnd.network.ServerDNDEntity
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
-import com.pineypiney.mtt.network.payloads.s2c.DNDEngineUpdateS2CPayload
-import com.pineypiney.mtt.network.payloads.s2c.RaceS2CPayload
+import com.pineypiney.mtt.network.payloads.s2c.*
+import com.pineypiney.mtt.serialisation.EnginePropertySerialiser
 import com.pineypiney.mtt.serialisation.MTTCodecs
 import com.pineypiney.mtt.util.NameGenerator
 import com.pineypiney.mtt.util.toInts
-import io.netty.buffer.Unpooled
+import io.netty.buffer.ByteBuf
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
@@ -32,7 +35,7 @@ import java.util.*
 import kotlin.experimental.and
 import kotlin.io.path.notExists
 
-class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
+class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>() {
 
 	override var running: Boolean
 		get() = super.running
@@ -57,6 +60,8 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 	val nameGenerators = mutableMapOf<Identifier, NameGenerator>()
 	val prefabs = mutableSetOf<Prefab>()
 
+	var nextCombatId = 0
+
 	fun onPlayerConnect(player: ServerPlayerEntity) {
 		Race.set.forEach { race ->
 			val payload = RaceS2CPayload(race)
@@ -73,6 +78,9 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 		for ((playerUUID, characterUUID) in playerCharacters) {
 			ServerPlayNetworking.send(player, DNDEngineUpdateS2CPayload("player", playerUUID, characterUUID))
 		}
+		for (combat in combats) {
+			ServerPlayNetworking.send(player, combat.asPayload())
+		}
 
 		characterManager.connectPlayer(player)
 	}
@@ -81,15 +89,16 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 		characterManager.disconnectPlayer(player)
 	}
 
-	override fun addCharacter(character: Character) {
+	override fun addCharacter(character: ServerCharacter) {
 		super.addCharacter(character)
 		sendPayload(character.createPayload(server.registryManager))
 		if (showCharacters) createCharacterEntity(character)
 	}
 
-	override fun removeCharacter(character: Character) {
+	override fun removeCharacter(character: ServerCharacter) {
 		super.removeCharacter(character)
 		characterBin.binCharacter(character)
+		sendPayload(DeleteCharacterS2CPayload(character.uuid))
 
 		for (world in server.worlds) {
 			world.getEntitiesByType(MTTEntities.DND_ENTITY) { true }.forEach {
@@ -100,7 +109,7 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 
 	fun createCharacterEntity(character: Character) {
 		val world = server.getWorld(character.world) ?: return
-		world.spawnEntity(character.createEntity(world))
+		world.spawnEntity(ServerDNDEntity(world, character))
 	}
 
 	override fun getControllingPlayer(character: UUID): PlayerEntity? {
@@ -140,15 +149,30 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 		return true
 	}
 
-	/**
-	 * Remove the first character with UUID [uuid] and it's representing entity
-	 *
-	 * @return If a character was successfully removed
-	 */
-	fun removeCharacter(uuid: UUID): Boolean {
-		val character = getCharacter(uuid) ?: return false
-		removeCharacter(character)
-		return true
+	fun startCombat(vararg initialCharacters: Character) {
+		startCombat(nextCombatId++, initialCharacters.toSet())
+	}
+
+	override fun onCharactersEnterCombat(manager: CombatManager, characters: Map<out Character, Int>) {
+		sendPayload(EnterCombatS2CPayload(manager.id, characters.mapKeys { (char, _) -> char.uuid }))
+	}
+
+	override fun onCharactersExitCombat(manager: CombatManager, characters: List<UUID>) {
+		super.onCharactersExitCombat(manager, characters)
+		sendPayload(ExitCombatS2CPayload(manager.id, characters))
+	}
+
+	fun showCharacters() {
+		killCharacters()
+		showCharacters = true
+		for (character in characters) createCharacterEntity(character)
+	}
+
+	fun killCharacters() {
+		showCharacters = false
+		server.worlds.forEach { world ->
+			world.getEntitiesByType(MTTEntities.DND_ENTITY) { true }.forEach { it.kill(world) }
+		}
 	}
 
 	private fun loadJson(directory: String, func: (Identifier, JsonObject) -> Unit) {
@@ -186,33 +210,6 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 		}
 	}
 
-	fun addStringPayload(id: String, data: String) {
-		updates.add(DNDEngineUpdateS2CPayload(id, emptyList(), data))
-	}
-
-	fun addIntPayload(id: String, ints: List<Int>) {
-		updates.add(DNDEngineUpdateS2CPayload(id, ints, ""))
-	}
-
-	private fun sendPayload(payload: CustomPayload) {
-		for (player in server.playerManager.playerList) {
-			ServerPlayNetworking.send(player, payload)
-		}
-	}
-
-	fun showCharacters() {
-		killCharacters()
-		showCharacters = true
-		for (character in characters) createCharacterEntity(character)
-	}
-
-	fun killCharacters() {
-		showCharacters = false
-		server.worlds.forEach { world ->
-			world.getEntitiesByType(MTTEntities.DND_ENTITY) { true }.forEach { it.kill(world) }
-		}
-	}
-
 	fun save(suppressLogs: Boolean): Boolean {
 		val savePath = server.getSavePath(WorldSavePath.ROOT)
 		if (savePath.notExists()) return false
@@ -220,18 +217,8 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 		val mttDir = File(savePath.toString(), "mtt")
 		if (!mttDir.exists()) mttDir.mkdir()
 
-		val charactersFile = File(mttDir, "characters.bin")
-		if (!charactersFile.exists()) charactersFile.createNewFile()
-
-		val buf = RegistryByteBuf(Unpooled.buffer(), server.registryManager)
-		val bools = MTTCodecs.createBoolByte(running, showCharacters)
-		buf.writeBytes(byteArrayOf(bools))
-
-		MTTPacketCodecs.int.encode(buf, characters.size)
-		for (character in characters) CharacterTypeRegistry.save(character, buf)
-
-		MTTPacketCodecs.encodeMap(buf, playerCharacters, MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.UUID_CODEC)
-		charactersFile.writeBytes(buf.nioBuffer().array())
+		EnginePropertySerialiser.CHARACTER_SERIALISER.save(this, mttDir)
+		EnginePropertySerialiser.COMBATS_SERIALISER.save(this, mttDir)
 
 		return true
 	}
@@ -244,28 +231,63 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine() {
 		val mttDir = File(savePath.toString(), "mtt")
 		if (!mttDir.exists()) return false
 
-		val charactersFile = File(mttDir, "characters.bin")
-		if (charactersFile.exists()) {
-			val buf = RegistryByteBuf(Unpooled.buffer(), server.registryManager)
-			buf.writeBytes(charactersFile.readBytes())
-			if (buf.readableBytes() == 0) return true
-
-			val boolByte = buf.readByte()
-			running = boolByte and 1 > 0
-			showCharacters = boolByte and 2 > 0
-
-			characters.clear()
-			playerCharacters.clear()
-
-			val numCharacters = MTTPacketCodecs.int.decode(buf)
-			repeat(numCharacters) {
-				val char = CharacterTypeRegistry.load(buf, this)
-				if (char != null) characters.add(char)
-			}
-			MTTPacketCodecs.decodeMap(buf, MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.UUID_CODEC, playerCharacters)
-		}
-
+		EnginePropertySerialiser.CHARACTER_SERIALISER.load(this, mttDir)
+		EnginePropertySerialiser.COMBATS_SERIALISER.load(this, mttDir)
 
 		return true
+	}
+
+	fun encodeCharacters(buf: RegistryByteBuf) {
+		val bools = MTTCodecs.createBoolByte(running, showCharacters)
+		buf.writeByte(bools)
+
+		MTTPacketCodecs.int.encode(buf, characters.size)
+		for (character in characters) CharacterTypeRegistry.save(character, character.details, buf)
+
+		MTTPacketCodecs.encodeMap(buf, playerCharacters, MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.UUID_CODEC)
+	}
+
+	fun decodeCharacters(buf: RegistryByteBuf) {
+		val boolByte = buf.readByte()
+		running = boolByte and 1 > 0
+		showCharacters = boolByte and 2 > 0
+
+		characters.clear()
+		playerCharacters.clear()
+
+		val numCharacters = MTTPacketCodecs.int.decode(buf)
+		repeat(numCharacters) {
+			val char = CharacterTypeRegistry.load(buf, this)
+			if (char != null) characters.add(char)
+		}
+		MTTPacketCodecs.decodeMap(buf, MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.UUID_CODEC, playerCharacters)
+	}
+
+	fun encodeCombats(buf: ByteBuf) {
+		MTTPacketCodecs.bytInt.encode(buf, combats.size)
+		for (combat in combats) combat.encode(buf)
+	}
+
+	fun decodeCombats(buf: ByteBuf) {
+		combats.clear()
+		repeat(MTTPacketCodecs.bytInt.decode(buf)) {
+			val combat = CombatManager(nextCombatId++, this)
+			combat.decode(buf, this)
+			combats.add(combat)
+		}
+	}
+
+	fun addStringPayload(id: String, data: String) {
+		updates.add(DNDEngineUpdateS2CPayload(id, emptyList(), data))
+	}
+
+	fun addIntPayload(id: String, ints: List<Int>) {
+		updates.add(DNDEngineUpdateS2CPayload(id, ints, ""))
+	}
+
+	private fun sendPayload(payload: CustomPayload) {
+		for (player in server.playerManager.playerList) {
+			ServerPlayNetworking.send(player, payload)
+		}
 	}
 }

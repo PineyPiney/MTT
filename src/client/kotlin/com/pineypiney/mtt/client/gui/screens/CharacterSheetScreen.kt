@@ -2,13 +2,14 @@ package com.pineypiney.mtt.client.gui.screens
 
 import com.pineypiney.mtt.client.gui.widget.DynamicWidgets
 import com.pineypiney.mtt.client.gui.widget.sheet_widgets.*
-import com.pineypiney.mtt.dnd.characters.SheetCharacter
+import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.characters.CharacterSheet
 import com.pineypiney.mtt.dnd.traits.Ability
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.gui.screen.Screen
 import net.minecraft.text.Text
 
-class CharacterSheetScreen(val character: SheetCharacter) : Screen(Text.translatable("mtt.screen.character_sheet")){
+class CharacterSheetScreen(val sheet: CharacterSheet, val character: Character) : Screen(Text.translatable("mtt.screen.character_sheet")) {
 
 	var x = 0
 	var y = 0
@@ -18,18 +19,18 @@ class CharacterSheetScreen(val character: SheetCharacter) : Screen(Text.translat
 		y = (height - 252) / 2
 
 		val classText = Text.literal("")
-		for ((i, clazz) in character.sheet.classes.entries.withIndex()) {
+		for ((i, clazz) in sheet.classes.entries.withIndex()) {
 			classText.append(Text.translatable("mtt.class.${clazz.key.id}"))
 			classText.append(" ${clazz.value}")
-			if (i < character.sheet.classes.size - 1) classText.append(" / ")
+			if (i < sheet.classes.size - 1) classText.append(" / ")
 		}
 
 		val raceInfo = InfoTextWidget(
 			this,
 			x + 8,
 			y + 30,
-			character.sheet.race.getText(),
-			character.sheet.race.getText(character.sheet.subrace)
+			character.race.getText(),
+			character.race.getText(sheet.subrace)
 		)
 		val classInfo = InfoTextWidget(this, x + raceInfo.width + 16, y + 30, classText, classText)
 		addDrawableChild(raceInfo)
@@ -124,7 +125,7 @@ class CharacterSheetScreen(val character: SheetCharacter) : Screen(Text.translat
 				character,
 				"mtt.initiative",
 				24,
-				{ char -> char.getInitiative().let { if (it > 0) "+$it" else it.toString() } },
+				{ char -> char.getInitiativeModifier().let { if (it > 0) "+$it" else it.toString() } },
 				5,
 				x + 122,
 				y + 48,
@@ -160,7 +161,7 @@ class CharacterSheetScreen(val character: SheetCharacter) : Screen(Text.translat
 	}
 
 	fun renderForeground(context: DrawContext, mouseX: Int, mouseY: Int, deltaTicks: Float){
-		val nameText = Text.literal(character.sheet.name)
+		val nameText = Text.literal(character.name)
 		context.matrices.pushMatrix()
 		context.matrices.scale(2f, 2f)
 		context.drawText(client?.textRenderer, nameText, x / 2 + 4, y / 2 + 4, -12566464, false)

@@ -4,7 +4,7 @@ import com.mojang.authlib.GameProfile;
 import com.pineypiney.mtt.MTT;
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import com.pineypiney.mtt.dnd.DNDEngine;
-import com.pineypiney.mtt.dnd.characters.SheetCharacter;
+import com.pineypiney.mtt.dnd.characters.Character;
 import com.pineypiney.mtt.entity.DNDEntity;
 import com.pineypiney.mtt.mixin_interfaces.CharacterController;
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
@@ -104,13 +104,13 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
 
 	@Inject(method = "tickMovementInput()V", at = @At("HEAD"), cancellable = true)
 	private void moveCharacter(CallbackInfo ci) {
-		DNDEngine engine = ((DNDEngineHolder<?>) client).mtt$getDNDEngine();
+		DNDEngine<?> engine = ((DNDEngineHolder<?>) client).mtt$getDNDEngine();
 		if(engine == null){
 			MTT.Companion.getLogger().warn("Client does not have DNDEngine");
 			return;
 		}
 		if (!engine.getRunning() || uuid.equals(engine.getDM())) return;
-		SheetCharacter character = engine.getCharacterFromPlayer(uuid);
+		Character character = engine.getCharacterFromPlayer(uuid);
 		if (character == null) return;
 
 		ci.cancel();

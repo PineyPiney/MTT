@@ -4,7 +4,6 @@ import com.pineypiney.mtt.dice.DieRoll
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.conditions.Condition
 import com.pineypiney.mtt.dnd.traits.Ability
-import com.pineypiney.mtt.util.D20
 
 data class SavingThrow(val ability: Ability, val target: Int) {
 
@@ -15,7 +14,7 @@ data class SavingThrow(val ability: Ability, val target: Int) {
 
 	fun roll(character: Character, roll: DieRoll): Boolean {
 		character.conditions.forEachState { conditionModify(it, roll) }
-		var t = D20.roll() + character.abilities.getMod(ability)
+		var t = roll.roll() + character.abilities.getMod(ability)
 		if (character.isProficientIn(ability)) t += character.getProficiencyBonus()
 		return t >= target
 	}

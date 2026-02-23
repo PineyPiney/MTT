@@ -6,6 +6,7 @@ import com.pineypiney.mtt.component.MTTComponents
 import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.conditions.ConditionManager
 import com.pineypiney.mtt.dnd.race.Race
+import com.pineypiney.mtt.dnd.rolls.AbilityCheck
 import com.pineypiney.mtt.dnd.rolls.SavingThrow
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.dnd.spells.Spell
@@ -16,7 +17,6 @@ import com.pineypiney.mtt.dnd.traits.Size
 import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
 import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
-import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.DNDInventory
 import com.pineypiney.mtt.item.dnd.DNDGameItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDShieldItem
@@ -41,20 +41,35 @@ import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
-abstract class Character(val uuid: UUID, val engine: DNDEngine) {
+abstract class Character(val uuid: UUID) {
 
-	abstract var name: String
-	abstract val race: Race
-	abstract val type: CreatureType
-	abstract val size: Size
-	abstract val speed: Int
-	abstract val model: CharacterModel
-	abstract var health: Int
-	abstract val maxHealth: Int
-	abstract val abilities: Abilities
-	abstract var baseArmourClass: Int
+	abstract val engine: DNDEngine<*>
+	abstract val details: CharacterDetails
+
+	var name: String
+		get() = details.name
+		set(value) {
+			details.name = value
+		}
+	val race: Race get() = details.race
+	val type: CreatureType get() = details.type
+	val size: Size get() = details.size
+	val speed: Int get() = details.speed
+	val model: CharacterModel get() = details.model
+	var health: Int
+		get() = details.health
+		set(value) {
+			details.health = value
+		}
+	val maxHealth: Int get() = details.maxHealth
+	val abilities: Abilities get() = details.abilities
+	var baseArmourClass: Int
+		get() = details.armourClass
+		set(value) {
+			details.armourClass = value
+		}
 	val inventory: DNDInventory = DNDInventory(this)
-	abstract val conditions: ConditionManager
+	val conditions: ConditionManager by lazy { ConditionManager(this, details.conditions) }
 
 	var world: RegistryKey<World> = World.OVERWORLD
 	var pos = Vec3d(0.0, 0.0, 0.0)
@@ -79,21 +94,26 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) {
 		return total
 	}
 
-	open fun getInitiative(): Int{
+	open fun getInitiativeModifier(): Int {
 		return abilities.dexMod
 	}
 
-	fun addItemStack(stack: ItemStack){
-		inventory.insertStack(-1, stack)
-		(stack.item as? DNDGameItem)?.addToCharacter(this, stack)
-	}
+	fun getLevel(): Int = details.level
+
+	fun getPreparedSpells(): Set<Spell> = details.getPreparedSpells()
+
+	fun isProficientIn(equipment: EquipmentType): Boolean = details.isProficientIn(equipment)
+
+	fun isProficientIn(ability: Ability): Boolean = details.isProficientIn(ability)
+
+	fun getProficiencyBonus(): Int = details.getProficiencyBonus()
 
 	fun getDamage(): DamageRolls {
 		val stack = inventory.getHeldStack()
 		return DNDWeaponItem.getDamage(stack, this)
 	}
 
-	fun attack(target: Character) {
+	open fun attack(target: Character) {
 		val armour = target.getTotalArmour()
 		val roll = D20.roll()
 		val crit = roll == 20
@@ -102,7 +122,7 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) {
 		}
 	}
 
-	fun damage(damage: DamageRolls, crit: Boolean, attacker: Character?, savingThrow: SavingThrow? = null) {
+	open fun damage(damage: DamageRolls, crit: Boolean, attacker: Character?, savingThrow: SavingThrow? = null) {
 		val saved = savingThrow?.roll(this) ?: false
 		for (damage in damage.types) {
 			var amount = damage.roll(crit, attacker != null && attacker.inventory.getOffhand() == null)
@@ -111,6 +131,30 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) {
 				if (engine is ServerDNDEngine) engine.updates.add(CharacterDamageS2CPayload(uuid, damage.type, amount))
 			}
 		}
+	}
+
+	open fun rollSavingThrow(savingThrow: SavingThrow): Boolean = savingThrow.roll(this)
+
+	open fun rollAbilityCheck(check: AbilityCheck): Int = check.roll(this)
+
+	open fun rollInitiative(): Int = AbilityCheck.INITIATIVE.roll(this)
+
+	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int {
+		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
+		if (isProficientIn(weaponType)) i += getProficiencyBonus()
+		i += stack[MTTComponents.HIT_BONUS_TYPE] ?: 0
+		return i
+	}
+
+	fun getDamageBonus(weaponType: WeaponType, stack: ItemStack): Int {
+		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
+		i += stack[MTTComponents.DAMAGE_BONUS_TYPE] ?: 0
+		return i
+	}
+
+	fun addItemStack(stack: ItemStack) {
+		inventory.insertStack(-1, stack)
+		(stack.item as? DNDGameItem)?.addToCharacter(this, stack)
 	}
 
 	fun readNbt(nbt: NbtCompound, regManager: DynamicRegistryManager) {
@@ -145,36 +189,17 @@ abstract class Character(val uuid: UUID, val engine: DNDEngine) {
 		nbt.put("inventory", view.nbt)
 	}
 
-	abstract fun createEntity(world: World): DNDEntity
-
-	abstract fun createPayload(regManager: DynamicRegistryManager): CustomPayload
-
-	abstract fun getLevel(): Int
-
-	abstract fun getPreparedSpells(): Set<Spell>
-
-	abstract fun isProficientIn(equipment: EquipmentType): Boolean
-
-	abstract fun isProficientIn(ability: Ability): Boolean
-
-	abstract fun getProficiencyBonus(): Int
-
-	open fun rollSavingThrow(savingThrow: SavingThrow): Boolean = savingThrow.roll(this)
-
-	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int {
-		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
-		if (isProficientIn(weaponType)) i += getProficiencyBonus()
-		i += stack[MTTComponents.HIT_BONUS_TYPE] ?: 0
-		return i
+	fun createPayload(regManager: DynamicRegistryManager): CustomPayload {
+		val nbt = NbtCompound()
+		writeNbt(nbt, regManager)
+		return details.createPayload(regManager, uuid, nbt)
 	}
 
-	fun getDamageBonus(weaponType: WeaponType, stack: ItemStack): Int {
-		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
-		i += stack[MTTComponents.DAMAGE_BONUS_TYPE] ?: 0
-		return i
-	}
+	fun isPlayable() = details is CharacterSheet
 
 	fun getErrorReporterContext() = ErrorReportingContext(this)
+
+	override fun toString(): String = "$name($uuid)"
 
 	data class ErrorReportingContext(val character: Character) : ErrorReporter.Context {
 		override fun getName(): String = character.name

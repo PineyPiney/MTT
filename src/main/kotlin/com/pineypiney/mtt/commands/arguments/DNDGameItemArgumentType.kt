@@ -31,8 +31,8 @@ class DNDGameItemArgumentType(val access: CommandRegistryAccess) : ArgumentType<
 		for (entry in registry.streamEntries()) {
 			val key = entry.registryKey().value
 			if (entry.value() is DNDGameItem) {
-				if (key.namespace == MTT.MOD_ID) builder.suggest(key.path)
-				else builder.suggest(key.toString())
+				val suggestions = if (key.namespace == MTT.MOD_ID) listOf(key.path, key.toString()) else listOf(key.toString())
+				for (suggest in suggestions) if (suggest.startsWith(builder.remainingLowerCase)) builder.suggest(suggest)
 			}
 		}
 

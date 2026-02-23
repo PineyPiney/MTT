@@ -41,7 +41,7 @@ fun UUID.toInts(): List<Int> {
 	)
 }
 
-fun World.getEngine(): DNDEngine = (this as DNDEngineHolder<*>).`mtt$getDNDEngine`()
+fun World.getEngine(): DNDEngine<*> = (this as DNDEngineHolder<*>).`mtt$getDNDEngine`()
 fun MinecraftServer.getEngine(): ServerDNDEngine = (this as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ServerDNDEngine
 
 fun <E> Collection<E>.findOrError(message: String, pred: (E) -> Boolean): E {

@@ -8,12 +8,12 @@ import kotlin.math.min
 object MTTCodecs {
 
 
-	fun createBoolByte(vararg values: Boolean): Byte {
+	fun createBoolByte(vararg values: Boolean): Int {
 		var b = 0
 		for (i in 0..<min(values.size, 8)) {
 			b = b or if (values[i]) 1 shl i else 0
 		}
-		return b.toByte()
+		return b
 	}
 
 	val UUID_CODEC: Codec<UUID> = RecordCodecBuilder.create { builder ->
