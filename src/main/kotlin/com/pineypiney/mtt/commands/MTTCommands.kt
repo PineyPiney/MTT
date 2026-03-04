@@ -29,6 +29,7 @@ import net.minecraft.command.permission.PermissionLevel
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.player.PlayerInventory
 import net.minecraft.item.ItemStack
+import net.minecraft.network.packet.s2c.play.PositionFlag
 import net.minecraft.screen.NamedScreenHandlerFactory
 import net.minecraft.screen.ScreenHandler
 import net.minecraft.server.command.CommandManager.argument
@@ -125,22 +126,21 @@ object MTTCommands {
 			})
 		)
 		// Rename the character
-		.then(defaultCharacter(literal("rename"), argument("name", StringArgumentType.greedyString())) { ctx, character ->
-			val engine = getEngine(ctx)
+		.then(defaultCharacter(literal("rename"), argument("name", StringArgumentType.greedyString())) { ctx, engine, character ->
 			character.name = StringArgumentType.getString(ctx, "name")
 			engine.getEntityOfCharacter(character.uuid)?.name = character.name
 			engine.updates.add(DNDEngineUpdateS2CPayload("rename", character.uuid.toInts(), character.name))
 			1
 		})
 		// Open the inventory of the character
-		.then(defaultCharacter(literal("inventory")) { ctx, character ->
+		.then(defaultCharacter(literal("inventory")) { ctx, _, character ->
 			val player = ctx.source.player
 			if (player != null) {
 				(player as? MTTServerPlayer)?.`mTT$openCharacterInventory`(character)
 				1
 			} else 0
 		})
-		.then(defaultCharacter(literal("give"), argument("item", DNDGameItemArgumentType(access))) { ctx, character ->
+		.then(defaultCharacter(literal("give"), argument("item", DNDGameItemArgumentType(access))) { ctx, engine, character ->
 			val stack = ItemStack(DNDGameItemArgumentType.getItem(ctx, "item"), 1)
 			character.addItemStack(stack)
 			1
@@ -183,53 +183,55 @@ object MTTCommands {
 		// Set and query character conditions
 		.then(
 			literal("condition")
-				.then(defaultCharacter(literal("give"), argument("condition", DNDConditionStateArgumentType())) { ctx, character ->
+				.then(defaultCharacter(literal("give"), argument("condition", DNDConditionStateArgumentType())) { ctx, engine, character ->
 					val DM = getEngine(ctx).DM ?: ctx.source.player?.uuid ?: return@defaultCharacter 0
 					val condition = DNDConditionStateArgumentType.getCondition(ctx, "condition")
 					character.conditions.apply(Source.DMOverrideSource(DM), condition)
 					reply(ctx, "Given ${character.name} $condition")
 					1
-				}).then(defaultCharacter(literal("query")) { ctx, character ->
-					reply(ctx, "${character.name} has the following conditions: " + character.conditions.mapConditions<String>(Condition.ConditionState<*>::toString).joinToString(", "), false)
+				}).then(defaultCharacter(literal("query")) { ctx, engine, character ->
+					reply(ctx, "${character.name} has the following conditions: " + character.conditions.mapConditions(Condition.ConditionState<*>::toString).joinToString(", "), false)
 					1
 				}).then(
 					defaultCharacter(
 						literal("remove"),
-						CharacterCommand(literal("all")) { _, character ->
+						CharacterCommand(literal("all")) { _, _, character ->
 							character.conditions.clear()
 							1
 						},
 						CharacterCommand(
 							argument("condition", DNDConditionArgumentType("character")),
 							argument("condition", DNDConditionArgumentType(null))
-						) { ctx, character ->
+						) { ctx, _, character ->
 							val condition = DNDConditionArgumentType.getCondition(ctx, "condition")
 							character.conditions.cleanse(condition)
 							1
 						}
 					))
 		)
-		.then(defaultCharacter(literal("flee")) { ctx, character ->
-			val engine = getEngine(ctx)
+		.then(defaultCharacter(literal("flee")) { ctx, engine, character ->
 			val combat = engine.getCombat(character) ?: return@defaultCharacter 0
 			combat.exitCharacter(character)
 			1
-		})
+		}.then(literal("all").executes { ctx ->
+			val engine = getEngine(ctx)
+			while (engine.combats.isNotEmpty()) engine.combats.first().endCombat()
+			1
+		}))
 
 		// Teleport the character
-		.then(defaultCharacter(literal("tp"), argument("location", Vec3ArgumentType.vec3())) { ctx, character ->
-			val engine = getEngine(ctx)
+		.then(defaultCharacter(literal("tp"), argument("location", Vec3ArgumentType.vec3())) { ctx, engine, character ->
 			val entity = engine.getEntityOfCharacter(character.uuid)
 			val pos = Vec3ArgumentType.getVec3(ctx, "location")
 			if (entity == null) character.pos = pos
-			else entity.setPosition(pos)
+			else entity.teleport(entity.entityWorld, pos.x, pos.y, pos.z, setOf(PositionFlag.X_ROT, PositionFlag.Y_ROT), entity.yaw, entity.pitch, false)
 			1
 		})
 
 		// Delete the character
 		.then(literal("delete").then(argument("character", DNDCharacterArgumentType(false)).executes { ctx ->
 			val character = DNDCharacterArgumentType.getCharacter(ctx, "character")
-			if (getEngine(ctx).removeCharacter(character.uuid)) {
+			if (character.engine.removeCharacter(character.uuid)) {
 				reply(ctx, "Removed DND character ${character.name}")
 			} else reply(ctx, "There is no DND Character with the name ${character.name} to delete")
 			1
@@ -256,29 +258,33 @@ object MTTCommands {
 			1
 		})
 
-	private fun <T : ArgumentBuilder<ServerCommandSource, T>> defaultCharacter(builder: T, func: (ctx: CommandContext<ServerCommandSource>, character: Character) -> Int): T {
+	private fun <T : ArgumentBuilder<ServerCommandSource, T>> defaultCharacter(builder: T, func: (ctx: CommandContext<ServerCommandSource>, engine: ServerDNDEngine, character: Character) -> Int): T {
 		return builder.then(argument("character", DNDCharacterArgumentType(false)).executes { ctx ->
-			val character = DNDCharacterArgumentType.getCharacter(ctx, "character")
-			func(ctx, character)
+			val engine = getEngine(ctx)
+			val character = DNDCharacterArgumentType.getCharacter(ctx, engine, "character")
+			func(ctx, engine, character)
 		}).executes { ctx ->
 			val player = ctx.source.player ?: return@executes 0
-			val character = getEngine(ctx).getCharacterFromPlayer(player.uuid) ?: return@executes 0
-			func(ctx, character)
+			val engine = getEngine(ctx)
+			val character = engine.getCharacterFromPlayer(player.uuid) ?: return@executes 0
+			func(ctx, engine, character)
 		}
 	}
 
 	private fun <T : ArgumentBuilder<ServerCommandSource, T>> defaultCharacter(
 		builder: T,
 		argument: RequiredArgumentBuilder<ServerCommandSource, *>,
-		func: (ctx: CommandContext<ServerCommandSource>, character: Character) -> Int
+		func: (ctx: CommandContext<ServerCommandSource>, engine: ServerDNDEngine, character: Character) -> Int
 	): T {
 		return builder.then(argument("character", DNDCharacterArgumentType(false)).then(argument.executes { ctx ->
-			val character = DNDCharacterArgumentType.getCharacter(ctx, "character")
-			func(ctx, character)
+			val engine = getEngine(ctx)
+			val character = DNDCharacterArgumentType.getCharacter(ctx, engine, "character")
+			func(ctx, engine, character)
 		})).then(argument.executes { ctx ->
 			val player = ctx.source.player ?: return@executes 0
-			val character = getEngine(ctx).getCharacterFromPlayer(player.uuid) ?: return@executes 0
-			func(ctx, character)
+			val engine = getEngine(ctx)
+			val character = engine.getCharacterFromPlayer(player.uuid) ?: return@executes 0
+			func(ctx, engine, character)
 		})
 	}
 
@@ -286,16 +292,18 @@ object MTTCommands {
 		return builder.then(argument("character", DNDCharacterArgumentType(false)).apply {
 			for ((argument, _, func) in commands) {
 				then(argument.executes { ctx ->
-					val character = DNDCharacterArgumentType.getCharacter(ctx, "character")
-					func(ctx, character)
+					val engine = getEngine(ctx)
+					val character = DNDCharacterArgumentType.getCharacter(ctx, engine, "character")
+					func(ctx, engine, character)
 				})
 			}
 		}).apply {
 			for ((_, argument, func) in commands) {
 				then(argument.executes { ctx ->
 					val player = ctx.source.player ?: return@executes 0
+					val engine = getEngine(ctx)
 					val character = getEngine(ctx).getCharacterFromPlayer(player.uuid) ?: return@executes 0
-					func(ctx, character)
+					func(ctx, engine, character)
 				})
 			}
 		}
@@ -311,13 +319,13 @@ object MTTCommands {
 	}
 
 	class CharacterCommand(
-		val withCharacterArgument: ArgumentBuilder<ServerCommandSource, *>,
-		val withoutCharacterArgument: ArgumentBuilder<ServerCommandSource, *>,
-		val func: (ctx: CommandContext<ServerCommandSource>, character: Character) -> Int
+		private val withCharacterArgument: ArgumentBuilder<ServerCommandSource, *>,
+		private val withoutCharacterArgument: ArgumentBuilder<ServerCommandSource, *>,
+		private val func: (ctx: CommandContext<ServerCommandSource>, engine: ServerDNDEngine, character: Character) -> Int
 	) {
 		constructor(
 			characterArgument: ArgumentBuilder<ServerCommandSource, *>,
-			func: (ctx: CommandContext<ServerCommandSource>, character: Character) -> Int
+			func: (ctx: CommandContext<ServerCommandSource>, engine: ServerDNDEngine, character: Character) -> Int
 		) : this(characterArgument, characterArgument, func)
 
 		operator fun component1() = withCharacterArgument

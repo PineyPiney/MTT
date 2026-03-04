@@ -123,5 +123,10 @@ object MTTClientNetwork {
 			val engine = getEngine(ctx)
 			engine.removeCharactersFromCombat(payload.combatID, payload.characters)
 		}
+		ClientPlayNetworking.registerGlobalReceiver(NextTurnS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx)
+			val combat = engine.getCombat(payload.combatID) ?: return@registerGlobalReceiver
+			combat.setTurn(payload.character)
+		}
 	}
 }

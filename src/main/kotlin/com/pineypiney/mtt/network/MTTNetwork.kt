@@ -36,6 +36,7 @@ object MTTNetwork {
 		PayloadTypeRegistry.playS2C().register(CharacterConditionsS2CPayload.ID, CharacterConditionsS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(EnterCombatS2CPayload.ID, EnterCombatS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(ExitCombatS2CPayload.ID, ExitCombatS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(NextTurnS2CPayload.ID, NextTurnS2CPayload.CODEC)
 
 		PayloadTypeRegistry.playC2S().register(OpenDNDScreenC2SPayload.ID, OpenDNDScreenC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(ClickButtonC2SPayload.ID, ClickButtonC2SPayload.CODEC)
@@ -45,6 +46,7 @@ object MTTNetwork {
 		PayloadTypeRegistry.playC2S().register(TeleportConfirmC2SPayload.ID, TeleportConfirmC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(CharacterInteractCharacterC2SPayload.ID, CharacterInteractCharacterC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(CastSpellC2SPayload.ID, CastSpellC2SPayload.CODEC)
+		PayloadTypeRegistry.playC2S().register(EndTurnC2SPayload.ID, EndTurnC2SPayload.CODEC)
 
 
 
@@ -149,6 +151,15 @@ object MTTNetwork {
 			val character = engine.getCharacterFromPlayer(ctx.player().uuid) ?: return@registerGlobalReceiver
 			for ((i, target) in payload.locations.withIndex()) {
 				payload.spell.cast(character, Vec3d(target), payload.angles.getOrNull(i) ?: 0f, payload.level, Ability.INTELLIGENCE, engine.getCombat(character))
+			}
+		}
+
+		ServerPlayNetworking.registerGlobalReceiver(EndTurnC2SPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
+			val character = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
+			val combat = engine.getCombat(character) ?: return@registerGlobalReceiver
+			if (combat.getCurrentCombatant()?.character?.uuid == payload.character) {
+				combat.endTurn()
 			}
 		}
 	}

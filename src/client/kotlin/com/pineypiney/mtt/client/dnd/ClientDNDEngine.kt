@@ -19,11 +19,12 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine<ClientCharacter>(
 
 	// On the client side the only players that we have to care about are the ones
 	// in the same dimension as the client and in close proximity (100 blocks here)
-	override val playerEntities: List<DNDEntity>
-		get() = client.player?.let {
-			it.entityWorld?.getEntitiesByType(
-				MTTEntities.DND_ENTITY, Box.of(it.entityPos, 200.0, 200.0, 200.0)
-			) { true }
+	@Suppress("UNCHECKED_CAST")
+	override val playerEntities: List<ClientDNDEntity>
+		get() = client.cameraEntity?.let { camera ->
+			camera.entityWorld?.getEntitiesByType(
+				MTTEntities.DND_ENTITY, Box.of(camera.entityPos, 200.0, 200.0, 200.0)
+			) { true } as List<ClientDNDEntity>
 		} ?: emptyList()
 
 	val networkHandler = ClientCharacterNetworkHandler(this)
@@ -40,7 +41,7 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine<ClientCharacter>(
 	}
 
 	fun addCharactersToCombat(combatId: Int, characterUuids: Map<UUID, Int>) {
-		val combat = combats.firstOrNull { it.id == combatId }
+		val combat = getCombat(combatId)
 		val characters = characterUuids.mapKeys { (uuid, _) -> getCharacter(uuid)!! }
 		if (combat != null) combat.enterCharacters(characters)
 		else {
@@ -49,9 +50,11 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine<ClientCharacter>(
 	}
 
 	fun removeCharactersFromCombat(combatId: Int, characterUuids: Collection<UUID>) {
-		val combat = combats.firstOrNull { it.id == combatId } ?: return
+		val combat = getCombat(combatId) ?: return
 		combat.exitCharacters(characterUuids)
 	}
+
+	override fun getEntityOfCharacter(character: UUID) = playerEntities.firstOrNull { it.character?.uuid == character }
 
 	override fun getControllingPlayer(character: UUID): PlayerEntity? {
 		val playerUuid = playerCharacters.entries.firstOrNull { it.value == character }?.key ?: return null
@@ -95,6 +98,13 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine<ClientCharacter>(
 			val client = MinecraftClient.getInstance()
 			val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`()
 			return engine.getCharacterUuidFromPlayer(client.player?.uuid ?: return null)
+		}
+
+		fun getRunningAndClientCharacter(): ClientCharacter? {
+			val client = MinecraftClient.getInstance()
+			val engine = (client as DNDEngineHolder<*>).`mtt$getDNDEngine`() as ClientDNDEngine
+			if (!engine.running) return null
+			return engine.getCharacterFromPlayer(client.player?.uuid ?: return null)
 		}
 
 		fun getRunningAndPlayerCharacter(player: PlayerEntity?): Character? {

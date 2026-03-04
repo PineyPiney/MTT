@@ -14,7 +14,6 @@ import com.pineypiney.mtt.dnd.traits.Abilities
 import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.dnd.traits.CreatureType
 import com.pineypiney.mtt.dnd.traits.Size
-import com.pineypiney.mtt.dnd.traits.proficiencies.ArmourType
 import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.entity.DNDInventory
@@ -31,17 +30,19 @@ import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.DynamicRegistryManager
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.scoreboard.ScoreHolder
 import net.minecraft.storage.NbtReadView
 import net.minecraft.storage.NbtWriteView
+import net.minecraft.text.MutableText
+import net.minecraft.text.Text
 import net.minecraft.util.ErrorReporter
 import net.minecraft.util.Identifier
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
 import java.util.*
 import kotlin.math.max
-import kotlin.math.min
 
-abstract class Character(val uuid: UUID) {
+abstract class Character(val uuid: UUID) : ScoreHolder {
 
 	abstract val engine: DNDEngine<*>
 	abstract val details: CharacterDetails
@@ -86,11 +87,7 @@ abstract class Character(val uuid: UUID) {
 
 		// Armour from Dexterity
 		total += if(armour == null) abilities.dexMod
-		else when(armour.armourType){
-			ArmourType.LIGHT -> abilities.dexMod
-			ArmourType.MEDIUM -> min(abilities.dexMod, 2)
-			ArmourType.HEAVY -> min(abilities.dexMod, 0)
-		}
+		else armour.armourType.dexMod(abilities.dexMod)
 		return total
 	}
 
@@ -195,9 +192,12 @@ abstract class Character(val uuid: UUID) {
 		return details.createPayload(regManager, uuid, nbt)
 	}
 
-	fun isPlayable() = details is CharacterSheet
+	fun isPlayable() = true
 
 	fun getErrorReporterContext() = ErrorReportingContext(this)
+
+	override fun getNameForScoreboard(): String = name
+	override fun getDisplayName(): MutableText = Text.literal(name)
 
 	override fun toString(): String = "$name($uuid)"
 

@@ -7,6 +7,14 @@ accessible field net/minecraft/client/gui/DrawContext client Lnet/minecraft/clie
 accessible class net/minecraft/server/world/ServerChunkLoadingManager$EntityTracker
 accessible field net/minecraft/server/world/ServerChunkLoadingManager$EntityTracker listeners Ljava/util/Set;
 
+# For ChunkLevelManagerMixin
+accessible class net/minecraft/server/world/ChunkLevelManager$DistanceFromNearestPlayerTracker
+accessible class net/minecraft/server/world/ChunkLevelManager$NearbyChunkTicketUpdater
+
+# For ServerChunkLoadingManagerMixin
+accessible class net/minecraft/server/world/ServerChunkLoadingManager$LevelManager
+
+
 # For ClientDNDEntity
 accessible field net/minecraft/client/network/ClientPlayerEntity ticksLeftToDoubleTapSprint I
 
@@ -18,3 +26,6 @@ accessible method net/minecraft/client/render/item/HeldItemRenderer getHandRende
 accessible class net/minecraft/client/render/item/HeldItemRenderer$HandRenderType
 accessible field net/minecraft/client/render/item/HeldItemRenderer$HandRenderType renderMainHand Z
 accessible field net/minecraft/client/render/item/HeldItemRenderer$HandRenderType renderOffHand Z
+
+#For InGameHudMixin
+accessible class net/minecraft/client/gui/hud/InGameHud$HeartType

@@ -7,6 +7,7 @@ import com.pineypiney.mtt.util.getEngine
 import net.minecraft.client.MinecraftClient
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.client.network.ClientPlayerLikeState
+import net.minecraft.client.world.ClientWorld
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityPose
 import net.minecraft.entity.MovementType
@@ -27,6 +28,10 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 	var selectionColour = 0
 
 	val texts = mutableSetOf<CharacterGameText>()
+
+	override fun getEntityWorld(): World {
+		return super.getEntityWorld() as ClientWorld
+	}
 
 	override fun onDataTrackerUpdate(entries: List<DataTracker.SerializedEntry<*>?>?) {
 		super.onDataTrackerUpdate(entries)

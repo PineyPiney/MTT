@@ -1,5 +1,6 @@
 package com.pineypiney.mtt.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.pineypiney.mtt.dnd.DNDEngine;
 import com.pineypiney.mtt.dnd.characters.Character;
 import com.pineypiney.mtt.entity.DNDEntity;
@@ -7,12 +8,15 @@ import com.pineypiney.mtt.util.ExtensionsKt;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.PlayerAssociatedNetworkHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerChunkLoadingManager;
+import net.minecraft.util.math.Vec3d;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Set;
@@ -39,12 +43,17 @@ public abstract class EntityTrackerMixin {
 		} else return instance.listeners;
 	}
 
-//	@Inject(method = "updateTrackedStatus(Lnet/minecraft/server/network/ServerPlayerEntity;)V", at = @At("HEAD"), cancellable = true)
-//	private void doNotTrackControllingDNDEntity(ServerPlayerEntity player, CallbackInfo ci){
-//		DNDEngine engine = ExtensionsKt.getEngine(player.getEntityWorld());
-//		if(engine.getRunning() && engine.getEntityFromPlayer(player.getUuid()) == entity) {
-//			stopTracking(player);
-//			ci.cancel();
-//		}
-//	}
+	@ModifyVariable(method = "updateTrackedStatus(Lnet/minecraft/server/network/ServerPlayerEntity;)V", at = @At("STORE"))
+	private Vec3d injected(Vec3d vec3d, @Local(argsOnly = true) ServerPlayerEntity player) {
+		DNDEngine<?> engine = ExtensionsKt.getEngine(player.getEntityWorld());
+		Character character = engine.getCharacterFromPlayer(player.getUuid());
+		// If the DNDEngine is running and the player is controlling a character
+		if (engine.getRunning() && character != null) {
+			// Then if this tracker's character is not the controlled DNDEntity,
+			// return the distance to the controlled character.
+			// If it is the same then return a very large number so it doesn't track it
+			// This stops the server trying to update the position for the client
+			return character.getPos().subtract(this.entity.getEntityPos());
+		} else return vec3d;
+	}
 }

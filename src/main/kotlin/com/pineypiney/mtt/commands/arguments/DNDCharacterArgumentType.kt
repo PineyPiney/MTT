@@ -6,6 +6,7 @@ import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.mixin_interfaces.MTTCommandSource
@@ -75,6 +76,9 @@ class DNDCharacterArgumentType(val playerCharactersOnly: Boolean) : ArgumentType
 		fun getCharacter(ctx: CommandContext<ServerCommandSource>, arg: String): ServerCharacter {
 			return getArgument(ctx, arg).getCharacter(ctx.source) as ServerCharacter
 		}
+		fun getCharacter(ctx: CommandContext<ServerCommandSource>, engine: DNDEngine<*>, arg: String): ServerCharacter {
+			return getArgument(ctx, arg).getCharacter(engine) as ServerCharacter
+		}
 
 		fun getPlayableCharacter(ctx: CommandContext<ServerCommandSource>, arg: String): ServerCharacter {
 			return getArgument(ctx, arg).getCharacter(ctx.source) as ServerCharacter
@@ -83,8 +87,8 @@ class DNDCharacterArgumentType(val playerCharactersOnly: Boolean) : ArgumentType
 
 	class CharacterArgument(val name: String, val uuid: UUID?) {
 		fun getCharacter(src: CommandSource): Character = getCharacter(src as MTTCommandSource)
-		fun getCharacter(src: MTTCommandSource): Character {
-			val engine = src.`mTT$getEngine`()
+		fun getCharacter(src: MTTCommandSource): Character = getCharacter(src.`mTT$getEngine`())
+		fun getCharacter(engine: DNDEngine<*>): Character {
 			return if (uuid == null) engine.getCharacter(name) ?: throw EntityArgumentType.ENTITY_NOT_FOUND_EXCEPTION.create()
 			else engine.getCharacter(uuid) ?: throw EntityArgumentType.ENTITY_NOT_FOUND_EXCEPTION.create()
 		}

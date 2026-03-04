@@ -63,7 +63,7 @@ abstract class DNDEngine<C : Character> {
 		return playerEntities.firstOrNull { it.character?.uuid == characterUuid }
 	}
 
-	fun getEntityOfCharacter(character: UUID) = playerEntities.firstOrNull { it.character?.uuid == character }
+	abstract fun getEntityOfCharacter(character: UUID): DNDEntity?
 
 	abstract fun getControllingPlayer(character: UUID): PlayerEntity?
 
@@ -96,11 +96,13 @@ abstract class DNDEngine<C : Character> {
 	}
 
 	open fun onCharactersEnterCombat(manager: CombatManager, characters: Map<out Character, Int>) {}
+	open fun onCharactersStartTurn(manager: CombatManager, turnID: Int) {}
 	open fun onCharactersExitCombat(manager: CombatManager, characters: List<UUID>) {
 		if (manager.isEmpty()) combats.remove(manager)
 	}
 
 	fun getCombat(character: Character) = combats.firstOrNull { combat -> combat.containsCharacter(character) }
+	fun getCombat(id: Int) = combats.firstOrNull { combat -> combat.id == id }
 	fun isInCombat(character: Character) = combats.any { combat -> combat.containsCharacter(character) }
 
 	fun tick(){

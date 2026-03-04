@@ -9,7 +9,6 @@ import com.pineypiney.mtt.dnd.combat.CombatManager
 import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.network.ServerDNDEntity
 import com.pineypiney.mtt.dnd.race.Race
-import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import com.pineypiney.mtt.network.payloads.s2c.*
@@ -52,7 +51,8 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 			addIntPayload("dm", value?.toInts() ?: emptyList())
 		}
 
-	override val playerEntities: List<DNDEntity> get() = server.worlds.flatMap { it.getEntitiesByType(MTTEntities.DND_ENTITY) { true } }
+	@Suppress("UNCHECKED_CAST")
+	override val playerEntities: List<ServerDNDEntity> get() = server.worlds.flatMap { it.getEntitiesByType(MTTEntities.DND_ENTITY) { true } } as List<ServerDNDEntity>
 
 	val characterManager = CharacterManager(this)
 	val characterBin = CharacterBin(5)
@@ -60,7 +60,7 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 	val nameGenerators = mutableMapOf<Identifier, NameGenerator>()
 	val prefabs = mutableSetOf<Prefab>()
 
-	var nextCombatId = 0
+	private var nextCombatId = 0
 
 	fun onPlayerConnect(player: ServerPlayerEntity) {
 		Race.set.forEach { race ->
@@ -112,6 +112,8 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 		world.spawnEntity(ServerDNDEntity(world, character))
 	}
 
+	override fun getEntityOfCharacter(character: UUID) = playerEntities.firstOrNull { it.character?.uuid == character }
+
 	override fun getControllingPlayer(character: UUID): PlayerEntity? {
 		val playerUUID = playerCharacters.entries.firstOrNull { it.value == character }?.key ?: return null
 		return server.playerManager.getPlayer(playerUUID)
@@ -155,6 +157,11 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 
 	override fun onCharactersEnterCombat(manager: CombatManager, characters: Map<out Character, Int>) {
 		sendPayload(EnterCombatS2CPayload(manager.id, characters.mapKeys { (char, _) -> char.uuid }))
+	}
+
+	override fun onCharactersStartTurn(manager: CombatManager, turnID: Int) {
+		super.onCharactersStartTurn(manager, turnID)
+		sendPayload(NextTurnS2CPayload(manager.id, turnID))
 	}
 
 	override fun onCharactersExitCombat(manager: CombatManager, characters: List<UUID>) {

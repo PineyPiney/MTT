@@ -8,6 +8,7 @@
 		"MinecraftServerMixin",
 		"PlayerEntityMixin",
 		"PlayerManagerMixin",
+		"ServerChunkLoadingManagerMixin",
 		"ServerCommandSourceMixin",
 		"ServerPlayerEntityMixin",
 		"ServerPlayNetworkHandlerMixin",

@@ -11,14 +11,15 @@ import net.minecraft.util.math.Vec3d
 import java.util.*
 import kotlin.jvm.optionals.getOrElse
 
-class CombatManager(val id: Int, val engine: DNDEngine<*>) {
+class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatManager.Combatant> {
 
 	private val combatants = mutableListOf<Combatant>()
 	private var current: Int = 0
+	private var nextID: Int = 0
 
 	fun enterCharacter(character: Character) {
 		val initiative = character.rollInitiative()
-		combatants.add(Combatant(character, initiative))
+		combatants.add(Combatant(character, initiative, nextID++))
 		sort()
 		engine.onCharactersEnterCombat(this, mapOf(character to initiative))
 	}
@@ -29,7 +30,7 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) {
 	}
 
 	fun enterCharacters(combatants: Map<out Character, Int>) {
-		for ((character, init) in combatants) this.combatants.add(Combatant(character, init))
+		for ((character, init) in combatants) this.combatants.add(Combatant(character, init, nextID++))
 		sort()
 		engine.onCharactersEnterCombat(this, combatants)
 	}
@@ -52,6 +53,20 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) {
 			} else i++
 		}
 		engine.onCharactersExitCombat(this, characters.filterNot { it in list })
+	}
+
+	fun setTurn(turn: Int) {
+		current = turn % combatants.size
+		engine.onCharactersStartTurn(this, current)
+	}
+
+	fun endTurn() {
+		setTurn(current + 1)
+	}
+
+	fun endCombat() {
+		engine.onCharactersExitCombat(this, combatants.map { it.character.uuid })
+		combatants.clear()
 	}
 
 	fun sort() {
@@ -135,12 +150,18 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) {
 			val uuid = MTTPacketCodecs.UUID_CODEC.decode(buf)
 			val init = MTTPacketCodecs.bytInt.decode(buf)
 			val character = engine.getCharacter(uuid)
-			if (character != null) combatants.add(Combatant(character, init))
+			if (character != null) combatants.add(Combatant(character, init, nextID++))
 		}
 		engine.onCharactersEnterCombat(this, combatants.associate { it.character to it.initiative })
 	}
 
-	data class Combatant(val character: Character, val initiative: Int) : Comparable<Combatant> {
+	fun size() = combatants.size
+
+	override fun iterator(): Iterator<Combatant> {
+		return combatants.iterator()
+	}
+
+	data class Combatant(val character: Character, val initiative: Int, val id: Int) : Comparable<Combatant> {
 		fun writeNbt(nbt: NbtCompound) {
 			nbt.putLongArray("uuid", longArrayOf(character.uuid.mostSignificantBits, character.uuid.leastSignificantBits))
 			nbt.putInt("init", initiative)
@@ -148,8 +169,10 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) {
 
 		override fun compareTo(other: Combatant): Int {
 			val initDiff = initiative - other.initiative
-			return if (initDiff != 0) initDiff
-			else character.abilities.dexMod - other.character.abilities.dexMod
+			if (initDiff != 0) return initDiff
+			val dexDiff = character.abilities.dexMod - other.character.abilities.dexMod
+			return if (dexDiff != 0) dexDiff
+			else other.id - id
 		}
 	}
 }

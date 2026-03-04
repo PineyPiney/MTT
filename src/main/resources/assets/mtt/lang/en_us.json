@@ -2,6 +2,8 @@
 	"category.mtt": "MTT",
 
 	"key.mtt.character_sheet": "Open Character Sheet",
+	"key.mtt.end_turn": "End Combat Turn",
+
 	"itemGroup.mtt.melee_weapons": "Melee Weapons",
 	"itemGroup.mtt.ranged_weapons": "Ranged Weapons",
 	"itemGroup.mtt.armour": "Armour",
