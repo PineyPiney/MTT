@@ -35,9 +35,13 @@ object MTTPacketCodecs {
 	val str: PacketCodec<ByteBuf, String> get() = PacketCodecs.STRING
 
 	val bytInt: PacketCodec<ByteBuf, Int> =
-		PacketCodecs.BYTE.xmap({ byte -> byte.toUByte().toInt() }) { int -> int.toUByte().toByte() }
+		PacketCodecs.BYTE.xmap({ byte -> byte.toInt() }) { int -> int.toByte() }
+	val uBytInt: PacketCodec<ByteBuf, Int> =
+		PacketCodecs.BYTE.xmap({ byte -> byte.toUByte().toInt() }) { int -> int.toByte() }
 	val shtInt: PacketCodec<ByteBuf, Int> =
-		PacketCodecs.SHORT.xmap({ short -> short.toUShort().toInt() }) { int -> int.toUShort().toShort() }
+		PacketCodecs.SHORT.xmap({ short -> short.toInt() }) { int -> int.toShort() }
+	val uShtInt: PacketCodec<ByteBuf, Int> =
+		PacketCodecs.SHORT.xmap({ short -> short.toUShort().toInt() }) { int -> int.toShort() }
 
 	fun <B: ByteBuf> INT() = object : PacketCodec<B, Int>{
 		override fun decode(buf: B) = buf.readInt()
@@ -76,7 +80,7 @@ object MTTPacketCodecs {
 
 	fun <K, V> decodeMap(buf: ByteBuf, keyCodec: PacketCodec<ByteBuf, K>, valueCodec: PacketCodec<ByteBuf, V>, dst: MutableMap<K, V> = mutableMapOf()): MutableMap<K, V>{
 		dst.clear()
-		repeat(bytInt.decode(buf)) {
+		repeat(uBytInt.decode(buf)) {
 			val key = keyCodec.decode(buf)
 			val level = valueCodec.decode(buf)
 			dst[key] = level
@@ -85,7 +89,7 @@ object MTTPacketCodecs {
 	}
 
 	fun <K, V> encodeMap(buf: ByteBuf, map: Map<K, V>, keyCodec: PacketCodec<ByteBuf, K>, valueCodec: PacketCodec<ByteBuf, V>){
-		bytInt.encode(buf, map.size)
+		uBytInt.encode(buf, map.size)
 		for((key, value) in map){
 			keyCodec.encode(buf, key)
 			valueCodec.encode(buf, value)
@@ -95,13 +99,13 @@ object MTTPacketCodecs {
 	fun <T, C : Collection<T>> smallCollection(codec: PacketCodec<ByteBuf, T>, func: (Int, (Int) -> T) -> C) = object :
 		PacketCodec<ByteBuf, C> {
 		override fun decode(buf: ByteBuf): C {
-			val size = byt.decode(buf).toUByte().toInt()
+			val size = uBytInt.decode(buf)
 			return func(size) { codec.decode(buf) }
 		}
 
 		override fun encode(buf: ByteBuf, value: C) {
 			val size = min(value.size, 255)
-			byt.encode(buf, size.toUByte().toByte())
+			uBytInt.encode(buf, size)
 
 			if (value.size > 255) {
 				MTT.logger.warn("Tried to make small collection packet from a large collection, writing the first 255 entries")
@@ -117,7 +121,7 @@ object MTTPacketCodecs {
 	fun <T, C : MutableCollection<T>> smallCollection(codec: PacketCodec<ByteBuf, T>, creator: () -> C) = object :
 		PacketCodec<ByteBuf, C> {
 		override fun decode(buf: ByteBuf): C {
-			val size = byt.decode(buf).toUByte().toInt()
+			val size = uBytInt.decode(buf)
 			val coll = creator()
 			repeat(size) { coll.add(codec.decode(buf)) }
 			return coll
@@ -125,13 +129,13 @@ object MTTPacketCodecs {
 
 		override fun encode(buf: ByteBuf, value: C) {
 			val size = min(value.size, 255)
-			byt.encode(buf, size.toUByte().toByte())
+			uBytInt.encode(buf, size)
 
 			if (value.size > 255) {
 				MTT.logger.warn("Tried to make small collection packet from a large collection, writing the first 255 entries")
 				for ((i, it) in value.withIndex()) {
 					codec.encode(buf, it)
-					if (i >= 255) break
+					if (i >= 254) break
 				}
 			} else value.forEach { codec.encode(buf, it) }
 		}
@@ -170,14 +174,14 @@ object MTTPacketCodecs {
 		object : PacketCodec<B, Map<K, V>> {
 			override fun decode(buf: B): Map<K, V> {
 				val map = mutableMapOf<K, V>()
-				repeat(bytInt.decode(buf)) {
+				repeat(uBytInt.decode(buf)) {
 					map[keyCodec.decode(buf)] = valueCodec.decode(buf)
 				}
 				return map
 			}
 
 			override fun encode(buf: B, value: Map<K, V>) {
-				bytInt.encode(buf, value.size)
+				uBytInt.encode(buf, value.size)
 				val size = min(value.size, 255)
 				if (size > 255) {
 					MTT.logger.warn("Tried to make small map packet from a large collection, writing the first 255 entries")
@@ -216,6 +220,17 @@ object MTTPacketCodecs {
 
 	}
 
+	fun <B : ByteBuf, K, V> pair(keyCodec: PacketCodec<B, K>, valueCodec: PacketCodec<B, V>) = object : PacketCodec<B, Pair<K, V>> {
+		override fun decode(buf: B): Pair<K, V> {
+			return keyCodec.decode(buf) to valueCodec.decode(buf)
+		}
+
+		override fun encode(buf: B, value: Pair<K, V>) {
+			keyCodec.encode(buf, value.first)
+			valueCodec.encode(buf, value.second)
+		}
+	}
+
 	val ID = str.xmap(MTT::identifier, MTT::identifierString)
 
 	val UUID_CODEC = PacketCodec.tuple(
@@ -227,7 +242,7 @@ object MTTPacketCodecs {
 	val DURATION = object : PacketCodec<ByteBuf, Duration> {
 		override fun decode(buf: ByteBuf): Duration {
 			@Suppress("UNCHECKED_CAST")
-			val id = bytInt.decode(buf)
+			val id = uBytInt.decode(buf)
 			val codec = when (id) {
 				0 -> Duration.Time.PACKET_CODEC
 				1 -> Duration.Turns.PACKET_CODEC
@@ -243,7 +258,7 @@ object MTTPacketCodecs {
 		}
 
 		fun <D : Duration> encodeDuration(buf: ByteBuf, value: D) {
-			bytInt.encode(buf, value.getID())
+			uBytInt.encode(buf, value.getID())
 			@Suppress("UNCHECKED_CAST")
 			val codec = try {
 				val companionClass = value::class.companionObject
@@ -260,7 +275,7 @@ object MTTPacketCodecs {
 
 	val DAMAGE_TYPE = str.xmap(DamageType::find, DamageType::id)
 
-	val ABILITY = bytInt.xmap({ Ability.entries[it] }, Ability::ordinal)
+	val ABILITY = uBytInt.xmap({ Ability.entries[it] }, Ability::ordinal)
 
 	val CLASS = PacketCodecs.STRING.xmap(DNDClass::findById, DNDClass::id)
 
@@ -313,7 +328,7 @@ object MTTPacketCodecs {
 	}
 
 	val SOURCE_LIST = smallCollection(
-		PacketCodec.tuple(bytInt, Pair<Int, Source>::first, SOURCE, Pair<Int, Source>::second, ::Pair),
+		PacketCodec.tuple(uBytInt, Pair<Int, Source>::first, SOURCE, Pair<Int, Source>::second, ::Pair),
 		::List
 	)
 
@@ -389,16 +404,16 @@ object MTTPacketCodecs {
 			sheet.subrace = sheet.race.getSubrace(str.decode(buf))
 			sheet.background = Background.findById(str.decode(buf))
 
-			sheet.level = bytInt.decode(buf)
-			sheet.armourClass = bytInt.decode(buf)
-			sheet.maxHealth = shtInt.decode(buf)
-			sheet.health = shtInt.decode(buf)
-			sheet.darkVision = shtInt.decode(buf)
+			sheet.level = uBytInt.decode(buf)
+			sheet.armourClass = uBytInt.decode(buf)
+			sheet.maxHealth = uShtInt.decode(buf)
+			sheet.health = uShtInt.decode(buf)
+			sheet.darkVision = uShtInt.decode(buf)
 
 			sheet.abilities.decode(buf)
 
 			sheet.decodeProperties(buf)
-			decodeMap(buf, CLASS, bytInt, sheet.classes)
+			decodeMap(buf, CLASS, uBytInt, sheet.classes)
 			sheet.advantages.decode(buf, smallCollection(str, ::mutableSetOf))
 			sheet.resistances.decode(buf, smallCollection(str, ::mutableSetOf))
 			sheet.proficiencies.decode(buf, smallCollection(Proficiency.CODEC, ::mutableSetOf))
@@ -418,16 +433,16 @@ object MTTPacketCodecs {
 			str.encode(buf, value.subrace?.name ?: "")
 			str.encode(buf, value.background.id)
 
-			bytInt.encode(buf, value.level)
-			bytInt.encode(buf, value.armourClass)
-			shtInt.encode(buf, value.maxHealth)
-			shtInt.encode(buf, value.health)
-			shtInt.encode(buf, value.darkVision)
+			uBytInt.encode(buf, value.level)
+			uBytInt.encode(buf, value.armourClass)
+			uShtInt.encode(buf, value.maxHealth)
+			uShtInt.encode(buf, value.health)
+			uShtInt.encode(buf, value.darkVision)
 
 			value.abilities.encode(buf)
 
 			value.encodeProperties(buf)
-			encodeMap(buf, value.classes, CLASS, bytInt)
+			encodeMap(buf, value.classes, CLASS, uBytInt)
 			value.advantages.encode(buf, smallCollection(str, ::mutableSetOf))
 			value.resistances.encode(buf, smallCollection(str, ::mutableSetOf))
 			value.proficiencies.encode(buf, smallCollection(Proficiency.CODEC, ::mutableSetOf))

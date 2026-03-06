@@ -17,11 +17,14 @@ import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.math.random.Random
 import net.minecraft.world.World
+import java.util.*
 import kotlin.jvm.optionals.getOrDefault
 import kotlin.math.min
 import kotlin.math.sqrt
 
 class ClientDNDEntity(world: World) : DNDEntity(world) {
+
+	override var character: ClientCharacter? = null
 
 	val state = ClientPlayerLikeState()
 
@@ -112,8 +115,7 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 	}
 
 	override fun openSpellBook() {
-		val character = character as? ClientCharacter ?: return
-		val allSpells = character.getPreparedSpells()
+		val allSpells = character?.getPreparedSpells() ?: return
 		MinecraftClient.getInstance().setScreen(SpellBookScreen(allSpells.toList()))
 	}
 
@@ -174,5 +176,10 @@ class ClientDNDEntity(world: World) : DNDEntity(world) {
 
 	fun clientIsControlling(): Boolean {
 		return ClientDNDEngine.getClientCharacter() == character
+	}
+
+	override fun updateCharacter(uuid: UUID) {
+		character = (entityWorld.getEngine() as ClientDNDEngine).getCharacter(uuid) ?: character
+		calculateDimensions()
 	}
 }

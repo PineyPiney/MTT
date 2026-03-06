@@ -5,11 +5,8 @@ import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import com.pineypiney.mtt.network.payloads.s2c.EnterCombatS2CPayload
 import io.netty.buffer.ByteBuf
-import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtList
 import net.minecraft.util.math.Vec3d
 import java.util.*
-import kotlin.jvm.optionals.getOrElse
 
 class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatManager.Combatant> {
 
@@ -17,15 +14,17 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatMana
 	private var current: Int = 0
 	private var nextID: Int = 0
 
+	private val resourceManager = CombatResources()
+
 	fun enterCharacter(character: Character) {
-		val initiative = character.rollInitiative()
+		val initiative = character.rollInitiative().value
 		combatants.add(Combatant(character, initiative, nextID++))
 		sort()
 		engine.onCharactersEnterCombat(this, mapOf(character to initiative))
 	}
 
 	fun enterCharacters(characters: Collection<Character>) {
-		val combatants = characters.associateWith(Character::rollInitiative)
+		val combatants = characters.associateWith { it.rollInitiative().value }
 		enterCharacters(combatants)
 	}
 
@@ -57,6 +56,8 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatMana
 
 	fun setTurn(turn: Int) {
 		current = turn % combatants.size
+		val combatant = getCurrentCombatant()
+		if (combatant != null) resourceManager.startTurn(combatant.character)
 		engine.onCharactersStartTurn(this, current)
 	}
 
@@ -69,7 +70,19 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatMana
 		combatants.clear()
 	}
 
-	fun sort() {
+	fun travel(distance: Double) = resourceManager.travel(distance)
+	fun getTotalMovement() = resourceManager.totalMovement
+	fun getMovementLeft() = resourceManager.getMovementLeft()
+
+	fun actions() = resourceManager.actions
+	fun bonusActions() = resourceManager.bonusActions
+	fun useAction(): Boolean {
+		val b = resourceManager.useAction()
+		engine.onResourceUsed(this, 1)
+		return b
+	}
+
+	private fun sort() {
 		val combatant = getCurrentCombatant()
 		combatants.sortDescending()
 		if (combatant != null) current = combatants.indexOf(combatant)
@@ -102,7 +115,7 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatMana
 		}
 	}
 
-	fun consume(other: CombatManager) {
+	private fun consume(other: CombatManager) {
 		combatants.addAll(other.combatants)
 		combatants.sortDescending()
 		engine.onCharactersEnterCombat(this, other.combatants.associate { (char, init) -> char to init })
@@ -115,40 +128,40 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatMana
 
 	fun asPayload() = EnterCombatS2CPayload(id, combatants.associate { (char, init) -> char.uuid to init })
 
-	fun writeNbt(nbt: NbtCompound) {
-		val combatants = NbtList()
-		nbt.put("combatants", combatants)
-		for (c in this.combatants) {
-			val combatant = NbtCompound()
-			combatants.add(combatants)
-			c.writeNbt(combatant)
-		}
-	}
-
-	fun readNbt(nbt: NbtCompound, engine: DNDEngine<*>) {
-		for (bNbt in nbt.getListOrEmpty("combatants")) {
-			readCombatantNbt(bNbt as NbtCompound, engine)
-		}
-	}
-
-	fun readCombatantNbt(nbt: NbtCompound, engine: DNDEngine<*>) {
-		nbt.getLongArray("uuid").getOrElse { return }
-		nbt.getIntArray("init").getOrElse { return }
-	}
+//	fun writeNbt(nbt: NbtCompound) {
+//		val combatants = NbtList()
+//		nbt.put("combatants", combatants)
+//		for (c in this.combatants) {
+//			val combatant = NbtCompound()
+//			combatants.add(combatants)
+//			c.writeNbt(combatant)
+//		}
+//	}
+//
+//	fun readNbt(nbt: NbtCompound, engine: DNDEngine<*>) {
+//		for (bNbt in nbt.getListOrEmpty("combatants")) {
+//			readCombatantNbt(bNbt as NbtCompound, engine)
+//		}
+//	}
+//
+//	fun readCombatantNbt(nbt: NbtCompound, engine: DNDEngine<*>) {
+//		nbt.getLongArray("uuid").getOrElse { return }
+//		nbt.getIntArray("init").getOrElse { return }
+//	}
 
 	fun encode(buf: ByteBuf) {
-		MTTPacketCodecs.shtInt.encode(buf, combatants.size)
+		MTTPacketCodecs.uShtInt.encode(buf, combatants.size)
 		for (combatant in combatants) {
 			MTTPacketCodecs.UUID_CODEC.encode(buf, combatant.character.uuid)
-			MTTPacketCodecs.bytInt.encode(buf, combatant.initiative)
+			MTTPacketCodecs.uBytInt.encode(buf, combatant.initiative)
 		}
 	}
 
 	fun decode(buf: ByteBuf, engine: DNDEngine<*>) {
 		combatants.clear()
-		repeat(MTTPacketCodecs.shtInt.decode(buf)) {
+		repeat(MTTPacketCodecs.uShtInt.decode(buf)) {
 			val uuid = MTTPacketCodecs.UUID_CODEC.decode(buf)
-			val init = MTTPacketCodecs.bytInt.decode(buf)
+			val init = MTTPacketCodecs.uBytInt.decode(buf)
 			val character = engine.getCharacter(uuid)
 			if (character != null) combatants.add(Combatant(character, init, nextID++))
 		}
@@ -162,10 +175,10 @@ class CombatManager(val id: Int, val engine: DNDEngine<*>) : Iterable<CombatMana
 	}
 
 	data class Combatant(val character: Character, val initiative: Int, val id: Int) : Comparable<Combatant> {
-		fun writeNbt(nbt: NbtCompound) {
-			nbt.putLongArray("uuid", longArrayOf(character.uuid.mostSignificantBits, character.uuid.leastSignificantBits))
-			nbt.putInt("init", initiative)
-		}
+//		fun writeNbt(nbt: NbtCompound) {
+//			nbt.putLongArray("uuid", longArrayOf(character.uuid.mostSignificantBits, character.uuid.leastSignificantBits))
+//			nbt.putInt("init", initiative)
+//		}
 
 		override fun compareTo(other: Combatant): Int {
 			val initDiff = initiative - other.initiative

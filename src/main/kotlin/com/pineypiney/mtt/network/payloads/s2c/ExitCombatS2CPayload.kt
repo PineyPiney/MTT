@@ -17,7 +17,7 @@ class ExitCombatS2CPayload(val combatID: Int, val characters: List<UUID>) : Cust
 		val PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "exit_combat")
 		val ID = CustomPayload.Id<ExitCombatS2CPayload>(PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(
-			MTTPacketCodecs.shtInt, ExitCombatS2CPayload::combatID,
+			MTTPacketCodecs.uShtInt, ExitCombatS2CPayload::combatID,
 			MTTPacketCodecs.smallCollection(MTTPacketCodecs.UUID_CODEC, ::List), ExitCombatS2CPayload::characters,
 			::ExitCombatS2CPayload
 		)

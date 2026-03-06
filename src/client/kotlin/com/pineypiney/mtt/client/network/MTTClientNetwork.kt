@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.client.network
 
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.client.ClientRoll
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine
 import com.pineypiney.mtt.client.dnd.network.ClientCharacter
 import com.pineypiney.mtt.client.gui.screens.DNDScreen
@@ -127,6 +128,15 @@ object MTTClientNetwork {
 			val engine = getEngine(ctx)
 			val combat = engine.getCombat(payload.combatID) ?: return@registerGlobalReceiver
 			combat.setTurn(payload.character)
+		}
+		ClientPlayNetworking.registerGlobalReceiver(CombatResourcesS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx)
+			val combat = engine.getCombat(payload.combatID) ?: return@registerGlobalReceiver
+			repeat(payload.getActions()) { combat.useAction() }
+		}
+		ClientPlayNetworking.registerGlobalReceiver(DiceResultS2CPayload.ID) { payload, ctx ->
+			val engine = getEngine(ctx)
+			engine.rolls.add(ClientRoll(payload.id, payload.list, payload.success))
 		}
 	}
 }

@@ -17,8 +17,8 @@ class EnterCombatS2CPayload(val combatID: Int, val characters: Map<UUID, Int>) :
 		val PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "enter_combat")
 		val ID = CustomPayload.Id<EnterCombatS2CPayload>(PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(
-			MTTPacketCodecs.shtInt, EnterCombatS2CPayload::combatID,
-			MTTPacketCodecs.smallMap(MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.bytInt), EnterCombatS2CPayload::characters,
+			MTTPacketCodecs.uShtInt, EnterCombatS2CPayload::combatID,
+			MTTPacketCodecs.smallMap(MTTPacketCodecs.UUID_CODEC, MTTPacketCodecs.uBytInt), EnterCombatS2CPayload::characters,
 			::EnterCombatS2CPayload
 		)
 	}

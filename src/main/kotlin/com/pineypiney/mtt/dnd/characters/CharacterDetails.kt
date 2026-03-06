@@ -41,7 +41,7 @@ abstract class CharacterDetails {
 	abstract fun createPayload(regManager: DynamicRegistryManager, uuid: UUID, nbt: NbtCompound): CustomPayload
 
 	fun <T, C> encodePropertyMap(buf: ByteBuf, property: Property<T>, codec: PacketCodec<ByteBuf, C>, get: (T) -> C) {
-		MTTPacketCodecs.bytInt.encode(buf, property.sources.size)
+		MTTPacketCodecs.uBytInt.encode(buf, property.sources.size)
 		for ((src, value) in property.sources) {
 			MTTPacketCodecs.SOURCE.encode(buf, src)
 			codec.encode(buf, get(value))
@@ -49,7 +49,7 @@ abstract class CharacterDetails {
 	}
 
 	fun <T, C> decodePropertyMap(buf: ByteBuf, property: Property<T>, codec: PacketCodec<ByteBuf, C>, get: (C) -> T) {
-		val size = MTTPacketCodecs.bytInt.decode(buf)
+		val size = MTTPacketCodecs.uBytInt.decode(buf)
 		property.sources.clear()
 		repeat(size) {
 			val src = MTTPacketCodecs.SOURCE.decode(buf)

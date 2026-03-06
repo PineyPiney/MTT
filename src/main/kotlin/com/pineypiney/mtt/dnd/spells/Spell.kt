@@ -20,8 +20,7 @@ abstract class Spell(val id: String, val level: Int, val settings: Settings) {
 
 	open fun getSavingThrow(character: Character, spellCastingAbility: Ability): SavingThrow? {
 		val ability = getSavingAbility() ?: return null
-		val target = getSaveThreshold(character, spellCastingAbility)
-		return SavingThrow(ability, target)
+		return SavingThrow(ability)
 	}
 
 	open fun getTargetCount(): Int = 1

@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.dnd.traits
 
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs.bytInt
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.uBytInt
 import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.PacketCodec
 
@@ -33,7 +33,7 @@ open class SourceMap<E> : LinkedHashMap<Source, MutableSet<E>>() {
 	}
 
 	fun <B : ByteBuf> encode(buf: B, valueCodec: PacketCodec<B, MutableSet<E>>) {
-		bytInt.encode(buf, size)
+		uBytInt.encode(buf, size)
 		for ((key, value) in this) {
 			MTTPacketCodecs.SOURCE.encode(buf, key)
 			valueCodec.encode(buf, value)
@@ -42,7 +42,7 @@ open class SourceMap<E> : LinkedHashMap<Source, MutableSet<E>>() {
 
 	fun <B : ByteBuf> decode(buf: B, valueCodec: PacketCodec<B, MutableSet<E>>) {
 		clear()
-		repeat(bytInt.decode(buf)) {
+		repeat(uBytInt.decode(buf)) {
 			val key = MTTPacketCodecs.SOURCE.decode(buf)
 			val level = valueCodec.decode(buf)
 			this[key] = level

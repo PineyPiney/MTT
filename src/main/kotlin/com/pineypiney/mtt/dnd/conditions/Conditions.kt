@@ -5,6 +5,7 @@ import com.pineypiney.mtt.dice.DieRoll
 import com.pineypiney.mtt.dnd.Duration
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.rolls.AbilityCheck
+import com.pineypiney.mtt.dnd.rolls.AttackRoll
 import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import io.netty.buffer.ByteBuf
@@ -33,11 +34,11 @@ object Conditions {
 			if (check.hasTag("sight")) roll.multiplier = 0f
 		}
 
-		override fun modifyAttackRoll(state: BasicState, roll: DieRoll) {
+		override fun modifyAttackRoll(state: BasicState, check: AttackRoll, roll: DieRoll) {
 			roll.dis = true
 		}
 
-		override fun modifyAttackedRoll(state: BasicState, roll: DieRoll) {
+		override fun modifyAttackedRoll(state: BasicState, check: AttackRoll, roll: DieRoll) {
 			roll.adv = true
 		}
 	}

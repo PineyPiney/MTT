@@ -2,6 +2,7 @@ package com.pineypiney.mtt.entity
 
 import com.google.common.annotations.VisibleForTesting
 import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.combat.CombatManager
 import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.item.dnd.DNDItems
@@ -37,9 +38,9 @@ import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
-open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
+abstract class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 
-	var character: Character? = null
+	abstract val character: Character?
 
 	var name: String
 		get() = customName?.string ?: "Unnamed Character"
@@ -77,7 +78,6 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	}
 
 	constructor(world: World, character: Character) : this(world) {
-		this.character = character
 		this.name = character.name
 		this.setPosition(character.pos)
 		dataTracker.set(CHARACTER_UUID, character.uuid)
@@ -90,10 +90,7 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 	}
 
 	override fun onDataTrackerUpdate(entries: List<DataTracker.SerializedEntry<*>?>?) {
-		val engine = entityWorld.getEngine()
-		character = engine.getCharacter(dataTracker.get(CHARACTER_UUID)) ?: character
-		calculateDimensions()
-		uuid
+		updateCharacter(dataTracker.get(CHARACTER_UUID))
 	}
 
 	override fun interact(player: PlayerEntity, hand: Hand): ActionResult {
@@ -128,6 +125,35 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		}
 	}
 
+	override fun move(type: MovementType, movement: Vec3d) {
+		val character = character
+		val combat = character?.getCombat()
+
+		if (combat != null) moveInCombat(type, movement, character, combat)
+		else super.move(type, movement)
+	}
+
+	fun moveInCombat(type: MovementType, movement: Vec3d, character: Character, combat: CombatManager) {
+		val oldPos = entityPos
+		super.move(type, adjustMovement(movement, character, combat))
+		val distance = oldPos.subtract(entityPos).horizontalLength()
+		if (distance > 0) {
+			combat.travel(distance * 5f)
+		}
+	}
+
+	fun adjustMovement(movement: Vec3d, character: Character, combat: CombatManager): Vec3d {
+		val movementDist = movement.horizontalLength()
+		if (movementDist == 0.0) return movement
+		val current = combat.getCurrentCombatant() ?: return Vec3d(0.0, movement.y, 0.0)
+		if (current.character != character) return Vec3d(0.0, movement.y, 0.0)
+
+		val movementLeft = combat.getMovementLeft() * .2f
+		return if (movementDist > movementLeft) {
+			val r = movementLeft / movementDist
+			Vec3d(movement.x * r, movement.y, movement.z * r)
+		} else movement
+	}
 
 	open fun travel(movementInput: Vec3d) {
 		if (this.isTravellingInFluid(this.entityWorld.getFluidState(this.blockPos))) {
@@ -532,6 +558,8 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		return EntityDimensions.fixed(model.width, model.height).withEyeHeight(model.eyeY)
 	}
 
+	abstract fun updateCharacter(uuid: UUID)
+
 	override fun readCustomData(view: ReadView) {
 		val (most, least) = view.getOptionalLongArray("characterUuid").getOrNull() ?: return
 		val uuid = UUID(most, least)
@@ -539,8 +567,7 @@ open class DNDEntity(world: World) : Entity(MTTEntities.DND_ENTITY, world) {
 		// The data tracker is synced with the client
 		dataTracker.set(CHARACTER_UUID, uuid)
 		// This is for the server
-		character = entityWorld.getEngine().getCharacter(uuid) ?: character
-		calculateDimensions()
+		updateCharacter(uuid)
 	}
 
 	override fun writeCustomData(view: WriteView) {

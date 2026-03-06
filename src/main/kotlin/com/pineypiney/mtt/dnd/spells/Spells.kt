@@ -1,5 +1,6 @@
 package com.pineypiney.mtt.dnd.spells
 
+import com.pineypiney.mtt.dice.DieRoll
 import com.pineypiney.mtt.dnd.DamageType
 import com.pineypiney.mtt.dnd.Duration
 import com.pineypiney.mtt.dnd.characters.Character
@@ -268,7 +269,14 @@ object Spells {
 	) {
 		override fun cast(caster: ServerCharacter, location: Vec3d, direction: Float, level: Int, spellCastingAbility: Ability, combat: CombatManager?) {
 			val target = getCharacter(caster.engine, location, combat) ?: return
-			if (!target.rollSavingThrow(SavingThrow(Ability.WISDOM, getSaveThreshold(caster, spellCastingAbility)))) {
+			val thresh = getSaveThreshold(caster, spellCastingAbility)
+
+			// Creatures have advantage of saving throws in combat
+			val roll = DieRoll.d20()
+			if (combat?.containsCharacter(target) ?: false) roll.adv = true
+
+			val rollResult = target.rollSavingThrow(SavingThrow(Ability.WISDOM), thresh, roll)
+			if (!rollResult.crit && rollResult < thresh) {
 				target.conditions.apply(Source.SpellSource, Conditions.CHARMED.State(caster.uuid, Duration.Time(3600)))
 			}
 		}

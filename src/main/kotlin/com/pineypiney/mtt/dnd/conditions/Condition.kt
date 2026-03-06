@@ -5,6 +5,7 @@ import com.pineypiney.mtt.dice.DieRoll
 import com.pineypiney.mtt.dnd.Duration
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.rolls.AbilityCheck
+import com.pineypiney.mtt.dnd.rolls.AttackRoll
 import com.pineypiney.mtt.dnd.rolls.SavingThrow
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
 import io.netty.buffer.ByteBuf
@@ -18,9 +19,8 @@ abstract class Condition<S : Condition.ConditionState<S>>(val id: Identifier) {
 
 	open fun modifyAbilityCheck(state: S, check: AbilityCheck, roll: DieRoll) {}
 	open fun modifySavingThrow(state: S, check: SavingThrow, roll: DieRoll) {}
-
-	open fun modifyAttackRoll(state: S, roll: DieRoll) {}
-	open fun modifyAttackedRoll(state: S, roll: DieRoll) {}
+	open fun modifyAttackRoll(state: S, check: AttackRoll, roll: DieRoll) {}
+	open fun modifyAttackedRoll(state: S, check: AttackRoll, roll: DieRoll) {}
 
 	open fun modifyHealing(state: S, base: Int) = base
 

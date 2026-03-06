@@ -1,7 +1,11 @@
 package com.pineypiney.mtt.mixin.client;
 
+import com.pineypiney.mtt.MTT;
+import com.pineypiney.mtt.client.ClientRoll;
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
 import com.pineypiney.mtt.client.dnd.network.ClientCharacter;
+import com.pineypiney.mtt.dice.Die;
+import com.pineypiney.mtt.dice.RollResult;
 import com.pineypiney.mtt.dnd.characters.Character;
 import com.pineypiney.mtt.dnd.combat.CombatManager;
 import net.minecraft.client.MinecraftClient;
@@ -16,11 +20,9 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.Arm;
-import net.minecraft.util.Colors;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Identifier;
+import net.minecraft.util.*;
 import net.minecraft.util.math.MathHelper;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -30,27 +32,32 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Random;
+
 @Mixin(InGameHud.class)
 public abstract class InGameHudMixin {
 
+	@Unique
+	final private static Identifier RESOURCE_ICONS = Identifier.of(MTT.MOD_ID, "hud/resource_icons");
+
 	@Shadow @Final private static Identifier HOTBAR_TEXTURE;
-
 	@Shadow @Final private static Identifier HOTBAR_SELECTION_TEXTURE;
-
 	@Shadow @Final private static Identifier HOTBAR_OFFHAND_LEFT_TEXTURE;
-
 	@Shadow @Final private static Identifier HOTBAR_OFFHAND_RIGHT_TEXTURE;
-
-	@Shadow protected abstract void renderHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed);
-
-	@Shadow @Final private MinecraftClient client;
-
+	@Unique
+	final private static Identifier DICE_BOX_TEXTURE = Identifier.of(MTT.MOD_ID, "hud/dice_box");
 	@Shadow
 	@Final
 	private static Identifier ARMOR_FULL_TEXTURE;
 	@Shadow
 	@Final
 	private static Identifier ARMOR_HALF_TEXTURE;
+	@Shadow
+	@Final
+	private MinecraftClient client;
+
+	@Shadow
+	protected abstract void renderHotbarItem(DrawContext context, int x, int y, RenderTickCounter tickCounter, PlayerEntity player, ItemStack stack, int seed);
 
 	@Shadow
 	protected abstract void drawHeart(DrawContext context, InGameHud.HeartType type, int x, int y, boolean hardcore, boolean blinking, boolean half);
@@ -105,8 +112,9 @@ public abstract class InGameHudMixin {
 				this.renderMiscOverlays(context, tickCounter);
 				this.renderCrosshair(context, tickCounter);
 				context.createNewRootLayer();
-				this.renderMainDndHud(context, player, character, tickCounter);
+				this.renderMainDndHud(context, player, character, combat, tickCounter);
 				this.renderStatusEffectOverlay(context, tickCounter);
+				renderDiceBox(context, character);
 				this.renderBossBarHud(context, tickCounter);
 				this.renderDemoTimer(context, tickCounter);
 				if (combat != null) this.renderCombatCards(context, combat);
@@ -120,9 +128,10 @@ public abstract class InGameHudMixin {
 	}
 
 	@Unique
-	private void renderMainDndHud(DrawContext ctx, ClientPlayerEntity player, ClientCharacter character, RenderTickCounter tickCounter) {
+	private void renderMainDndHud(DrawContext ctx, ClientPlayerEntity player, ClientCharacter character, @Nullable CombatManager combat, RenderTickCounter tickCounter) {
 		this.renderDNDHotbar(ctx, player, character, tickCounter);
-		this.renderStatusBars(ctx, character);
+		this.renderStatusBars(ctx, character, combat);
+		if (combat != null) this.renderMovementBar(ctx, character, combat);
 		this.renderHeldItemTooltip(ctx);
 	}
 
@@ -163,11 +172,14 @@ public abstract class InGameHudMixin {
 	}
 
 	@Unique
-	private void renderStatusBars(DrawContext context, ClientCharacter character) {
+	private void renderStatusBars(DrawContext context, ClientCharacter character, @Nullable CombatManager combat) {
 		int x = context.getScaledWindowWidth() / 2 - 91;
 		int y = context.getScaledWindowHeight() - 39;
-		y = renderHealth(context, character, x, y);
-		y = renderArmour(context, character, x, y);
+		int leftY = renderHealth(context, character, x, y);
+		leftY = renderArmour(context, character, x, leftY);
+
+		x += 102;
+		if (combat != null) renderCombatResources(context, character, combat, x + 20, y);
 	}
 
 	@Unique
@@ -205,6 +217,97 @@ public abstract class InGameHudMixin {
 			context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, texture, iconX, iconY, 9, 9);
 		}
 		return y - (MathHelper.ceilDiv(armourIcons, 10) * 8);
+	}
+
+	@Unique
+	private void renderCombatResources(DrawContext context, ClientCharacter character, CombatManager combat, int x, int y) {
+		int maxActions = 2, maxBonusActions = 2;
+		int actions, bonusActions;
+		if (combat.getCurrentCombatant() != null && combat.getCurrentCombatant().getCharacter() == character) {
+			actions = combat.actions();
+			bonusActions = combat.bonusActions();
+		} else {
+			actions = 1;
+			bonusActions = 1;
+		}
+		for (int i = 0; i < maxActions; i++) {
+			int iconX = x + (i % 10) * 5;
+			int iconY = y - (i / 10) * 8;
+			context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, RESOURCE_ICONS, 32, 32, actions > i ? 5 : 0, 0, iconX, iconY, 4, 7);
+		}
+		for (int i = 0; i < maxBonusActions; i++) {
+			int iconX = x + ((i + maxActions) % 10) * 5;
+			int iconY = y - ((i + maxActions) / 10) * 8;
+			context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, RESOURCE_ICONS, 32, 32, bonusActions > i ? 10 : 0, 0, iconX, iconY, 4, 7);
+		}
+	}
+
+	@Unique
+	private void renderMovementBar(DrawContext context, ClientCharacter character, CombatManager combat) {
+		int x = (client.getWindow().getScaledWidth() - 182) / 2;
+		int y = client.getWindow().getScaledHeight() - 29;
+		if (combat.getCurrentCombatant() == null) return;
+		boolean bl = combat.getCurrentCombatant().getCharacter() == character;
+		double left = combat.getMovementLeft();
+		double total = combat.getTotalMovement();
+		int l = (int) (183.0 * (bl ? left / total : 1.0));
+		Identifier BACKGROUND = Identifier.ofVanilla("hud/experience_bar_background");
+		Identifier PROGRESS = Identifier.ofVanilla("hud/experience_bar_progress");
+		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, BACKGROUND, x, y, 182, 5);
+		if (l > 0) {
+			context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, PROGRESS, 182, 5, 0, 0, x, y, l, 5);
+		}
+
+		String label = String.format("%.1f", left) + '/' + String.format("%.1f", total);
+		Text text = Text.literal(label);
+		TextRenderer textRenderer = client.textRenderer;
+		int i = (context.getScaledWindowWidth() - textRenderer.getWidth(text)) / 2;
+		int j = context.getScaledWindowHeight() - 35;
+		context.drawText(textRenderer, text, i + 1, j, Colors.BLACK, false);
+		context.drawText(textRenderer, text, i - 1, j, Colors.BLACK, false);
+		context.drawText(textRenderer, text, i, j + 1, Colors.BLACK, false);
+		context.drawText(textRenderer, text, i, j - 1, Colors.BLACK, false);
+		context.drawText(textRenderer, text, i, j, -8323296, false);
+	}
+
+	@Unique
+	private void renderDiceBox(DrawContext context, ClientCharacter character) {
+		ClientDNDEngine engine = character.getEngine();
+		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, DICE_BOX_TEXTURE, 0, 0, 64, 64);
+		if (!engine.getRolls().isEmpty() && renderDiceInBox(context, engine.getRolls().getFirst(), 0, 0, 64, 64)) engine.getRolls().removeFirst();
+	}
+
+	@Unique
+	boolean renderDiceInBox(DrawContext context, ClientRoll roll, int x, int y, int width, int height) {
+		long time = Util.getEpochTimeMs();
+		if (roll.getEndTime() == -1L) roll.setEndTime(time + 2000);
+		RollResult result = roll.getRolls().getFirst();
+		Die die = result.getDie();
+		int dieX = x + ((width - die.getWidth()) / 2);
+		int dieY = y + ((height - die.getHeight()) / 2);
+		context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, die.texture(), dieX, dieY, die.getWidth(), die.getHeight());
+
+		long rollTime = Math.max(roll.getEndTime() - time, 0);
+		int i = (int) (rollTime * rollTime * 9e-6);
+		long seed = roll.getEndTime() + i;
+		int value = i == 0 ? (result.getCrit() ? 20 : result.getValue()) : ((new Random(seed)).nextInt(die.getSides()) + 1);
+
+		Text text = Text.literal(String.valueOf(value));
+		int textWidth = client.textRenderer.getWidth(text);
+		int textX = dieX + ((die.getWidth() - textWidth) / 2);
+		int textY = dieY + die.getTextY();
+		context.drawText(client.textRenderer, text, textX - 1, textY, Colors.BLACK, false);
+		context.drawText(client.textRenderer, text, textX + 1, textY, Colors.BLACK, false);
+		context.drawText(client.textRenderer, text, textX, textY - 1, Colors.BLACK, false);
+		context.drawText(client.textRenderer, text, textX, textY + 1, Colors.BLACK, false);
+		int colour = i == 0 ? switch (roll.getSuccess()) {
+			case -1 -> Colors.RED;
+			case 1 -> Colors.GREEN;
+			default -> Colors.WHITE;
+		} : Colors.WHITE;
+		context.drawText(client.textRenderer, text, textX, textY, colour, false);
+
+		return time > roll.getEndTime() + 2000;
 	}
 
 	@Unique

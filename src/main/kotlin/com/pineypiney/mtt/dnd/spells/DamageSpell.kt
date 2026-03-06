@@ -20,6 +20,6 @@ abstract class DamageSpell(id: String, level: Int, settings: Settings) : Spell(i
 	}
 
 	open fun apply(caster: ServerCharacter, target: Character, level: Int, spellCastingAbility: Ability) {
-		target.damage(getDamage(caster, level), false, caster, getSavingThrow(caster, spellCastingAbility))
+		target.damage(getDamage(caster, level), false, caster, getSavingThrow(caster, spellCastingAbility)?.let { it to getSaveThreshold(caster, spellCastingAbility) })
 	}
 }

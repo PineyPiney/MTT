@@ -22,7 +22,7 @@ class Features {
 		companion object {
 			val CODEC = PacketCodec.tuple(
 				MTTPacketCodecs.ABILITY, AbilityScoreImprovement::ability,
-				MTTPacketCodecs.bytInt, AbilityScoreImprovement::boost,
+				MTTPacketCodecs.uBytInt, AbilityScoreImprovement::boost,
 				::AbilityScoreImprovement
 			)
 		}

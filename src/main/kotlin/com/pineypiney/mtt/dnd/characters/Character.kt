@@ -3,10 +3,13 @@ package com.pineypiney.mtt.dnd.characters
 import com.mojang.logging.LogUtils
 import com.pineypiney.mtt.component.DamageRolls
 import com.pineypiney.mtt.component.MTTComponents
+import com.pineypiney.mtt.dice.DieRoll
+import com.pineypiney.mtt.dice.RollResult
 import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.conditions.ConditionManager
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.rolls.AbilityCheck
+import com.pineypiney.mtt.dnd.rolls.AttackRoll
 import com.pineypiney.mtt.dnd.rolls.SavingThrow
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
 import com.pineypiney.mtt.dnd.spells.Spell
@@ -18,10 +21,10 @@ import com.pineypiney.mtt.dnd.traits.proficiencies.EquipmentType
 import com.pineypiney.mtt.dnd.traits.proficiencies.WeaponType
 import com.pineypiney.mtt.entity.DNDInventory
 import com.pineypiney.mtt.item.dnd.DNDGameItem
+import com.pineypiney.mtt.item.dnd.equipment.DNDMeleeItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDShieldItem
 import com.pineypiney.mtt.item.dnd.equipment.DNDWeaponItem
 import com.pineypiney.mtt.network.payloads.s2c.CharacterDamageS2CPayload
-import com.pineypiney.mtt.util.D20
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtDouble
@@ -111,16 +114,23 @@ abstract class Character(val uuid: UUID) : ScoreHolder {
 	}
 
 	open fun attack(target: Character) {
+
 		val armour = target.getTotalArmour()
-		val roll = D20.roll()
-		val crit = roll == 20
-		if (crit || roll >= armour) {
-			target.damage(getDamage(), crit, this)
+		val attackRoll = rollAttackRoll(AttackRoll(target.inventory.getHeldStack()), armour)
+
+		if (attackRoll.crit || attackRoll >= armour) {
+			target.damage(getDamage(), attackRoll.crit, this)
 		}
 	}
 
-	open fun damage(damage: DamageRolls, crit: Boolean, attacker: Character?, savingThrow: SavingThrow? = null) {
-		val saved = savingThrow?.roll(this) ?: false
+	open fun damage(damage: DamageRolls, crit: Boolean, attacker: Character?, savingThrow: Pair<SavingThrow, Int>? = null) {
+		val saved: Boolean
+		if (savingThrow != null) {
+			val (save, target) = savingThrow
+			val roll = save.roll(this)
+			saved = roll >= target
+		} else saved = false
+
 		for (damage in damage.types) {
 			var amount = damage.roll(crit, attacker != null && attacker.inventory.getOffhand() == null)
 			if (saved) amount /= 2
@@ -130,11 +140,21 @@ abstract class Character(val uuid: UUID) : ScoreHolder {
 		}
 	}
 
-	open fun rollSavingThrow(savingThrow: SavingThrow): Boolean = savingThrow.roll(this)
+	open fun rollSavingThrow(savingThrow: SavingThrow, target: Int, roll: DieRoll = DieRoll.d20()): RollResult = savingThrow.roll(this, roll)
 
-	open fun rollAbilityCheck(check: AbilityCheck): Int = check.roll(this)
+	open fun rollAbilityCheck(check: AbilityCheck, target: Int, roll: DieRoll = DieRoll.d20()): RollResult = check.roll(this, roll)
 
-	open fun rollInitiative(): Int = AbilityCheck.INITIATIVE.roll(this)
+	open fun rollInitiative(roll: DieRoll = DieRoll.d20()): RollResult = AbilityCheck.INITIATIVE.roll(this, roll)
+
+	open fun rollAttackRoll(roll: AttackRoll, target: Int, dieRoll: DieRoll = DieRoll.d20()): RollResult = roll.roll(this, dieRoll)
+
+	fun getAttackBonus(stack: ItemStack): Int {
+		if (stack.isEmpty) return abilities.strMod + getProficiencyBonus()
+
+		val item = stack.item
+		return if (item is DNDMeleeItem) getAttackBonus(item.weaponType, stack)
+		else abilities.strMod + (stack[MTTComponents.HIT_BONUS_TYPE] ?: 0)
+	}
 
 	fun getAttackBonus(weaponType: WeaponType, stack: ItemStack): Int {
 		var i = if (weaponType.finesse) max(abilities.strMod, abilities.dexMod) else abilities.strMod
@@ -193,6 +213,8 @@ abstract class Character(val uuid: UUID) : ScoreHolder {
 	}
 
 	fun isPlayable() = true
+
+	fun getCombat() = engine.getCombat(this)
 
 	fun getErrorReporterContext() = ErrorReportingContext(this)
 

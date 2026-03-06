@@ -27,7 +27,7 @@ class CastSpellC2SPayload(val spell: Spell, val level: Int, val locations: List<
 		val ID = CustomPayload.Id<CastSpellC2SPayload>(PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(
 			MTTPacketCodecs.SPELL, CastSpellC2SPayload::spell,
-			MTTPacketCodecs.bytInt, CastSpellC2SPayload::level,
+			MTTPacketCodecs.uBytInt, CastSpellC2SPayload::level,
 			MTTPacketCodecs.smallCollection(PacketCodecs.VECTOR_3F, ::List), CastSpellC2SPayload::locations,
 			MTTPacketCodecs.smallCollection(PacketCodecs.FLOAT, ::List), CastSpellC2SPayload::angles,
 			::CastSpellC2SPayload

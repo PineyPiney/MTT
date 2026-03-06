@@ -100,6 +100,7 @@ abstract class DNDEngine<C : Character> {
 	open fun onCharactersExitCombat(manager: CombatManager, characters: List<UUID>) {
 		if (manager.isEmpty()) combats.remove(manager)
 	}
+	open fun onResourceUsed(manager: CombatManager, actions: Int = 0, bonusActions: Int = 0, extraAttacks: Int = 0) {}
 
 	fun getCombat(character: Character) = combats.firstOrNull { combat -> combat.containsCharacter(character) }
 	fun getCombat(id: Int) = combats.firstOrNull { combat -> combat.id == id }

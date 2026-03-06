@@ -6,7 +6,7 @@ import com.pineypiney.mtt.dnd.classes.DNDClass
 import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.race.Race
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
-import com.pineypiney.mtt.dnd.traits.Ability
+import com.pineypiney.mtt.dnd.server.network.ServerCharacterNetworkHandler
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import com.pineypiney.mtt.mixin_interfaces.MTTServerPlayer
 import com.pineypiney.mtt.network.payloads.c2s.*
@@ -14,7 +14,6 @@ import com.pineypiney.mtt.network.payloads.s2c.*
 import com.pineypiney.mtt.screen.CharacterMakerScreenHandler
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.util.math.Vec3d
 import java.util.*
 
 object MTTNetwork {
@@ -37,6 +36,8 @@ object MTTNetwork {
 		PayloadTypeRegistry.playS2C().register(EnterCombatS2CPayload.ID, EnterCombatS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(ExitCombatS2CPayload.ID, ExitCombatS2CPayload.CODEC)
 		PayloadTypeRegistry.playS2C().register(NextTurnS2CPayload.ID, NextTurnS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(CombatResourcesS2CPayload.ID, CombatResourcesS2CPayload.CODEC)
+		PayloadTypeRegistry.playS2C().register(DiceResultS2CPayload.ID, DiceResultS2CPayload.CODEC)
 
 		PayloadTypeRegistry.playC2S().register(OpenDNDScreenC2SPayload.ID, OpenDNDScreenC2SPayload.CODEC)
 		PayloadTypeRegistry.playC2S().register(ClickButtonC2SPayload.ID, ClickButtonC2SPayload.CODEC)
@@ -130,37 +131,34 @@ object MTTNetwork {
 				!payload.getPitch(0.0f).isFinite()
 			) return@registerGlobalReceiver
 
-			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
-			engine.characterManager[ctx.player().uuid]?.onPlayerMove(payload)
+			manage(ctx, payload, ServerCharacterNetworkHandler::onPlayerMove)
 		}
 
 		ServerPlayNetworking.registerGlobalReceiver(TeleportConfirmC2SPayload.ID) { payload, ctx ->
-			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
-			engine.characterManager[ctx.player().uuid]?.onTeleportConfirm(payload)
+			manage(ctx, payload, ServerCharacterNetworkHandler::onTeleportConfirm)
 		}
 
 		ServerPlayNetworking.registerGlobalReceiver(CharacterInteractCharacterC2SPayload.ID) { payload, ctx ->
-			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
-			val character = engine.getCharacterFromPlayer(ctx.player().uuid)
-			val target = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
-			character?.attack(target)
+			manage(ctx, payload, ServerCharacterNetworkHandler::onCharacterInteract)
 		}
 
 		ServerPlayNetworking.registerGlobalReceiver(CastSpellC2SPayload.ID) { payload, ctx ->
-			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
-			val character = engine.getCharacterFromPlayer(ctx.player().uuid) ?: return@registerGlobalReceiver
-			for ((i, target) in payload.locations.withIndex()) {
-				payload.spell.cast(character, Vec3d(target), payload.angles.getOrNull(i) ?: 0f, payload.level, Ability.INTELLIGENCE, engine.getCombat(character))
-			}
+			manage(ctx, payload, ServerCharacterNetworkHandler::onCharacterCastSpell)
 		}
 
 		ServerPlayNetworking.registerGlobalReceiver(EndTurnC2SPayload.ID) { payload, ctx ->
 			val engine = getEngine(ctx) ?: return@registerGlobalReceiver
 			val character = engine.getCharacter(payload.character) ?: return@registerGlobalReceiver
 			val combat = engine.getCombat(character) ?: return@registerGlobalReceiver
-			if (combat.getCurrentCombatant()?.character?.uuid == payload.character) {
+			val current = combat.getCurrentCombatant()?.character
+			if (engine.getCharacterUuidFromPlayer(ctx.player().uuid) == payload.character && current?.uuid == payload.character) {
 				combat.endTurn()
 			}
 		}
+	}
+
+	private inline fun <P> manage(ctx: ServerPlayNetworking.Context, payload: P, func: ServerCharacterNetworkHandler.(P) -> Unit) {
+		val engine = getEngine(ctx) ?: return
+		engine.characterManager[ctx.player().uuid]?.func(payload)
 	}
 }

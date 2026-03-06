@@ -1,6 +1,7 @@
 package com.pineypiney.mtt.dnd.server
 
 import com.pineypiney.mtt.MTT
+import com.pineypiney.mtt.dice.RollResult
 import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.characters.Character
 import com.pineypiney.mtt.dnd.characters.CharacterTypeRegistry
@@ -22,7 +23,6 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.entity.Entity
-import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.MinecraftServer
@@ -61,6 +61,7 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 	val prefabs = mutableSetOf<Prefab>()
 
 	private var nextCombatId = 0
+	private var nextDieId = 0
 
 	fun onPlayerConnect(player: ServerPlayerEntity) {
 		Race.set.forEach { race ->
@@ -89,6 +90,11 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 		characterManager.disconnectPlayer(player)
 	}
 
+	fun onCharacterRollDice(character: ServerCharacter, result: RollResult, success: Int) {
+		val player = getControllingPlayer(character.uuid)
+		if (player != null) ServerPlayNetworking.send(player, DiceResultS2CPayload(nextDieId++, listOf(result), success))
+	}
+
 	override fun addCharacter(character: ServerCharacter) {
 		super.addCharacter(character)
 		sendPayload(character.createPayload(server.registryManager))
@@ -114,7 +120,7 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 
 	override fun getEntityOfCharacter(character: UUID) = playerEntities.firstOrNull { it.character?.uuid == character }
 
-	override fun getControllingPlayer(character: UUID): PlayerEntity? {
+	override fun getControllingPlayer(character: UUID): ServerPlayerEntity? {
 		val playerUUID = playerCharacters.entries.firstOrNull { it.value == character }?.key ?: return null
 		return server.playerManager.getPlayer(playerUUID)
 	}
@@ -160,13 +166,21 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 	}
 
 	override fun onCharactersStartTurn(manager: CombatManager, turnID: Int) {
-		super.onCharactersStartTurn(manager, turnID)
 		sendPayload(NextTurnS2CPayload(manager.id, turnID))
+
+		// Associate the DM with the character who's turn it is
+		val current = manager.getCurrentCombatant()?.character ?: return
+		val controlling = getControlling(current)
+		if (controlling == null) DM?.let { associatePlayer(it, current.uuid) }
 	}
 
 	override fun onCharactersExitCombat(manager: CombatManager, characters: List<UUID>) {
 		super.onCharactersExitCombat(manager, characters)
 		sendPayload(ExitCombatS2CPayload(manager.id, characters))
+	}
+
+	override fun onResourceUsed(manager: CombatManager, actions: Int, bonusActions: Int, extraAttacks: Int) {
+		sendPayload(CombatResourcesS2CPayload(manager.id, actions, bonusActions, extraAttacks))
 	}
 
 	fun showCharacters() {
@@ -271,13 +285,13 @@ class ServerDNDEngine(val server: MinecraftServer) : DNDEngine<ServerCharacter>(
 	}
 
 	fun encodeCombats(buf: ByteBuf) {
-		MTTPacketCodecs.bytInt.encode(buf, combats.size)
+		MTTPacketCodecs.uBytInt.encode(buf, combats.size)
 		for (combat in combats) combat.encode(buf)
 	}
 
 	fun decodeCombats(buf: ByteBuf) {
 		combats.clear()
-		repeat(MTTPacketCodecs.bytInt.decode(buf)) {
+		repeat(MTTPacketCodecs.uBytInt.decode(buf)) {
 			val combat = CombatManager(nextCombatId++, this)
 			combat.decode(buf, this)
 			combats.add(combat)

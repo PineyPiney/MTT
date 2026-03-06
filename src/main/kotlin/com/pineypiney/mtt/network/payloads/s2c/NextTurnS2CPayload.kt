@@ -16,8 +16,8 @@ class NextTurnS2CPayload(val combatID: Int, val character: Int) : CustomPayload 
 		val PAYLOAD_ID = Identifier.of(MTT.MOD_ID, "next_turn")
 		val ID = CustomPayload.Id<NextTurnS2CPayload>(PAYLOAD_ID)
 		val CODEC = PacketCodec.tuple(
-			MTTPacketCodecs.shtInt, NextTurnS2CPayload::combatID,
-			MTTPacketCodecs.shtInt, NextTurnS2CPayload::character,
+			MTTPacketCodecs.uShtInt, NextTurnS2CPayload::combatID,
+			MTTPacketCodecs.uShtInt, NextTurnS2CPayload::character,
 			::NextTurnS2CPayload
 		)
 	}

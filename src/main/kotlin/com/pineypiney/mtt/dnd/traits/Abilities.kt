@@ -1,7 +1,7 @@
 package com.pineypiney.mtt.dnd.traits
 
 import com.pineypiney.mtt.network.codec.MTTPacketCodecs
-import com.pineypiney.mtt.network.codec.MTTPacketCodecs.bytInt
+import com.pineypiney.mtt.network.codec.MTTPacketCodecs.uBytInt
 import io.netty.buffer.ByteBuf
 import java.util.*
 
@@ -76,12 +76,12 @@ class Abilities {
 	fun getMod(ability: Ability) = (getStat(ability) - 10).floorDiv(2)
 
 	fun decode(buf: ByteBuf) {
-		strength = bytInt.decode(buf)
-		dexterity = bytInt.decode(buf)
-		constitution = bytInt.decode(buf)
-		intelligence = bytInt.decode(buf)
-		wisdom = bytInt.decode(buf)
-		charisma = bytInt.decode(buf)
+		strength = uBytInt.decode(buf)
+		dexterity = uBytInt.decode(buf)
+		constitution = uBytInt.decode(buf)
+		intelligence = uBytInt.decode(buf)
+		wisdom = uBytInt.decode(buf)
+		charisma = uBytInt.decode(buf)
 
 		for((_, list) in modifications){
 			list.clear()
@@ -90,12 +90,12 @@ class Abilities {
 	}
 
 	fun encode(buf: ByteBuf) {
-		bytInt.encode(buf, strength)
-		bytInt.encode(buf, dexterity)
-		bytInt.encode(buf, constitution)
-		bytInt.encode(buf, intelligence)
-		bytInt.encode(buf, wisdom)
-		bytInt.encode(buf, charisma)
+		uBytInt.encode(buf, strength)
+		uBytInt.encode(buf, dexterity)
+		uBytInt.encode(buf, constitution)
+		uBytInt.encode(buf, intelligence)
+		uBytInt.encode(buf, wisdom)
+		uBytInt.encode(buf, charisma)
 
 		for ((_, list) in modifications) MTTPacketCodecs.SOURCE_LIST.encode(buf, list)
 	}

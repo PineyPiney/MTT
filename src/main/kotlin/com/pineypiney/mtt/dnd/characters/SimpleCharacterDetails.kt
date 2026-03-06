@@ -93,14 +93,14 @@ class SimpleCharacterDetails(
 				val subrace = race.getSubrace(PacketCodecs.STRING.decode(buf))
 				val modelId = PacketCodecs.STRING.decode(buf)
 				val dndClass = DNDClass.findById(PacketCodecs.STRING.decode(buf))
-				val level = MTTPacketCodecs.bytInt.decode(buf)
-				val maxHealth = MTTPacketCodecs.shtInt.decode(buf)
+				val level = MTTPacketCodecs.uBytInt.decode(buf)
+				val maxHealth = MTTPacketCodecs.uShtInt.decode(buf)
 				val spells = MTTPacketCodecs.SPELLS.decode(buf)
 				val value = SimpleCharacterDetails(name, race, subrace, modelId, dndClass, level, maxHealth, spells)
 
 				value.abilities.decode(buf)
-				value.armourClass = MTTPacketCodecs.bytInt.decode(buf)
-				value.health = MTTPacketCodecs.shtInt.decode(buf)
+				value.armourClass = MTTPacketCodecs.uBytInt.decode(buf)
+				value.health = MTTPacketCodecs.uShtInt.decode(buf)
 				value.conditions.decode(buf, MTTPacketCodecs.smallCollection(MTTPacketCodecs.CONDITION, ::mutableSetOf))
 
 				return value
@@ -112,13 +112,13 @@ class SimpleCharacterDetails(
 				PacketCodecs.STRING.encode(buf, value.subrace?.name ?: "")
 				PacketCodecs.STRING.encode(buf, value.modelId)
 				PacketCodecs.STRING.encode(buf, value.dndClass.id)
-				MTTPacketCodecs.bytInt.encode(buf, value.level)
-				MTTPacketCodecs.shtInt.encode(buf, value.maxHealth)
+				MTTPacketCodecs.uBytInt.encode(buf, value.level)
+				MTTPacketCodecs.uShtInt.encode(buf, value.maxHealth)
 				MTTPacketCodecs.SPELLS.encode(buf, value.spells)
 
 				value.abilities.encode(buf)
-				MTTPacketCodecs.bytInt.encode(buf, value.armourClass)
-				MTTPacketCodecs.shtInt.encode(buf, value.health)
+				MTTPacketCodecs.uBytInt.encode(buf, value.armourClass)
+				MTTPacketCodecs.uShtInt.encode(buf, value.health)
 				value.conditions.encode(buf, MTTPacketCodecs.smallCollection(MTTPacketCodecs.CONDITION, ::mutableSetOf))
 			}
 		}

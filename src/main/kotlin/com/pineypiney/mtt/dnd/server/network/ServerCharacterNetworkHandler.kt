@@ -1,9 +1,12 @@
 package com.pineypiney.mtt.dnd.server.network
 
 import com.pineypiney.mtt.MTT
-import com.pineypiney.mtt.dnd.characters.Character
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.server.ServerDNDEngine
+import com.pineypiney.mtt.dnd.traits.Ability
 import com.pineypiney.mtt.entity.DNDEntity
+import com.pineypiney.mtt.network.payloads.c2s.CastSpellC2SPayload
+import com.pineypiney.mtt.network.payloads.c2s.CharacterInteractCharacterC2SPayload
 import com.pineypiney.mtt.network.payloads.c2s.CharacterMoveC2SPayload
 import com.pineypiney.mtt.network.payloads.c2s.TeleportConfirmC2SPayload
 import com.pineypiney.mtt.network.payloads.s2c.CharacterPositionLookS2CPayload
@@ -25,7 +28,7 @@ import net.minecraft.world.rule.GameRules
 
 class ServerCharacterNetworkHandler(val engine: ServerDNDEngine, val player: ServerPlayerEntity) {
 
-	var character: Character? = null
+	var character: ServerCharacter? = null
 
 	private var ticks = 0
 	private var lastTickX = 0.0
@@ -67,6 +70,24 @@ class ServerCharacterNetworkHandler(val engine: ServerDNDEngine, val player: Ser
 			this.updatedZ = this.requestedTeleportPos!!.z
 			this.player.onTeleportationDone()
 			this.requestedTeleportPos = null
+		}
+	}
+
+	fun onCharacterInteract(payload: CharacterInteractCharacterC2SPayload) {
+		val target = engine.getCharacter(payload.character) ?: return
+		val combat = character?.getCombat()
+		if (combat == null) character?.attack(target)
+		else if (combat.getCurrentCombatant()?.character == character && combat.useAction()) character?.attack(target)
+	}
+
+	fun onCharacterCastSpell(payload: CastSpellC2SPayload) {
+		withCharacter { character ->
+			val combat = character.getCombat()
+			if (combat == null || (combat.getCurrentCombatant()?.character == character && combat.useAction())) {
+				for ((i, target) in payload.locations.withIndex()) {
+					payload.spell.cast(character, Vec3d(target), payload.angles.getOrNull(i) ?: 0f, payload.level, Ability.INTELLIGENCE, engine.getCombat(character))
+				}
+			}
 		}
 	}
 
@@ -329,4 +350,6 @@ class ServerCharacterNetworkHandler(val engine: ServerDNDEngine, val player: Ser
 		this.dead = false
 		this.remainingLoadingTicks = 60
 	}
+
+	private fun withCharacter(func: (character: ServerCharacter) -> Unit) = character?.let { func(it) }
 }

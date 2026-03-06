@@ -1,13 +1,10 @@
 package com.pineypiney.mtt.mixin.client;
 
 import com.mojang.authlib.GameProfile;
-import com.pineypiney.mtt.MTT;
 import com.pineypiney.mtt.client.dnd.ClientDNDEngine;
-import com.pineypiney.mtt.dnd.DNDEngine;
-import com.pineypiney.mtt.dnd.characters.Character;
+import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity;
 import com.pineypiney.mtt.entity.DNDEntity;
 import com.pineypiney.mtt.mixin_interfaces.CharacterController;
-import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder;
 import com.pineypiney.mtt.network.payloads.c2s.CharacterMoveC2SPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.MinecraftClient;
@@ -104,18 +101,9 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
 
 	@Inject(method = "tickMovementInput()V", at = @At("HEAD"), cancellable = true)
 	private void moveCharacter(CallbackInfo ci) {
-		DNDEngine<?> engine = ((DNDEngineHolder<?>) client).mtt$getDNDEngine();
-		if(engine == null){
-			MTT.Companion.getLogger().warn("Client does not have DNDEngine");
-			return;
-		}
-		if (!engine.getRunning() || uuid.equals(engine.getDM())) return;
-		Character character = engine.getCharacterFromPlayer(uuid);
-		if (character == null) return;
-
-		ci.cancel();
-		DNDEntity entity = engine.getEntityFromPlayer(uuid);
+		ClientDNDEntity entity = ClientDNDEngine.Companion.getRunningAndPlayerCharacterEntity(this);
 		if (entity == null) return;
+		ci.cancel();
 
 		Vec2f vec2f = this.applyMovementSpeedFactors(this.input.getMovementInput());
 		entity.setSidewaysSpeed(vec2f.x);

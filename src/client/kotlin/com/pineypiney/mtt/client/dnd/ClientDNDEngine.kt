@@ -1,11 +1,11 @@
 package com.pineypiney.mtt.client.dnd
 
+import com.pineypiney.mtt.client.ClientRoll
 import com.pineypiney.mtt.client.dnd.network.ClientCharacter
 import com.pineypiney.mtt.client.dnd.network.ClientCharacterNetworkHandler
 import com.pineypiney.mtt.client.dnd.network.ClientDNDEntity
 import com.pineypiney.mtt.dnd.DNDEngine
 import com.pineypiney.mtt.dnd.characters.Character
-import com.pineypiney.mtt.entity.DNDEntity
 import com.pineypiney.mtt.entity.MTTEntities
 import com.pineypiney.mtt.mixin_interfaces.DNDEngineHolder
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents
@@ -28,6 +28,8 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine<ClientCharacter>(
 		} ?: emptyList()
 
 	val networkHandler = ClientCharacterNetworkHandler(this)
+
+	val rolls = mutableListOf<ClientRoll>()
 
 	init {
 		// reset the client in case it joins a different server before closing the client
@@ -113,7 +115,7 @@ class ClientDNDEngine(val client: MinecraftClient) : DNDEngine<ClientCharacter>(
 			return engine.getCharacterFromPlayer(player?.uuid ?: return null)
 		}
 
-		fun getRunningAndPlayerCharacterEntity(player: PlayerEntity?): DNDEntity? {
+		fun getRunningAndPlayerCharacterEntity(player: PlayerEntity?): ClientDNDEntity? {
 			val engine = getInstance()
 			if (!engine.running) return null
 			val characterUuid = engine.getCharacterUuidFromPlayer(player?.uuid ?: return null) ?: return null

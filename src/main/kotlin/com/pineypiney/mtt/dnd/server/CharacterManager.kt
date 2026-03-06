@@ -1,5 +1,6 @@
 package com.pineypiney.mtt.dnd.server
 
+import com.pineypiney.mtt.dnd.network.ServerCharacter
 import com.pineypiney.mtt.dnd.network.ServerDNDEntity
 import com.pineypiney.mtt.dnd.server.network.ServerCharacterNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
@@ -25,8 +26,12 @@ class CharacterManager(val engine: ServerDNDEngine) {
 	}
 
 	operator fun get(playerUuid: UUID) = handlers[playerUuid]
-	operator fun get(entity: ServerDNDEntity): ServerCharacterNetworkHandler? {
-		val player = engine.getControllingPlayer(entity.character?.uuid ?: return null) ?: return null
+	operator fun get(character: ServerCharacter): ServerCharacterNetworkHandler? {
+		val player = engine.getControllingPlayer(character.uuid) ?: return null
 		return handlers[player.uuid]
+	}
+
+	operator fun get(entity: ServerDNDEntity): ServerCharacterNetworkHandler? {
+		return get(entity.character ?: return null)
 	}
 }

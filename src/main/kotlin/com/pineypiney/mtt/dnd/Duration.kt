@@ -66,7 +66,7 @@ sealed class Duration : Comparable<Duration> {
 		companion object {
 			val PACKET_CODEC = PacketCodec.tuple(
 				MTTPacketCodecs.UUID_CODEC, Turns::character,
-				MTTPacketCodecs.bytInt, Turns::turnsLeft,
+				MTTPacketCodecs.uBytInt, Turns::turnsLeft,
 				::Turns
 			)
 		}
